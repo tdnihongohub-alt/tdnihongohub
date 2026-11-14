@@ -23,3 +23,8 @@ h1,h2,h3,h4{font-family:var(--font-reading)}
 :lang(ja){font-family:'Noto Sans JP',sans-serif}
 .hero-japanese-heading,.culture-heading>span:last-child,.culture-tabs small{font-family:'Noto Serif JP',serif}
 :lang(si){font-family:'Noto Sans Sinhala',sans-serif}
+
+/* Softer, compact typography for the homepage feature cards. */
+.public-restyle .home-benefit-grid h3{font-size:17px;font-weight:600;line-height:1.5;letter-spacing:-.015em;margin-bottom:12px}
+.public-restyle .home-benefit-grid p{font-size:14px;font-weight:400;line-height:1.75;letter-spacing:normal;color:#5e5059}
+.public-restyle .home-benefit-grid{font-family:var(--font-reading);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
