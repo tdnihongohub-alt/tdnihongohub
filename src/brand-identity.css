@@ -1,0 +1,21 @@
+.branded-logo .brand-image-shell{display:grid;place-items:center;width:59px;height:59px;background:#fff;border:1px solid #e7dece;border-radius:10px;overflow:hidden;flex:none;box-shadow:0 2px 6px #5b3d2106}
+.branded-logo .brand-image-shell img{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block}
+.branded-logo{gap:11px}
+.sidebar .branded-logo{font-size:11px;gap:10px;margin-left:3px;margin-right:3px;margin-bottom:25px}
+.sidebar .brand-image-shell{width:49px;height:49px;border:1px solid #ffffff20;border-radius:9px}
+.sidebar .brand-hub{font-size:9px}.sidebar .brand-hub i{font-size:5px;letter-spacing:.5px}
+.public-footer .branded-logo .brand-image-shell{width:78px;height:78px;border-radius:11px}
+.brand-sinhala-greeting{font-size:14px;line-height:1.8;color:#a17c50;margin:0 0 15px}
+.brand-story-card{background:#fff;border:1px solid #e0d3be;border-radius:8px;overflow:hidden;align-self:center;box-shadow:8px 8px 0 #ece2d1}
+.brand-story-card>img{width:100%;max-height:390px;object-fit:contain;display:block;padding:12px 18px 0}
+.brand-story-caption{text-align:center;padding:3px 22px 24px}
+.brand-story-caption>span{font-size:7px;letter-spacing:2px;color:#ba9563}
+.brand-story-caption>p{font:italic 22px/1.35 'DM Serif Display';color:#a26243;letter-spacing:-.2px;margin:12px 0 17px}
+.brand-colour-marks{display:flex;justify-content:center;gap:6px}.brand-colour-marks i{width:7px;height:7px;border-radius:50%;background:#cb4242}.brand-colour-marks i:nth-child(2){background:#efb741}.brand-colour-marks i:nth-child(3){background:#298d9f}
+.button.brand-phone{color:#397f89;border-color:#bed1ce;background:#f0f6ef}
+.button.brand-phone:hover{background:#e4efe9}
+.public-lesson-meta{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.public-lesson-meta>small{font-size:10px;color:#a18c6c}.video-card .text-link{font-size:11px;margin-top:6px}
+@media(max-width:900px){.sidebar .branded-logo{font-size:10px;gap:8px}.sidebar .brand-image-shell{width:43px;height:43px}.sidebar .brand-hub i{display:none}}
+@media(max-width:720px){.branded-logo .brand-image-shell{width:45px;height:45px;border-radius:8px}.branded-logo{gap:9px;font-size:11px}.brand-story-card{max-width:400px;justify-self:center;width:100%}.brand-story-card>img{max-height:340px}.brand-sinhala-greeting{font-size:12px}.sidebar .brand-image-shell{width:49px;height:49px}.sidebar .branded-logo{font-size:11px}.sidebar .brand-hub i{display:inline}.public-footer .branded-logo .brand-image-shell{width:66px;height:66px}}
+@media(max-width:440px){.branded-logo{font-size:9px;gap:7px}.branded-logo .brand-image-shell{width:40px;height:40px;border-radius:7px}.branded-logo .brand-hub{font-size:7px;letter-spacing:2px}.sidebar .branded-logo{font-size:11px}.sidebar .brand-image-shell{width:49px;height:49px}.sidebar .brand-hub{font-size:9px;letter-spacing:3px}.public-footer .branded-logo{font-size:13px;gap:11px}.public-footer .brand-hub{font-size:9px}.brand-story-caption>p{font-size:20px}}

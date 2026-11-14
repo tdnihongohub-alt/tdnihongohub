@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" fill="none">
+<defs>
+ <linearGradient id="sky" x1="270" y1="25" x2="270" y2="300" gradientUnits="userSpaceOnUse"><stop stop-color="#f4c6dc"/><stop offset="1" stop-color="#fff5ed"/></linearGradient>
+ <linearGradient id="fuji" x1="240" y1="130" x2="350" y2="280" gradientUnits="userSpaceOnUse"><stop stop-color="#b8a9d0"/><stop offset="1" stop-color="#d7c6de"/></linearGradient>
+ <linearGradient id="book" x1="220" y1="257" x2="330" y2="330" gradientUnits="userSpaceOnUse"><stop stop-color="#d16b97"/><stop offset="1" stop-color="#a84c76"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="9" stdDeviation="8" flood-color="#8e4867" flood-opacity=".13"/></filter>
+ <g id="flower"><path d="M0 0C-17-2-18-22-8-20C-1-24 5-8 0 0C-3-17 14-27 18-17C29-13 12 1 0 0C15-9 30 4 22 12C19 24 3 14 0 0C10 14 0 29-9 21C-22 24-19 7 0 0C-16 9-29-4-20-11C-14-20-2-12 0 0Z" fill="#f3b4d1"/><circle r="3" fill="#bc789b"/></g>
+</defs>
+<ellipse cx="278" cy="337" rx="207" ry="16" fill="#b67b99" opacity=".11"/>
+<!-- An open Japanese garden window. -->
+<path d="M104 286V151a153 153 0 0 1 306 0v135Z" fill="url(#sky)"/>
+<circle cx="306" cy="126" r="45" fill="#fff3e5"/>
+<path d="m151 250 109-123 112 123Z" fill="url(#fuji)"/><path d="m223 168 37-41 37 41-20-8-16 12-17-12Z" fill="#fff9f4"/>
+<path d="M103 245c76-52 105 21 168-8 68-32 99-24 140 0v48H103Z" fill="#c4b9ca"/><path d="M104 267c59-20 79 14 139-2 85-25 118-1 167 2v24H104Z" fill="#aeb5a6"/>
+<path d="M105 285V153a152 152 0 0 1 304 0v132" stroke="#fff8f4" stroke-width="18"/>
+<path d="M105 285V153a152 152 0 0 1 304 0v132" stroke="#d3a4bb" stroke-width="2"/>
+<path d="M257 20v257M113 160h289" stroke="#fff9f3" stroke-width="7"/><path d="M251 21v257M114 155h289" stroke="#d6a7be" stroke-width="1.5"/>
+<!-- Torii beyond the window, and ripples in the garden. -->
+<g transform="translate(325 197)"><path d="M0 1q35 9 68 0l-3 8H4Z" fill="#b66783"/><path d="M8 17h53v6H8Z" fill="#a95776"/><path d="M15 8h7v53h-7ZM48 8h7v53h-7Z" fill="#bd7890"/><path d="M33 10h6v9h-6Z" fill="#a95776"/></g>
+<path d="M114 293h298" stroke="#c291ac" stroke-width="9" stroke-linecap="round"/>
+<path d="M113 289h300" stroke="#fff1f3" stroke-width="5" stroke-linecap="round"/>
+<!-- Sakura branch and blossoms. -->
+<path d="M50 98q69 20 146-21m-83 24 14-42m15 36 31 20m-10-23 22-36" stroke="#8d6680" stroke-width="5" stroke-linecap="round"/>
+<use href="#flower" transform="translate(64 99) scale(.75)"/><use href="#flower" transform="translate(102 104) scale(.9)"/><use href="#flower" transform="translate(127 63) scale(.8)"/><use href="#flower" transform="translate(162 92) scale(1.1)"/><use href="#flower" transform="translate(191 76) scale(.75)"/><use href="#flower" transform="translate(172 117) scale(.55)"/><use href="#flower" transform="translate(185 49) scale(.5)"/>
+<path d="M72 157q16-10 11 5-13 9-11-5M425 147q15-10 10 5-13 9-10-5M384 80q12-6 9 6-10 7-9-6" fill="#eaa7c7"/>
+<!-- A little wind bell. -->
+<path d="M384 59v30" stroke="#b889a4"/><path d="M369 106q0-28 15-28t15 28Z" fill="#fff5f4" stroke="#c18ca9" stroke-width="2"/><path d="M384 108v18" stroke="#bd82a2"/><path d="m377 125 16 1-2 43-15-2Z" fill="#d78caf"/><path d="m380 136 8 1m-8 7 7 1m-7 7 7 1" stroke="#fff1f8"/>
+<!-- A warm study desk: books, notebook, pencil and tea. -->
+<g filter="url(#shadow)"><rect x="145" y="307" width="226" height="19" rx="4" fill="#be7298"/><path d="M154 308h207v13H154Z" fill="#fff3eb"/><path d="M166 313h169m-153 4h147" stroke="#e3c9cf"/>
+<path d="m198 257 79 5 69 43-88 12-76-42Z" fill="url(#book)"/><path d="m203 252 75 9 68 39-89 12-69-41Z" fill="#fff9f0"/><path d="m278 261-21 51-12-38-42-22" fill="#fff0ec"/><path d="m278 261-20 49m-40-47 22 6m-18-1 18 6m-11-1 12 5m51-5 27 15m-30-8 26 14" stroke="#d4a9b8" stroke-width="1.5"/><path d="m277 263 25 14-7 21-16-8Z" fill="#f5d2e1"/><path d="m304 284 13 7" stroke="#bb7193"/>
+<path d="m273 315 9 13 11-20" fill="#d878a4"/>
+<path d="m345 281 54-43 5 7-55 42-7 1Z" fill="#c180a0"/><path d="m399 238 7-3-2 10Z" fill="#76566f"/>
+<path d="M84 282h47l-4 35q-18 12-38 0Z" fill="#fff8f4" stroke="#d6a6bb" stroke-width="2"/><path d="M132 287c27-4 24 24-3 19" stroke="#d6a6bb" stroke-width="6"/><ellipse cx="108" cy="282" rx="23" ry="5" fill="#dabcc5"/><ellipse cx="108" cy="281" rx="18" ry="3" fill="#ba8d9f"/><path d="M104 268c-13-14 10-15 0-30m13 29c-8-9 8-13 1-22" stroke="#cfa9bb" stroke-width="2" stroke-linecap="round"/>
+<use href="#flower" transform="translate(107 302) scale(.35)"/>
+</g>
+<path d="m429 286 6-36 6 36" stroke="#a1aa98" stroke-width="3"/><ellipse cx="426" cy="253" rx="6" ry="13" transform="rotate(-35 426 253)" fill="#b8c2ad"/><ellipse cx="442" cy="260" rx="5" ry="12" transform="rotate(35 442 260)" fill="#a9b39e"/><path d="M419 283h32l-6 31h-20Z" fill="#d8a2bb"/><path d="M420 287h30" stroke="#f7dce8" stroke-width="3"/>
+</svg>

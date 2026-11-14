@@ -1,0 +1,20 @@
+.sakura-classroom{isolation:isolate}
+.sakura-3d-scene{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden;mask-image:linear-gradient(90deg,transparent 0%,#0002 26%,#000b 46%,#000 60%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,#0002 26%,#000b 46%,#000 60%)}
+.sakura-3d-scene canvas{display:block;width:100%;height:100%}
+.sakura-classroom .hero-copy{position:relative;z-index:6}
+.sakura-classroom .culture-hero{z-index:2}
+.sakura-classroom .culture-image-frame{transform:none!important;transition:none;box-shadow:none;border:0;border-radius:0;background:transparent;inset:9px -20px -12px -20px;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 92%,transparent)}
+.sakura-classroom .culture-image{transform:none!important;object-position:50% 26%;mask-image:linear-gradient(0deg,transparent,#000 12%,#000 92%,transparent);-webkit-mask-image:linear-gradient(0deg,transparent,#000 12%,#000 92%,transparent)}
+.sakura-classroom .culture-discovery{z-index:7;background:#fff9e9e8;box-shadow:0 5px 18px #80551f12;transform:none}
+.sakura-classroom .culture-heading{z-index:7;top:7px;right:20px;left:20px}
+.sakura-classroom .culture-greeting{z-index:7;left:5px;bottom:126px}
+.sakura-classroom .culture-side-caption{right:26px;top:65px}
+.sakura-classroom .culture-vignette{background:none}
+.hero-3d-controls{position:absolute;bottom:6px;right:35px;left:35px;display:flex;align-items:center;justify-content:space-between;z-index:8;pointer-events:none}
+.hero-3d-controls>span{font-size:5px;letter-spacing:1px;color:#ab9374}
+.hero-3d-controls button{pointer-events:auto;display:flex;align-items:center;gap:8px;border:0;background:#f6f0e3d9;backdrop-filter:blur(4px);padding:5px 8px;border-radius:3px;font-size:7px;color:#a28258}
+.hero-3d-controls button>span{font-size:9px;color:#b96442}
+.hero-3d-controls button:hover{background:#eadbc3;color:#8c6138}
+.sakura-3d-scene.scene-fallback{display:none}
+@media(max-width:800px){.sakura-3d-scene{mask-image:linear-gradient(180deg,transparent 0%,transparent 43%,#000 66%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,transparent 43%,#000 66%)}.sakura-classroom .culture-hero{margin-top:0}.sakura-classroom .culture-image-frame{inset:12px -20px -8px}.sakura-classroom .culture-greeting{bottom:15px;left:10px}.sakura-classroom .culture-side-caption{top:20px}.sakura-classroom .culture-heading{top:0}.hero-3d-controls{bottom:1px;left:20px;right:20px}.hero-3d-controls>span{font-size:4px;letter-spacing:.6px}.hero-3d-controls button{font-size:6px;padding:4px 7px}}
+@media(prefers-reduced-motion:reduce){.hero-3d-controls button{transition:none}}

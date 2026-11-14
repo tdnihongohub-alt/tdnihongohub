@@ -1,0 +1,52 @@
+/* Reading surfaces: keep the pink accents, give the words stronger contrast. */
+.public-restyle{--bloom-ink:#352832;--bloom-muted:#5e4d59;--bloom-rose:#8c2e5e;--bloom-wash:#fff8fb;background:#fffafb}
+.public-restyle p{font-weight:400;line-height:1.85}
+.public-restyle :is(.video-card,.course-card,.exam-detail,.exam-comparison,.home-benefit-grid article,.home-free-grid>a,.home-joining-grid article){background:#fff}
+.public-restyle :is(.video-card p,.course-card p,.course-detail-grid p,.about-layout p,.home-benefit-grid p,.home-free-copy p,.home-joining-grid p,.portal-tour-copy p,.home-section-intro,.section-heading-aside p){font-size:16px;line-height:1.85;color:#51434d;font-weight:400}
+.public-restyle :is(.video-card h3,.home-free-copy h3,.home-benefit-grid h3,.home-joining-grid h3){font-size:20px;line-height:1.5;color:#352832;font-weight:700;letter-spacing:0}
+.public-restyle .video-card .pad{padding:26px}
+.public-restyle .video-card .public-lesson-meta{flex-wrap:wrap;gap:10px}
+.public-restyle .public-lesson-meta .badge{font-size:12px;background:#fff2f8;color:#74334f;line-height:1.5}
+.public-restyle .public-lesson-meta>small{font-size:13px;color:#61505b;font-weight:600}
+.public-restyle :is(.video-card .text-link,.home-free-copy>strong,.course-meta){font-size:13px;color:#822951;font-weight:700}
+.public-restyle :is(.course-detail-grid .outcomes li,.portal-tour-copy li,.join-features span,.batch-preview,.course-join-card>small){font-size:15px;line-height:1.8;color:#51434d;font-weight:400}
+.public-restyle :is(.course-join-card,.jlpt-path,.exam-facts,.home-portal-tour){background:#fff8fb}
+.public-restyle .exam-detail{background:#fff}
+.public-restyle .exam-description{font-size:16px;line-height:1.9;color:#463641;font-weight:400}
+.public-restyle .exam-full-name{font-size:15px;line-height:1.7;color:#61505b;font-weight:600}
+.public-restyle .exam-benefits h4{font-size:17px;color:#352832;font-weight:700;line-height:1.5}
+.public-restyle :is(.exam-benefits p,.jlpt-level-detail p,.exam-consider p,.exam-intro p){font-size:16px;line-height:1.85;color:#51434d;font-weight:400}
+.public-restyle :is(.exam-facts strong,.jlpt-level-detail>strong){font-size:15px;line-height:1.8;color:#49313f;font-weight:600}
+.public-restyle :is(.exam-facts small,.exam-detail-top>span,.exam-detail-top small,.jlpt-path>div:first-child>span){font-size:12px;color:#65515e;font-weight:600;letter-spacing:.3px;line-height:1.6}
+.public-restyle :is(.jlpt-path>div:first-child>strong,.exam-consider strong){font-size:14px;color:#74334f}
+.public-restyle :is(.exam-choices small,.exam-guide-note,.exam-comparison p){font-size:14px;color:#61505b;font-weight:400;line-height:1.8}
+.exam-choices button{color:#74334f;background:#fff}.exam-choices strong{color:#352832;font-weight:700}
+.exam-goals button{font-size:14px;color:#74334f;font-weight:600}.exam-goals button[aria-pressed='true']{color:#fff;background:#8c2e5e;border-color:#8c2e5e}
+.public-restyle .exam-detail-footer a{font-size:13px;font-weight:700;color:#822951;line-height:1.7}
+.public-restyle .exam-comparison td{font-size:15px;line-height:1.8;color:#51434d}.public-restyle .exam-comparison th{font-size:13px;color:#49313f;background:#fff5fa}
+.public-restyle .exam-comparison td:first-child{color:#74334f}
+.public-restyle .exam-explorer .exam-intro .text-link{font-size:14px;color:#822951}
+.public-restyle .home-questions :is(p,summary){font-size:16px;line-height:1.85;color:#51434d}
+.public-restyle .home-faq-list details>p{font-size:16px;line-height:1.85;color:#51434d;font-weight:400}
+.public-restyle .home-faq-list summary>strong{font-size:16px;line-height:1.7;font-weight:600;color:#352832}
+.public-restyle .portal-tour-preview{--tour-muted:#6b5363;--tour-ink:#49313f}
+.public-restyle .portal-tour-preview.night{--tour-muted:#d4bed0;--tour-ink:#f7edf5}
+.public-restyle .tour-preview-rows strong{font-size:14px;font-weight:600}
+.public-restyle .tour-preview-bottom small{font-size:12px}
+/* Use theme-aware colours for private reading areas and administrative records. */
+.workspace{--read-ink:#382b35;--read-muted:#61505d;--read-paper:#fff;--read-soft:#fff8fb}
+.workspace[data-theme='dark']{--read-ink:#f4e9f1;--read-muted:#d5c1d0;--read-paper:#241e2b;--read-soft:#302636}
+:root:has(.student-workspace) .student-workspace{--studio-muted:var(--read-muted);--studio-ink:var(--read-ink)}
+.teacher-workspace{--teacher-muted:var(--read-muted);--teacher-ink:var(--read-ink);--teacher-soft:var(--read-soft)}
+.workspace .workspace-content :is(.panel-heading p,.panel .pad p,.lesson-list small,.submission-answer,.claim-feedback,.feedback-box p,.desk-feedback-item p,.desk-announcements p,.results-note,.form-note){font-size:15px;line-height:1.85;font-weight:400;color:var(--read-muted)}
+.workspace .workspace-content :is(.preserve-lines,.submission-answer,.lesson-list strong){font-size:16px;line-height:1.9;font-weight:400;color:var(--read-ink)}
+.workspace .workspace-content .table-wrap td{font-size:14px;line-height:1.75;color:var(--read-ink)}
+.workspace .workspace-content .table-wrap th{font-size:12px;font-weight:700}
+.workspace .workspace-content :is(.list-row strong,.form-field,.results-filter){font-size:14px;font-weight:600}
+.workspace .workspace-content :is(.list-row small,.table-wrap td small,.form-field small,.student-quiz-card p){font-size:13px;line-height:1.75;color:var(--read-muted)}
+.workspace .workspace-content .form-field :is(input,textarea,select){font-size:16px;color:var(--read-ink)}
+.workspace .workspace-content :is(.level-question h2,.quiz-question h3){font-size:18px;line-height:1.7;font-weight:700}
+.workspace .workspace-content .quiz-options button{font-size:16px;line-height:1.75}
+.workspace .level-page{--level-ink:var(--read-ink);--level-muted:var(--read-muted);--level-soft:var(--read-soft)}
+.workspace .level-page :is(.level-quiz-card>p,.level-edition p,.level-edition small){font-size:14px;line-height:1.8;font-weight:400}
+@media(max-width:720px){.public-restyle .exam-detail{padding:24px 20px}.public-restyle .exam-choices button{min-width:185px;max-width:210px}.public-restyle .exam-choices small{font-size:13px}.public-restyle .home-benefit-grid{grid-template-columns:1fr}.public-restyle .video-card .pad{padding:23px}.public-restyle .exam-comparison td{min-width:180px}}

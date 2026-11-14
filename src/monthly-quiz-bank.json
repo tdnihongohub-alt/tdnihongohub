@@ -1,0 +1,670 @@
+{
+  "edition": "2026-11",
+  "label": "November 2026",
+  "quizzes": [
+    {
+      "id": "AL-B01",
+      "track": "A/L",
+      "difficulty": "Beginner",
+      "title": "Sounds, particles and polite requests",
+      "objectives": [
+        "Count Japanese morae",
+        "Choose an action-location particle",
+        "Use a polite request for repetition"
+      ],
+      "questions": [
+        {
+          "id": "AL-B01-Q1",
+          "skill": "Pronunciation awareness — morae",
+          "instruction": "How many morae (sound beats) are there in きょう? Count sound beats, not written kana characters.",
+          "prompt": "きょう",
+          "options": [
+            "1 mora",
+            "2 morae",
+            "3 morae",
+            "4 morae"
+          ],
+          "correctIndex": 1,
+          "explanation": "きょう has two morae: きょ + う. The small ょ combines with き to form one mora; the long-vowel part う contributes another mora.",
+          "distractors": {
+            "A": "Counts the whole long syllable as one beat, overlooking the long vowel.",
+            "C": "Counts written kana characters instead of morae.",
+            "D": "Adds beats that are not present."
+          },
+          "alignment": "A/L sound system: contracted sounds and long vowels."
+        },
+        {
+          "id": "AL-B01-Q2",
+          "skill": "Grammar — location of an action",
+          "instruction": "Choose the particle that marks where the studying takes place.",
+          "prompt": "私は図書館（としょかん）（　）日本語を勉強します。",
+          "options": [
+            "に",
+            "を",
+            "で",
+            "と"
+          ],
+          "correctIndex": 2,
+          "explanation": "で marks the place where an action happens: 図書館で勉強します means ‘I study at the library.’",
+          "distractors": {
+            "A": "に can mark a destination or the location of existence; it does not mark the action location here.",
+            "B": "を does not mark the location of 勉強します in this sentence.",
+            "D": "と normally marks accompaniment or a quoted expression, not this location."
+          },
+          "alignment": "A/L Grade 12 grammar: place + で + action."
+        },
+        {
+          "id": "AL-B01-Q3",
+          "skill": "Communication — requesting repetition",
+          "instruction": "You did not understand your teacher. Which expression politely asks the teacher to say it once more?",
+          "prompt": "先生の説明（せつめい）がよく分かりませんでした。もう一度聞きたいです。",
+          "options": [
+            "すみません。もう一度お願いします。",
+            "ありがとうございます。よく分かりました。",
+            "お先に失礼します。",
+            "おはようございます。"
+          ],
+          "correctIndex": 0,
+          "explanation": "すみません。もう一度お願いします。means ‘Excuse me. Once more, please.’ It politely requests repetition.",
+          "distractors": {
+            "B": "Thanks the teacher and says the explanation was understood.",
+            "C": "Is a leave-taking expression used when leaving before others.",
+            "D": "Is a morning greeting, not a request for repetition."
+          },
+          "alignment": "A/L everyday communication: polite classroom interaction."
+        }
+      ]
+    },
+    {
+      "id": "AL-I01",
+      "track": "A/L",
+      "difficulty": "Intermediate",
+      "title": "Describing experiences and understanding a cultural visit",
+      "objectives": [
+        "Complete a past-tense noun-modifying clause",
+        "Express a purpose",
+        "Extract a rule from a short cultural-context passage"
+      ],
+      "questions": [
+        {
+          "id": "AL-I01-Q1",
+          "skill": "Grammar — noun-modifying clause",
+          "instruction": "Choose the form that correctly describes a photograph taken last year.",
+          "prompt": "これは、私が去年（きょねん）京都（きょうと）で（　）写真です。",
+          "options": [
+            "撮って",
+            "撮ります",
+            "撮り",
+            "撮った"
+          ],
+          "correctIndex": 3,
+          "explanation": "The plain past form 撮った modifies 写真: ‘This is a photograph that I took in Kyoto last year.’ 去年 establishes a completed past event.",
+          "distractors": {
+            "A": "The て-form cannot directly modify 写真 in this construction.",
+            "B": "The polite ます-form is not the required noun-modifying form.",
+            "C": "The verb stem 撮り does not make the needed relative clause."
+          },
+          "alignment": "A/L noun-modifying clauses; past tense. Reading support: 撮る（とる）, to take a photograph."
+        },
+        {
+          "id": "AL-I01-Q2",
+          "skill": "Grammar — purpose",
+          "instruction": "Complete the sentence meaning ‘I practise every day in order to speak Japanese well.’",
+          "prompt": "日本語を上手に話す（　）、毎日練習しています。",
+          "options": [
+            "ので",
+            "ために",
+            "ながら",
+            "まで"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dictionary-form verb + ために expresses a purpose: 話すために, ‘in order to speak’. Here the practice is done to achieve the speaking goal.",
+          "distractors": {
+            "A": "ので expresses a reason (because), not the intended purpose (in order to).",
+            "C": "ながら attaches to the verb stem, not 話す, and expresses simultaneous actions.",
+            "D": "まで means ‘until/as far as’; it does not express the intended purpose."
+          },
+          "alignment": "A/L Grade 13 grammar: purpose with ために."
+        },
+        {
+          "id": "AL-I01-Q3",
+          "skill": "Reading — cultural visit instructions",
+          "instruction": "Read the passage. What must the visitors do when leaving?",
+          "passage": "日曜日、私たちは日本人の友達と公園へ花見（はなみ）に行きます。友達は「公園ではお弁当を食べてもいいですが、ごみは必ず持って帰ってください」と言いました。私たちはごみを入れる袋（ふくろ）も持って行くことにしました。",
+          "prompt": "公園を出るとき、何をしなければなりませんか。",
+          "options": [
+            "ごみを公園に置いて帰ります。",
+            "お弁当を食べないで帰ります。",
+            "ごみを持って帰ります。",
+            "友達の家で袋をもらいます。"
+          ],
+          "correctIndex": 2,
+          "explanation": "The friend explicitly says ごみは必ず持って帰ってください: take the rubbish home. The group plans to bring a bag for that purpose. The question is answered from the passage, not from a general claim about all Japanese parks.",
+          "distractors": {
+            "A": "Contradicts the instruction to take rubbish away.",
+            "B": "The passage explicitly allows eating a boxed lunch in the park.",
+            "D": "The group decides to bring a bag; collecting one at the friend’s home is not stated."
+          },
+          "alignment": "A/L reading and social/cultural context; permission and obligation. Glossary: 花見 = viewing blossoms; 必ず（かならず）= without fail."
+        }
+      ]
+    },
+    {
+      "id": "AL-H01",
+      "track": "A/L",
+      "difficulty": "High",
+      "title": "Contrast, respectful interaction and interpretation",
+      "objectives": [
+        "Express an unexpected contrast",
+        "Recognise a humble offer",
+        "Infer the main message of an original short narrative"
+      ],
+      "questions": [
+        {
+          "id": "AL-H01-Q1",
+          "skill": "Grammar — concessive contrast",
+          "instruction": "Complete the sentence meaning ‘Although I had practised many times, I became nervous during the presentation.’",
+          "prompt": "何度も練習した（　）、発表（はっぴょう）のときは緊張（きんちょう）してしまいました。",
+          "options": [
+            "のに",
+            "ので",
+            "ために",
+            "ときに"
+          ],
+          "correctIndex": 0,
+          "explanation": "のに expresses an outcome contrary to an expectation. Despite repeated practice, the speaker became nervous. 緊張してしまいました adds the sense of an unwanted or regretted outcome.",
+          "distractors": {
+            "B": "ので gives a cause, not the intended ‘although’ contrast.",
+            "C": "ために can express cause or purpose, but not the intended concessive meaning.",
+            "D": "ときに means ‘when’; it does not express the stated contrast."
+          },
+          "alignment": "A/L Grade 13 grammar: のに and てしまう."
+        },
+        {
+          "id": "AL-H01-Q2",
+          "skill": "Communication — humble offer",
+          "instruction": "Your principal is carrying a heavy box. Choose the grammatically correct humble offer meaning ‘Shall I carry that box for you?’",
+          "prompt": "校長先生（こうちょうせんせい）が重い箱（はこ）を持っています。あなたが運ぶことを申し出ます。",
+          "options": [
+            "私がその箱をお持ちください。",
+            "私がその箱をお持ちになりましょうか。",
+            "私がその箱をお持ちでした。",
+            "私がその箱をお持ちしましょうか。"
+          ],
+          "correctIndex": 3,
+          "explanation": "お + verb stem + しましょうか makes a humble offer about the speaker’s own action. 持つ → 持ち → お持ちしましょうか politely offers to carry the box for the principal.",
+          "distractors": {
+            "A": "お持ちください is a respectful request for the other person to carry it, and conflicts with 私が as the intended agent.",
+            "B": "お持ちになる is a respectful form for someone else’s action, not the humble form for the speaker’s own action.",
+            "C": "お持ちでした describes a past state in a respectful expression; it is not an offer to help."
+          },
+          "alignment": "A/L Grade 13 respectful/humble language; offering assistance."
+        },
+        {
+          "id": "AL-H01-Q3",
+          "skill": "Reading — interpretation of an original narrative",
+          "instruction": "Read the passage and choose the best summary of what the narrator learned.",
+          "passage": "初めて日本語で発表した日、私は途中（とちゅう）でことばを忘れてしまった。しばらく何も言えなかったが、友達は笑わずに待ってくれた。先生も「あわてなくていいですよ」と言ってくださった。発表は上手にできなかった。それでも、私はその日から、自分が話すときだけでなく、人の話を聞くときのことも考えるようになった。相手が話し終わるまで、静かに待とうと思う。",
+          "prompt": "この文章で、筆者（ひっしゃ）が学んだことは何ですか。",
+          "options": [
+            "人がことばを忘れたら、すぐに笑ったほうがいい。",
+            "話す練習だけでなく、相手を思いやって聞くことも大切だ。",
+            "発表が上手にできなければ、日本語をやめたほうがいい。",
+            "ほかの人が話し終わる前に、自分の意見を言うべきだ。"
+          ],
+          "correctIndex": 1,
+          "explanation": "The narrator’s experience of being listened to patiently changes how they intend to listen to others. The main lesson is considerate listening, not merely speaking well. The last two sentences support B.",
+          "distractors": {
+            "A": "Reverses the supportive behaviour described in the story.",
+            "C": "Adds a conclusion about quitting Japanese that the narrator never makes.",
+            "D": "Contradicts the narrator’s intention to wait until the other person finishes."
+          },
+          "alignment": "A/L reading interpretation; original prose rather than a prescribed literary excerpt. Glossary: 途中 = partway through; あわてる = to panic/rush; 筆者 = writer/narrator; 思いやる（おもいやる）= show consideration."
+        }
+      ]
+    },
+    {
+      "id": "N5-B01",
+      "track": "JLPT N5",
+      "difficulty": "Beginner",
+      "title": "First vocabulary and everyday facts",
+      "objectives": [
+        "Read a basic kanji",
+        "Choose a place-of-action particle",
+        "Find explicit personal information"
+      ],
+      "questions": [
+        {
+          "id": "N5-B01-Q1",
+          "skill": "Vocabulary — kanji reading",
+          "instruction": "Choose the hiragana reading of the bold kanji. The tested word has no reading hint.",
+          "prompt": "あの **山** は たかいです。",
+          "options": [
+            "かわ",
+            "うみ",
+            "やま",
+            "そら"
+          ],
+          "correctIndex": 2,
+          "explanation": "山 is read やま and means ‘mountain’. The sentence means ‘That mountain is high.’",
+          "distractors": {
+            "A": "かわ means ‘river’ (川).",
+            "B": "うみ means ‘sea’ (海).",
+            "D": "そら means ‘sky’ (空)."
+          },
+          "alignment": "N5-target basic kanji reading."
+        },
+        {
+          "id": "N5-B01-Q2",
+          "skill": "Grammar — action location",
+          "instruction": "Choose the particle that completes the sentence.",
+          "prompt": "わたしは うち（　）ごはんを たべます。",
+          "options": [
+            "で",
+            "に",
+            "を",
+            "へ"
+          ],
+          "correctIndex": 0,
+          "explanation": "で marks the place where eating happens: ‘I eat a meal at home.’",
+          "distractors": {
+            "B": "に is not the action-location particle needed with たべます here.",
+            "C": "を marks an object, not the location; ごはん is already marked with を.",
+            "D": "へ marks a direction, not the place where eating takes place."
+          },
+          "alignment": "N5-target basic particles."
+        },
+        {
+          "id": "N5-B01-Q3",
+          "skill": "Reading — explicit information",
+          "instruction": "Read the introduction and choose the person’s age.",
+          "passage": "わたしは ニマリです。スリランカから きました。１９さいです。まいにち にほんごを べんきょうします。",
+          "prompt": "ニマリさんは なんさいですか。",
+          "options": [
+            "１７さいです。",
+            "１８さいです。",
+            "２０さいです。",
+            "１９さいです。"
+          ],
+          "correctIndex": 3,
+          "explanation": "The introduction explicitly states １９さいです: ‘I am nineteen.’",
+          "distractors": {
+            "A": "The age given is not seventeen.",
+            "B": "The age given is not eighteen.",
+            "C": "The age given is not twenty."
+          },
+          "alignment": "N5-target short reading: self-introduction and numbers."
+        }
+      ]
+    },
+    {
+      "id": "N5-I01",
+      "track": "JLPT N5",
+      "difficulty": "Intermediate",
+      "title": "Requests, time ranges and past description",
+      "objectives": [
+        "Form a てください request",
+        "Identify the start of a time range",
+        "Use a past negative い-adjective"
+      ],
+      "questions": [
+        {
+          "id": "N5-I01-Q1",
+          "skill": "Grammar — て-form request",
+          "instruction": "Choose the correct form of かく (to write).",
+          "prompt": "ここに なまえを（　）ください。",
+          "options": [
+            "かく",
+            "かいて",
+            "かき",
+            "かいた"
+          ],
+          "correctIndex": 1,
+          "explanation": "かく changes to the て-form かいて. かいてください means ‘Please write’.",
+          "distractors": {
+            "A": "The dictionary form does not directly precede ください in this pattern.",
+            "C": "The verb stem is not the required て-form.",
+            "D": "The past form is not used for this request."
+          },
+          "alignment": "N5-target て-form and requests."
+        },
+        {
+          "id": "N5-I01-Q2",
+          "skill": "Grammar — time range",
+          "instruction": "Choose the word meaning ‘from’ at the start of the study period.",
+          "prompt": "まいにち、８じ（　）９じまで べんきょうします。",
+          "options": [
+            "まで",
+            "にも",
+            "では",
+            "から"
+          ],
+          "correctIndex": 3,
+          "explanation": "から marks the starting point, while まで marks the endpoint: ‘I study from eight to nine every day.’",
+          "distractors": {
+            "A": "まで means ‘until’; it cannot supply the stated starting-point meaning.",
+            "B": "にも means ‘also at/to’ in suitable contexts, not ‘from’.",
+            "C": "では does not mark the beginning of this time range."
+          },
+          "alignment": "N5-target から〜まで time expressions."
+        },
+        {
+          "id": "N5-I01-Q3",
+          "skill": "Grammar — past negative adjective",
+          "instruction": "Choose the grammatically correct polite form meaning ‘was not very difficult’. きのう means yesterday.",
+          "prompt": "きのうの テストは、あまり（　）。",
+          "options": [
+            "むずかしくありませんでした",
+            "むずかしいでした",
+            "むずかしくでした",
+            "むずかしいありませんでした"
+          ],
+          "correctIndex": 0,
+          "explanation": "For an い-adjective, replace final い with く and add ありませんでした for the polite past negative: むずかしくありませんでした. あまり + negative means ‘not very’.",
+          "distractors": {
+            "B": "An い-adjective does not form its past tense by adding でした directly.",
+            "C": "The く-form cannot be followed by でした to make the required predicate.",
+            "D": "ありませんでした attaches to the く-form here, not むずかしい."
+          },
+          "alignment": "N5-target adjective conjugation and あまり〜ない."
+        }
+      ]
+    },
+    {
+      "id": "N5-H01",
+      "track": "JLPT N5",
+      "difficulty": "High",
+      "title": "Connecting actions and organising information",
+      "objectives": [
+        "Connect sequential actions",
+        "Complete a preference comparison",
+        "Track the order of events in a short passage"
+      ],
+      "questions": [
+        {
+          "id": "N5-H01-Q1",
+          "skill": "Grammar — linking actions",
+          "instruction": "Choose the て-form of the verb to connect eating breakfast with the following action.",
+          "prompt": "あさごはんを（　）、がっこうへ いきます。",
+          "options": [
+            "たべる",
+            "たべます",
+            "たべて",
+            "たべた"
+          ],
+          "correctIndex": 2,
+          "explanation": "The て-form connects the actions: あさごはんをたべて、がっこうへいきます means ‘I eat breakfast and then go to school.’",
+          "distractors": {
+            "A": "A dictionary-form verb alone does not make the intended linked-action construction.",
+            "B": "たべます is a polite non-past form, not the て-form explicitly requested by the instruction.",
+            "D": "たべた is the plain past form, not the て-form requested here."
+          },
+          "alignment": "N5-target て-form sequence."
+        },
+        {
+          "id": "N5-H01-Q2",
+          "skill": "Grammar — comparing preferences",
+          "instruction": "Complete the reply meaning ‘I prefer apples’. Follow the printed particle が after the blank.",
+          "prompt": "A：りんごと みかんと、どちらが すきですか。\nB：りんごの（　）が すきです。",
+          "options": [
+            "より",
+            "ほう",
+            "いちばん",
+            "くらい"
+          ],
+          "correctIndex": 1,
+          "explanation": "Noun + のほうが expresses the preferred side of a comparison: りんごのほうがすきです, ‘I prefer apples.’",
+          "distractors": {
+            "A": "より marks the comparison standard and does not fit りんごの（　）が.",
+            "C": "いちばん means ‘most’; it cannot be inserted in this printed structure.",
+            "D": "くらい expresses extent or approximation, not the required preference construction."
+          },
+          "alignment": "N5-target basic comparison with のほうが."
+        },
+        {
+          "id": "N5-H01-Q3",
+          "skill": "Reading — event sequence",
+          "instruction": "Read the plan and choose the correct order of events.",
+          "passage": "にちようびに ともだちと えいがを みます。えいがは ２じからです。えいがかんの まえで、１じ４５ふんに ともだちに あいます。ひるごはんは、ともだちに あう まえに うちで たべます。",
+          "prompt": "どの じゅんばんが ただしいですか。",
+          "options": [
+            "ともだちに あう → えいがを みる → うちで ひるごはんを たべる",
+            "うちで ひるごはんを たべる → えいがを みる → ともだちに あう",
+            "えいがを みる → うちで ひるごはんを たべる → ともだちに あう",
+            "うちで ひるごはんを たべる → ともだちに あう → えいがを みる"
+          ],
+          "correctIndex": 3,
+          "explanation": "Lunch is eaten at home before meeting the friend. The meeting is at 1:45, and the film starts at 2:00. Therefore the order is lunch → meet friend → watch film.",
+          "distractors": {
+            "A": "Places lunch after the meeting and film, contradicting あうまえに.",
+            "B": "Places the film before the 1:45 meeting, although the film starts at 2:00.",
+            "C": "Places the film first, contradicting both time details and the lunch instruction."
+          },
+          "alignment": "N5-target short reading requiring several basic details. Glossary: じゅんばん = order/sequence."
+        }
+      ]
+    },
+    {
+      "id": "N4-B01",
+      "track": "JLPT N4",
+      "difficulty": "Beginner",
+      "title": "Ability, experiences and a short notice",
+      "objectives": [
+        "Recognise a potential form",
+        "Use たことがある",
+        "Read a deadline with までに"
+      ],
+      "questions": [
+        {
+          "id": "N4-B01-Q1",
+          "skill": "Grammar — ability paraphrase",
+          "instruction": "Choose the sentence with the same meaning as ‘I can swim fifty metres.’",
+          "prompt": "私は５０メートル泳ぐ（およぐ）ことができます。",
+          "options": [
+            "私は５０メートル泳げます。",
+            "私は５０メートル泳ぎたいです。",
+            "私は５０メートル泳ぎました。",
+            "私は５０メートル泳いではいけません。"
+          ],
+          "correctIndex": 0,
+          "explanation": "泳げます is the polite potential form of 泳ぐ. It expresses the same ability as 泳ぐことができます.",
+          "distractors": {
+            "B": "Expresses a wish to swim, not the ability to do so.",
+            "C": "Reports a past action, not present ability.",
+            "D": "Expresses prohibition, not ability."
+          },
+          "alignment": "N4-target ability forms; no claim of an official prescribed grammar list."
+        },
+        {
+          "id": "N4-B01-Q2",
+          "skill": "Grammar — past experience",
+          "instruction": "Choose the correct form before ことがあります to express a past experience.",
+          "prompt": "私は日本の映画（えいが）を（　）ことがあります。",
+          "options": [
+            "見る",
+            "見て",
+            "見た",
+            "見ます"
+          ],
+          "correctIndex": 2,
+          "explanation": "た-form + ことがあります expresses having had an experience. 見たことがあります means ‘I have watched/seen one before.’",
+          "distractors": {
+            "A": "The dictionary form does not make the past-experience pattern tested here.",
+            "B": "The て-form is not used before ことがあります for this meaning.",
+            "D": "The polite ます-form does not attach directly to こと in this construction."
+          },
+          "alignment": "N4-target experience expression."
+        },
+        {
+          "id": "N4-B01-Q3",
+          "skill": "Reading — return deadline",
+          "instruction": "Read the notice. Which return time meets the stated deadline?",
+          "passage": "【図書館からのお知らせ】\n今日は午後４時に閉まります。借りた本は、午後３時３０分までに受付（うけつけ）へ返してください。",
+          "prompt": "何時に本を返せば、このお知らせの指示に合いますか。",
+          "options": [
+            "午後３時４０分",
+            "午後３時２０分",
+            "午後４時",
+            "午後４時１０分"
+          ],
+          "correctIndex": 1,
+          "explanation": "The return deadline is 3:30 p.m. A 3:20 return is the only option before that deadline. The library’s 4:00 closing time is a separate detail.",
+          "distractors": {
+            "A": "Is ten minutes after the return deadline.",
+            "C": "Is the closing time, not the earlier return deadline.",
+            "D": "Is after both the return deadline and closing time."
+          },
+          "alignment": "N4-target reading: extracting instructions; までに. Glossary: 受付 = reception desk."
+        }
+      ]
+    },
+    {
+      "id": "N4-I01",
+      "track": "JLPT N4",
+      "difficulty": "Intermediate",
+      "title": "Simultaneous actions, rules and planning",
+      "objectives": [
+        "Use ながら with a verb stem",
+        "Interpret a prohibition",
+        "Combine conditions in an everyday message"
+      ],
+      "questions": [
+        {
+          "id": "N4-I01-Q1",
+          "skill": "Grammar — simultaneous actions",
+          "instruction": "Choose the expression meaning ‘while listening to music’. The word before the blank is the verb stem 聞き.",
+          "prompt": "姉（あね）は音楽を聞き（　）、料理をしています。",
+          "options": [
+            "ので",
+            "のに",
+            "ために",
+            "ながら"
+          ],
+          "correctIndex": 3,
+          "explanation": "Verb stem + ながら expresses two actions performed at the same time by the same person: the older sister is cooking while listening to music.",
+          "distractors": {
+            "A": "ので gives a reason and cannot attach directly to 聞き here.",
+            "B": "のに expresses contrast in this use and cannot attach directly to 聞き.",
+            "C": "ために would normally follow a dictionary-form verb for a purpose, not 聞き."
+          },
+          "alignment": "N4-target ながら construction."
+        },
+        {
+          "id": "N4-I01-Q2",
+          "skill": "Grammar — prohibition",
+          "instruction": "Choose the sentence ending that directly expresses the no-smoking rule. 禁煙 means ‘no smoking’.",
+          "prompt": "この部屋は禁煙（きんえん）です。ここでは、たばこを（　）。",
+          "options": [
+            "吸ってはいけません",
+            "吸ってもいいです",
+            "吸わなくてもいいです",
+            "吸いたいです"
+          ],
+          "correctIndex": 0,
+          "explanation": "てはいけません expresses prohibition. 吸ってはいけません means ‘You must not smoke.’",
+          "distractors": {
+            "B": "Gives permission to smoke, contradicting 禁煙.",
+            "C": "Says smoking is not necessary; it does not state that it is forbidden.",
+            "D": "Expresses a desire to smoke rather than the rule."
+          },
+          "alignment": "N4-target permission/prohibition distinction. Reading: 吸う（すう）, to smoke."
+        },
+        {
+          "id": "N4-I01-Q3",
+          "skill": "Reading — choosing a suitable meeting time",
+          "instruction": "Read the message. Which option satisfies all of Miki’s conditions?",
+          "passage": "ミキさんからのメッセージ：\n「土曜日は午前中ずっとアルバイトです。午後は２時から５時まで空いています。日曜日は家族と出かけるので、一日中会えません。図書館で１時間ぐらい一緒に勉強しませんか。」",
+          "prompt": "いつ図書館で勉強すれば、ミキさんと一緒に１時間勉強できますか。",
+          "options": [
+            "土曜日の午前１０時から１１時まで",
+            "土曜日の午後４時３０分から５時３０分まで",
+            "土曜日の午後３時から４時まで",
+            "日曜日の午後２時から３時まで"
+          ],
+          "correctIndex": 2,
+          "explanation": "Miki is free on Saturday from 2:00 to 5:00 p.m. The whole 3:00–4:00 p.m. session fits. Other choices conflict with work, exceed 5:00, or fall on Sunday when Miki is unavailable.",
+          "distractors": {
+            "A": "Falls during the Saturday morning job.",
+            "B": "Finishes thirty minutes after the free period ends.",
+            "D": "Falls on Sunday, when Miki cannot meet all day."
+          },
+          "alignment": "N4-target everyday reading requiring multiple time constraints. Reading: 空いて（あいて）, free/available."
+        }
+      ]
+    },
+    {
+      "id": "N4-H01",
+      "track": "JLPT N4",
+      "difficulty": "High",
+      "title": "Preparation, passive voice and a changed plan",
+      "objectives": [
+        "Recognise preparation with ておく",
+        "Recognise a past passive describing a building",
+        "Combine a changed time and changed place"
+      ],
+      "questions": [
+        {
+          "id": "N4-H01-Q1",
+          "skill": "Grammar — advance preparation",
+          "instruction": "Choose the expression meaning ‘I will clean the room in advance’. Keep the printed ます after the blank.",
+          "prompt": "あした友達が来るので、今日のうちに部屋を（　）ます。",
+          "options": [
+            "そうじしはじめ",
+            "そうじしておき",
+            "そうじしつづけ",
+            "そうじしすぎ"
+          ],
+          "correctIndex": 1,
+          "explanation": "そうじしておき + ます gives そうじしておきます. ておく expresses doing something beforehand in preparation for a later situation—here, tomorrow’s visit.",
+          "distractors": {
+            "A": "そうじしはじめます means to start cleaning, not specifically to do it in preparation.",
+            "C": "そうじしつづけます means to continue cleaning, not specifically to prepare in advance.",
+            "D": "そうじしすぎます means to clean too much. It does not express the intended preparation."
+          },
+          "alignment": "N4-target advance preparation with ておく."
+        },
+        {
+          "id": "N4-H01-Q2",
+          "skill": "Grammar — passive voice",
+          "instruction": "Choose the form meaning “was built”. The building, not the builder, is the topic. 建てる（たてる）means “to build”.",
+          "prompt": "この建物（たてもの）は、１００年前に（　）。",
+          "options": [
+            "建てました",
+            "建てています",
+            "建てさせました",
+            "建てられました"
+          ],
+          "correctIndex": 3,
+          "explanation": "建てられました is the polite past passive of 建てる. The sentence means “This building was built one hundred years ago.” The building receives the action; it does not build something.",
+          "distractors": {
+            "A": "Is active past: someone built something. It does not express the building receiving the action.",
+            "B": "Is active progressive/resulting state, not the required past passive.",
+            "C": "Is causative (made or let someone build), not passive."
+          },
+          "alignment": "N4-target passive construction, using basic event information rather than an advanced agent expression."
+        },
+        {
+          "id": "N4-H01-Q3",
+          "skill": "Reading — revised arrangements",
+          "instruction": "Read the two messages. Choose the correct final arrangement.",
+          "passage": "最初のメッセージ：\n「土曜日は午後２時に駅の前で会いましょう。それから、歩いて公園へ行きます。」\n\nその後のメッセージ：\n「土曜日は雨が降りそうなので、公園へ行くのはやめましょう。駅の近くの喫茶店（きっさてん）で会いませんか。私は２時から３０分ぐらい用事があるので、２時４５分に喫茶店へ直接（ちょくせつ）来てください。」",
+          "prompt": "最後のメッセージによると、どうすればいいですか。",
+          "options": [
+            "午後２時４５分に、駅の近くの喫茶店へ直接行きます。",
+            "午後２時に駅の前へ行ってから、公園へ歩いて行きます。",
+            "午後２時３０分に、公園で待ちます。",
+            "午後２時４５分に、駅の前で待ちます。"
+          ],
+          "correctIndex": 0,
+          "explanation": "The later message replaces the park plan with a café meeting and explicitly requests arrival directly at the café at 2:45 p.m. Do not replace the stated meeting time with 2:30 simply because the errand lasts about thirty minutes.",
+          "distractors": {
+            "B": "Repeats the superseded first plan.",
+            "C": "Uses the wrong place and infers the wrong meeting time.",
+            "D": "Keeps the correct time but ignores the instruction to go directly to the café."
+          },
+          "alignment": "N4-target reading: combining revised information and distinguishing explicit instructions from inference. Glossary: 用事（ようじ）= an errand/other business; 直接 = directly."
+        }
+      ]
+    }
+  ]
+}

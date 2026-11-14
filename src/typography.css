@@ -1,0 +1,25 @@
+/* One readable sans-serif family for learning content and interface text. */
+:root{--font-reading:'Inter','Noto Sans JP','Noto Sans Sinhala',Arial,sans-serif;font-family:var(--font-reading);font-weight:400}
+body,button,input,textarea,select{font-family:var(--font-reading)}
+h1,h2,h3,h4{font-family:var(--font-reading)}
+.public-restyle :is(h1,h2,h3,h4),.workspace :is(h1,h2,h3,h4){letter-spacing:-.025em;font-weight:700}
+.public-restyle :is(p,li),.workspace :is(p,li){letter-spacing:normal;word-spacing:normal}
+.public-restyle .exam-detail h3{font-weight:700;letter-spacing:-.035em}
+.public-restyle .exam-description,.public-restyle .exam-benefits p,.public-restyle .exam-consider p,.public-restyle .jlpt-level-detail p{font-size:16px;font-weight:400;line-height:1.8}
+.public-restyle .exam-full-name{font-size:15px;font-weight:500;letter-spacing:normal}
+.public-restyle .exam-benefits h4{font-size:17px;font-weight:600;line-height:1.5;letter-spacing:-.015em}
+.public-restyle .exam-facts strong{font-size:14px;font-weight:500;line-height:1.75}
+.public-restyle .exam-facts small{font-size:11px;font-weight:600;letter-spacing:.06em}
+.public-restyle .exam-choices strong{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.public-restyle .exam-choices small{font-size:13px;line-height:1.7;font-weight:400;letter-spacing:normal}
+.public-restyle .exam-benefits>div>span{font-family:var(--font-reading);font-style:normal;font-size:12px;font-weight:600}
+.public-restyle .exam-description,.public-restyle .exam-benefits p{max-width:72ch}
+.public-restyle .video-card h3,.public-restyle .home-free-copy h3{font-size:20px;line-height:1.5;font-weight:600;letter-spacing:-.025em}
+.public-restyle .video-card p,.public-restyle .home-free-copy p{font-size:16px;line-height:1.8;font-weight:400}
+.brand .brand-name,.hero-level-buttons button>span{font-family:var(--font-reading)}
+.workspace .workspace-content .table-wrap td{font-variant-numeric:tabular-nums;font-weight:400}
+.workspace .workspace-content :is(.preserve-lines,.submission-answer){font-weight:400;line-height:1.85}
+/* Japanese lesson text has deliberate native glyphs rather than Latin-font fallbacks. */
+:lang(ja){font-family:'Noto Sans JP',sans-serif}
+.hero-japanese-heading,.culture-heading>span:last-child,.culture-tabs small{font-family:'Noto Serif JP',serif}
+:lang(si){font-family:'Noto Sans Sinhala',sans-serif}

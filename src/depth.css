@@ -1,0 +1,16 @@
+.culture-hero{perspective:1200px;--scene-rx:0deg;--scene-ry:0deg}
+.culture-image-frame{transform:rotateX(var(--scene-rx)) rotateY(var(--scene-ry));transform-origin:50% 50%;transition:transform .7s cubic-bezier(.2,.6,.2,1),box-shadow .7s;box-shadow:0 10px 16px #7d5c3410,0 28px 50px #59371c13,inset 0 0 0 1px #fff8df60}
+.culture-discovery{transform:translateZ(24px);box-shadow:0 4px 7px #704d2410,0 17px 30px #68401a1c;border-bottom-width:3px}
+.tilt-card{--card-rx:0deg;--card-ry:0deg;transition:transform .35s cubic-bezier(.2,.6,.2,1),box-shadow .35s;transform-origin:center}
+@media(hover:hover) and (pointer:fine){
+ .tilt-card:hover{transform:perspective(1100px) rotateX(var(--card-rx)) rotateY(var(--card-ry)) translateY(-5px);box-shadow:0 5px 8px #4e35260a,0 20px 30px #4e352619;border-color:#c5ac8a}
+ .tilt-card .course-cover{box-shadow:inset 0 -1px 0 #fff5,inset 3px 0 5px #5d3c1210}
+ .button.primary{box-shadow:0 2px 0 #722417,0 5px 10px #9c3f2210;transition:transform .18s,background .18s,box-shadow .18s}
+ .button.primary:hover{transform:translateY(-1px);box-shadow:0 3px 0 #722417,0 8px 14px #9c3f2219}
+ .button.primary:active{transform:translateY(1px);box-shadow:0 1px 0 #722417}
+}
+.tilt-card:focus-within{box-shadow:0 8px 22px #4e35261a}
+@media(prefers-reduced-motion:reduce){
+ .culture-image-frame,.culture-discovery,.tilt-card,.tilt-card:hover,.button.primary,.button.primary:hover,.button.primary:active{transform:none;transition:none}
+}
+@media(hover:none),(pointer:coarse){.culture-image-frame,.culture-discovery,.tilt-card{transform:none}}

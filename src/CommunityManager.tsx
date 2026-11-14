@@ -1,0 +1,12 @@
+import { useState } from 'react';
+import { Pencil, Plus, Users } from 'lucide-react';
+import { useApp } from './store';
+import { Form, Modal, Panel, Empty } from './ui';
+import { uid } from './domain';
+import type { Row } from './domain';
+import { groupInviteLink } from './CommunityLinks';
+
+export function CommunityManager(){
+ const {data,save,notify}=useApp();const [editing,setEditing]=useState<Row|null|undefined>(null);const links=data.communityLinks||[];
+ return <><Panel className="section-gap" title="WhatsApp groups" description="Public groups appear in the hero dropdown, free learning pages and student portal. Private groups are shared only with approved students." action={<button className="button" onClick={()=>setEditing(undefined)}><Plus size={15}/>Add group</button>}>{links.length?links.map(g=><div className="list-row" key={g.id}><Users size={19}/><div><strong>{g.name}</strong><small>{g.visibility==='public'?'Public — everyone can join':g.batchId?data.batches.find(b=>b.id===g.batchId)?.name||'Batch unavailable':'All active students'} · {g.active?'Visible':'Hidden'}</small></div><button className="icon-button" aria-label={`Edit ${g.name}`} onClick={()=>setEditing(g)}><Pencil size={16}/></button></div>):<Empty title="No group invitations added">Add your real invitations and choose who can see them.</Empty>}</Panel>{editing!==null&&<Modal title={editing?'Edit group invitation':'Add group invitation'} onClose={()=>setEditing(null)}><Form initial={editing||{name:'',url:'',batchId:'',active:true,visibility:'students'}} fields={[{name:'name',label:'Group name',required:true},{name:'url',label:'WhatsApp group invite URL',type:'url',required:true,help:'Use your https://chat.whatsapp.com/… invite link.',wide:true},{name:'visibility',label:'Visibility',type:'select',options:[{value:'students',label:'Private — approved students only'},{value:'public',label:'Public — everyone can join'}]},{name:'batchId',label:'Private group batch (public groups ignore this)',type:'select',options:[{value:'',label:'All active students'},...data.batches.map(b=>({value:b.id,label:b.name}))]},{name:'active',label:'Show invitation',type:'checkbox'}]} onCancel={()=>setEditing(null)} onSave={async values=>{if(!groupInviteLink(values.url))throw Error('Use a valid https://chat.whatsapp.com/ group invite link.');await save('communityLinks',{...values,batchId:values.visibility==='public'?'':values.batchId,id:editing?.id||uid('GROUP-')});setEditing(null);notify('Group invitation saved.');}}/></Modal>}</>;
+}

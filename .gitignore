@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+.env.local
+.firebase/
+*-debug.log
+*.tsbuildinfo
+backups/
+service-account*.json
+firebase-export*/
+
+# Keep credentials, local exports and generated state out of source control
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+configstore/
+*.zip
+.DS_Store
+Thumbs.db
