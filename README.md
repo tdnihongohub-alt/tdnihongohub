@@ -6,6 +6,16 @@ Official Japanese tuition website, student portal and teacher workspace.
 
 Built with React, TypeScript, Vite, Firebase Authentication, Firestore and Firebase Hosting. Source repository: https://github.com/tdnihongohub-alt/tdnihongohub
 
+## Where the website runs
+
+**Use https://td-nihongo-hub.web.app for the live website.** GitHub stores the source and runs checks; it is not the production host.
+
+This is a React/Vite application, not a collection of standalone HTML pages. The source `index.html` loads `src/main.tsx`, where the application starts. A short or one-line HTML entry is normal. Build the application with `npm run build`; Vite writes runnable JavaScript, CSS and `index.html` into `dist/`.
+
+Publishing the repository root through GitHub Pages does not run that build. It serves the TypeScript source entry unchanged and produces a blank page. The production deployment uses Firebase Hosting with the `dist` directory and a single-page-app rewrite for direct links such as `/student` and `/privacy`.
+
+Do not select **Deploy from a branch â†’ main â†’ / (root)** as the production hosting method. GitHub Pages also restricts hosting online businesses; see [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits). Firebase remains the intended host for this tuition website. A small `hosting-redirect.js` forwards the accidental `tdnihongohub-alt.github.io/tdnihongohub/` source publication to the official Firebase site, preserving the path, query and fragment. It does not deploy the application to Pages or change navigation on the Firebase host. Existing accidental Pages publication can be removed in repository Settings â†’ Pages without deleting the source repository.
+
 ## Local setup
 
 Use Node.js 22 or later and npm.
