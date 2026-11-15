@@ -10,6 +10,7 @@ import { Attendance, BrandSettings, Payments, Schedule, Students } from '../src/
 import { StudentHome, MyClasses, LearningClass, StudentAssignments, StudentPayments } from '../src/Student';
 import { CheckLevel, MonthlyQuiz, MonthlyHistory } from '../src/CheckLevel';
 import { Workspace } from '../src/Workspace';
+import { StudentRegistration } from '../src/StudentRegistration';
 
 function render(node:React.ReactNode,path='/',pattern='*',sample=true){
  const data=initialData(sample);
@@ -34,6 +35,7 @@ describe('teacher interface',()=>{
  it('renders review queues and copyable reminder tools',()=>{expect(render(<AccessRequests/>)).toContain('No requests waiting');expect(render(<Submissions/>)).toContain('No homework submitted');expect(render(<TeacherRecords table="tasks"/>)).toContain('Copy message');});
 });
 describe('student interface',()=>{
+ it('offers the complete student details form with the requested batches',()=>{const html=render(<StudentRegistration/>);for(const label of ['Full name','Phone number','Age','27/A/L','28/A/L','N5','N4','28/O/L','Complete registration'])expect(html).toContain(label);expect(html).not.toContain('name="email"');});
  it('shows a full sign-out button in both workspace sidebars',()=>{for(const teacher of [false,true]){const html=render(<Workspace teacher={teacher}/>);expect(html).toContain('workspace-sign-out');expect(html).toContain('>Sign out</button>');expect(html).not.toContain('Privacy Policy');}});
  it('offers the monthly collection and links it from the student dashboard',()=>{const html=render(<CheckLevel/>);expect(html).toContain('November 2026');expect(html).toContain('Coming soon');expect((html.match(/Start quiz/g)||[]).length).toBe(9);expect(html).toContain('repeat attempts do not add duplicate points');expect(render(<StudentHome/>)).toContain('Check your level');});
  it('renders every reviewed quiz without revealing answers before submission',()=>{for(const id of ['AL-B01','AL-I01','AL-H01','N5-B01','N5-I01','N5-H01','N4-B01','N4-I01','N4-H01']){const html=render(<MonthlyQuiz/>,`/student/check-level/${id}`,'/student/check-level/:quizId');expect((html.match(/class="quiz-question level-question"/g)||[]).length).toBe(3);expect(html).toContain('Submit quiz');expect(html).not.toContain('Understand the other choices');}expect(render(<MonthlyQuiz/>,'/student/check-level/N5-B01','/student/check-level/:quizId')).toContain('<strong>山</strong>');expect(render(<MonthlyQuiz/>,'/student/check-level/missing','/student/check-level/:quizId')).toContain('Quiz not found');expect(render(<MonthlyHistory/>)).toContain('Your completed monthly quizzes');});
