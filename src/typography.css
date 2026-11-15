@@ -28,3 +28,10 @@ h1,h2,h3,h4{font-family:var(--font-reading)}
 .public-restyle .home-benefit-grid h3{font-size:17px;font-weight:600;line-height:1.5;letter-spacing:-.015em;margin-bottom:12px}
 .public-restyle .home-benefit-grid p{font-size:14px;font-weight:400;line-height:1.75;letter-spacing:normal;color:#5e5059}
 .public-restyle .home-benefit-grid{font-family:var(--font-reading);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* Keep account actions readable and reachable on short screens. */
+.workspace .sidebar{overflow-y:auto;padding-bottom:18px}
+.workspace .sidebar-bottom{flex-shrink:0}
+.workspace .workspace-sign-out{width:100%;min-height:42px;justify-content:center;font-size:13px;font-weight:600;color:#92395f;background:#fff3f8;border:1px solid #e9bcd0}
+.workspace[data-theme='dark'] .workspace-sign-out{color:#ffcee3;background:#402c3b;border-color:#77516a}
+.public-header .public-sign-out{min-height:39px;padding:9px 12px;font-size:11px;font-weight:600;white-space:nowrap;color:#92395f;background:#fff3f8;border-color:#e9bcd0}
+@media(max-width:600px){.public-header .header-actions{flex-wrap:wrap;justify-content:flex-end;gap:5px}.public-header .public-sign-out{min-height:32px;padding:7px 9px;font-size:10px}.public-header .public-sign-out svg{display:none}}

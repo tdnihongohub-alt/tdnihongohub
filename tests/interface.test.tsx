@@ -9,6 +9,7 @@ import { TeacherHome, TeacherRecords, AccessRequests, Submissions } from '../src
 import { Attendance, BrandSettings, Payments, Schedule, Students } from '../src/Administration';
 import { StudentHome, MyClasses, LearningClass, StudentAssignments, StudentPayments } from '../src/Student';
 import { CheckLevel, MonthlyQuiz, MonthlyHistory } from '../src/CheckLevel';
+import { Workspace } from '../src/Workspace';
 
 function render(node:React.ReactNode,path='/',pattern='*',sample=true){
  const data=initialData(sample);
@@ -17,6 +18,7 @@ function render(node:React.ReactNode,path='/',pattern='*',sample=true){
  return renderToString(<AppContext.Provider value={context}><MemoryRouter initialEntries={[path]}><Routes><Route path={pattern} element={node}/></Routes></MemoryRouter></AppContext.Provider>);
 }
 describe('public website',()=>{
+ it('keeps privacy in the footer and shows a labelled sign-out action',()=>{const html=render(<Home/>);expect(html).toContain('public-sign-out');expect(html).toContain('>Sign out</button>');expect((html.match(/Privacy Policy/g)||[]).length).toBe(1);expect(html.indexOf('Privacy Policy')).toBeGreaterThan(html.indexOf('<footer'));});
  it('explains the learning features and joining process with real free content',()=>{const html=render(<Home/>);expect(html).toContain('Explore student portal features');expect(html).toContain('Illustrative portal preview');expect(html).toContain('Save a course or request access');expect(html).toContain('Do I need an account to watch free lessons?');expect(html).toContain('JLPT N5 Paper Discussion');expect(html).toContain('WHAT YOU GET WITH TD NIHONGO HUB');expect(html).not.toContain('Guaranteed results');});
  it('renders the brand and class promotion without invented claims',()=>{const html=render(<Home/>);expect(html).toContain('TD NIHONGO');expect(html).toContain('Find your class');expect(html).toContain('Learn Japanese.');expect(html).toContain('日本語を、あなたの力に。');expect(html).toContain('Pause petals');expect(html).toContain('Live Zoom classes');expect(html).not.toContain('100% pass');});
  it('renders courses and course-specific details',()=>{expect(render(<Courses/>)).toContain('Japanese N5');expect(render(<CourseDetail/>,'/courses/n5','/courses/:id')).toContain('What you');});
@@ -32,6 +34,7 @@ describe('teacher interface',()=>{
  it('renders review queues and copyable reminder tools',()=>{expect(render(<AccessRequests/>)).toContain('No requests waiting');expect(render(<Submissions/>)).toContain('No homework submitted');expect(render(<TeacherRecords table="tasks"/>)).toContain('Copy message');});
 });
 describe('student interface',()=>{
+ it('shows a full sign-out button in both workspace sidebars',()=>{for(const teacher of [false,true]){const html=render(<Workspace teacher={teacher}/>);expect(html).toContain('workspace-sign-out');expect(html).toContain('>Sign out</button>');expect(html).not.toContain('Privacy Policy');}});
  it('offers the monthly collection and links it from the student dashboard',()=>{const html=render(<CheckLevel/>);expect(html).toContain('November 2026');expect(html).toContain('Coming soon');expect((html.match(/Start quiz/g)||[]).length).toBe(9);expect(html).toContain('repeat attempts do not add duplicate points');expect(render(<StudentHome/>)).toContain('Check your level');});
  it('renders every reviewed quiz without revealing answers before submission',()=>{for(const id of ['AL-B01','AL-I01','AL-H01','N5-B01','N5-I01','N5-H01','N4-B01','N4-I01','N4-H01']){const html=render(<MonthlyQuiz/>,`/student/check-level/${id}`,'/student/check-level/:quizId');expect((html.match(/class="quiz-question level-question"/g)||[]).length).toBe(3);expect(html).toContain('Submit quiz');expect(html).not.toContain('Understand the other choices');}expect(render(<MonthlyQuiz/>,'/student/check-level/N5-B01','/student/check-level/:quizId')).toContain('<strong>山</strong>');expect(render(<MonthlyQuiz/>,'/student/check-level/missing','/student/check-level/:quizId')).toContain('Quiz not found');expect(render(<MonthlyHistory/>)).toContain('Your completed monthly quizzes');});
  it('gives a new learner real free content without invented class progress',()=>{const html=render(<StudentHome/>,'/student','*',false);expect(html).toContain('A fresh beginning.');expect(html).toContain('Explore free lessons');expect(html).toContain('JLPT N5 Paper Discussion');expect(html).toContain('Reveal meaning');expect(html).not.toContain('NaN');expect(html).not.toContain('First steps: greetings');});
