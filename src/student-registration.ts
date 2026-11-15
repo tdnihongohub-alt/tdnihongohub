@@ -1,7 +1,10 @@
 import type { Row } from './domain';
 
-export const registrationBatches = ['27/A/L', '28/A/L', 'N5', 'N4', '28/O/L'] as const;
-export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string };
+export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string; preferredBatchId?: string };
+
+export function registrationBatches(batches: Row[]) {
+  return batches.filter(b => b.active && b.name).sort((a,b) => a.name.localeCompare(b.name));
+}
 
 export function validateRegistration(values: RegistrationDetails): RegistrationDetails {
   const displayName = values.displayName.trim();
@@ -9,8 +12,14 @@ export function validateRegistration(values: RegistrationDetails): RegistrationD
   if (!displayName || displayName.length > 200) throw Error('Enter your full name.');
   if (!/^\+?[0-9]{9,15}$/.test(phone)) throw Error('Enter a valid phone number, for example 0771234567.');
   if (!Number.isInteger(Number(values.age)) || Number(values.age) < 5 || Number(values.age) > 120) throw Error('Enter your age in years (5–120).');
-  if (!registrationBatches.includes(values.preferredBatch as typeof registrationBatches[number])) throw Error('Choose your batch.');
-  return { displayName, phone, age: Number(values.age), preferredBatch: values.preferredBatch };
+  if (!values.preferredBatch?.trim() || values.preferredBatch.length > 200) throw Error('Choose your batch.');
+  return { displayName, phone, age: Number(values.age), preferredBatch: values.preferredBatch.trim(), ...(values.preferredBatchId ? {preferredBatchId: values.preferredBatchId} : {}) };
+}
+
+export function requestedBatch(profile: Row, batches: Row[]) {
+  if (profile.preferredBatchId) return batches.find(b => b.id === profile.preferredBatchId);
+  const matches = batches.filter(b => b.name === profile.preferredBatch);
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 export function registrationComplete(profile?: Row) {

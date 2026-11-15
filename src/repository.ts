@@ -4,6 +4,7 @@ import { db, publicDb } from './firebase';
 import { collection as publicCollection, query as publicQuery, where as publicWhere, getDocs as publicGetDocs } from '@firebase/firestore/lite';
 import { emptyData, tables, key, uid } from './domain';
 import type { Data, Row, Table } from './domain';
+import { registrationApproval, studentDeletion } from './registration-approval';
 export type Identity={uid:string;email:string;displayName:string;verified:boolean;teacher:boolean};
 export async function readRows(table:Table,...filters:QueryConstraint[]):Promise<Row[]> { if(!db)return [];const result=await getDocs(query(collection(db,table),...filters));return result.docs.map(d=>({...d.data(),id:d.id})); }
 async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'communityLinks'):Promise<Row[]>{
@@ -54,4 +55,40 @@ export async function approveClaim(id:string,teacherUid:string){if(!db)throw Err
 export async function setEnrollment(row:Row,allEnrollments:Row[]){
  const otherActive=allEnrollments.some(e=>e.id!==row.id&&e.studentId===row.studentId&&e.courseId===row.courseId&&e.status==='active');
  await batchSave([{table:'enrollments',row},{table:'courseAccess',row:{id:key(row.studentId,row.courseId),studentId:row.studentId,courseId:row.courseId,active:row.status==='active'||otherActive}}]);
+}
+
+export async function acceptRegistration(accountId:string,studentId:string,batchId:string) {
+ if (!db) throw Error('Firebase is not configured.');
+ await runTransaction(db,async tx => {
+  const data=emptyData();
+  await Promise.all((['users','students','studentLinks','batches','enrollments','courseAccess','accessRequests'] as const).map(async table => {data[table]=await readRows(table);}));
+  const proposal=registrationApproval(data,accountId,studentId,batchId);
+  // Read every affected record before writing so concurrent approvals retry safely.
+  for (const change of [...proposal,{table:'batches' as const,row:{id:batchId}},{table:'users' as const,row:{id:accountId}}]) {
+   const current=await tx.get(doc(db!,change.table,change.row.id));
+   data[change.table]=data[change.table].filter(r => r.id !== change.row.id);
+   if(current.exists())data[change.table].push({...current.data(),id:current.id});
+  }
+  const changes=registrationApproval(data,accountId,studentId,batchId);
+  for(const {table,row} of changes){const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));}
+  const delivery=data.batches.find(b => b.id===batchId)!;
+  tx.update(doc(db!,'batches',batchId),{enrollmentRevision:Number(delivery.enrollmentRevision||0)+1});
+ });
+}
+
+export async function deleteStudent(studentId:string) {
+ if(!db)throw Error('Firebase is not configured.');
+ await runTransaction(db,async tx => {
+  const data=emptyData();
+  await Promise.all((['students','enrollments','courseAccess'] as const).map(async table=>{data[table]=await readRows(table);}));
+  const proposal=studentDeletion(data,studentId);
+  for(const {table,row} of proposal){
+   const current=await tx.get(doc(db!,table,row.id));
+   data[table]=data[table].filter(r=>r.id!==row.id);
+   if(current.exists())data[table].push({...current.data(),id:current.id});
+  }
+  for(const {table,row} of studentDeletion(data,studentId)){
+   const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));
+  }
+ });
 }

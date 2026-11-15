@@ -12,10 +12,11 @@ import { CheckLevel, MonthlyQuiz, MonthlyHistory } from '../src/CheckLevel';
 import { Workspace } from '../src/Workspace';
 import { StudentRegistration } from '../src/StudentRegistration';
 
-function render(node:React.ReactNode,path='/',pattern='*',sample=true){
+function render(node:React.ReactNode,path='/',pattern='*',sample=true,prepare?:(data:ReturnType<typeof initialData>)=>void){
  const data=initialData(sample);
+ prepare?.(data);
  const identity={uid:'demo-student',displayName:'Demo Student',email:'student@example.test',verified:true,teacher:true};
- const context={data,identity,studentId:'STU-DEMO',demo:true,loading:false,error:'',notify:()=>{},save:async()=>{},remove:async()=>{},refresh:async()=>{},batch:async()=>{},approve:async()=>{},enroll:async()=>{},login:async()=>{},google:async()=>{},reset:async()=>{},verify:async()=>{},logout:async()=>{},startDemo:()=>{},exitDemo:()=>{}};
+ const context={data,identity,studentId:'STU-DEMO',demo:true,loading:false,error:'',notify:()=>{},save:async()=>{},remove:async()=>{},refresh:async()=>{},batch:async()=>{},approve:async()=>{},enroll:async()=>{},acceptRegistration:async()=>{},deleteStudent:async()=>{},login:async()=>{},google:async()=>{},reset:async()=>{},verify:async()=>{},logout:async()=>{},startDemo:()=>{},exitDemo:()=>{}};
  return renderToString(<AppContext.Provider value={context}><MemoryRouter initialEntries={[path]}><Routes><Route path={pattern} element={node}/></Routes></MemoryRouter></AppContext.Provider>);
 }
 describe('public website',()=>{
@@ -27,6 +28,13 @@ describe('public website',()=>{
  it('renders the verified public phone without assuming WhatsApp access',()=>{const html=render(<About contact/>);expect(html).toContain('YouTube channel');expect(html).toContain('tel:+94703666043');expect(html).toContain('070 366 6043');expect(html).not.toContain('wa.me/');});
 });
 describe('teacher interface',()=>{
+ it('exposes saved timetable editing and student registration approval',()=>{
+   expect(render(<Schedule/>)).toContain('aria-label="Edit session"');
+   const edit=render(<Schedule/>,'/teacher/schedule?edit=SES-DEMO');
+   expect(edit).toContain('Edit scheduled class');expect(edit).toContain('Save session changes');expect(edit).toContain('value="18:00"');
+   const html=render(<Students/>,'/teacher/students','*',true,data=>{data.users[0]={...data.users[0],age:18,preferredBatch:'N5',registrationCompleted:true};data.studentLinks=[];});
+   expect(html).toContain('Review &amp; accept');expect(html).toContain('Pending');expect(html).toContain('>Delete</button>');
+ });
  it('renders the action queue and financial follow-ups',()=>{const html=render(<TeacherHome/>);expect(html).toContain('Needs your attention');expect(html).toContain('Outstanding fees');});
  it('renders course, batch, lesson and assignment tables',()=>{expect(render(<TeacherRecords/>,'/teacher/classes')).toContain('Courses');expect(render(<TeacherRecords/>,'/teacher/classes?view=batches')).toContain('N5 · Weekend group');expect(render(<TeacherRecords/>,'/teacher/lessons')).toContain('First steps');expect(render(<TeacherRecords/>,'/teacher/lessons?view=assignments')).toContain('Introduce yourself');});
  it('renders records, schedule, attendance, fees and brand forms',()=>{expect(render(<Students/>)).toContain('Demo Student');expect(render(<Schedule/>)).toContain('Your timetable');expect(render(<Attendance/>)).toContain('Mark attendance');expect(render(<Payments/>)).toContain('Fee snapshot');expect(render(<BrandSettings/>)).toContain('WhatsApp');});
@@ -35,7 +43,7 @@ describe('teacher interface',()=>{
  it('renders review queues and copyable reminder tools',()=>{expect(render(<AccessRequests/>)).toContain('No requests waiting');expect(render(<Submissions/>)).toContain('No homework submitted');expect(render(<TeacherRecords table="tasks"/>)).toContain('Copy message');});
 });
 describe('student interface',()=>{
- it('offers the complete student details form with the requested batches',()=>{const html=render(<StudentRegistration/>);for(const label of ['Full name','Phone number','Age','27/A/L','28/A/L','N5','N4','28/O/L','Complete registration'])expect(html).toContain(label);expect(html).not.toContain('name="email"');});
+ it('offers student details with batches from the teacher records',()=>{const html=render(<StudentRegistration/>);for(const label of ['Full name','Phone number','Age','N5 · Weekend group','Complete registration'])expect(html).toContain(label);expect(html).toContain('value="BAT-DEMO"');expect(html).not.toContain('28/O/L');expect(html).not.toContain('name="email"');});
  it('shows a full sign-out button in both workspace sidebars',()=>{for(const teacher of [false,true]){const html=render(<Workspace teacher={teacher}/>);expect(html).toContain('workspace-sign-out');expect(html).toContain('>Sign out</button>');expect(html).not.toContain('Privacy Policy');}});
  it('offers the monthly collection and links it from the student dashboard',()=>{const html=render(<CheckLevel/>);expect(html).toContain('November 2026');expect(html).toContain('Coming soon');expect((html.match(/Start quiz/g)||[]).length).toBe(9);expect(html).toContain('repeat attempts do not add duplicate points');expect(render(<StudentHome/>)).toContain('Check your level');});
  it('renders every reviewed quiz without revealing answers before submission',()=>{for(const id of ['AL-B01','AL-I01','AL-H01','N5-B01','N5-I01','N5-H01','N4-B01','N4-I01','N4-H01']){const html=render(<MonthlyQuiz/>,`/student/check-level/${id}`,'/student/check-level/:quizId');expect((html.match(/class="quiz-question level-question"/g)||[]).length).toBe(3);expect(html).toContain('Submit quiz');expect(html).not.toContain('Understand the other choices');}expect(render(<MonthlyQuiz/>,'/student/check-level/N5-B01','/student/check-level/:quizId')).toContain('<strong>山</strong>');expect(render(<MonthlyQuiz/>,'/student/check-level/missing','/student/check-level/:quizId')).toContain('Quiz not found');expect(render(<MonthlyHistory/>)).toContain('Your completed monthly quizzes');});

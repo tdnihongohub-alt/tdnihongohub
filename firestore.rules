@@ -36,15 +36,24 @@ service cloud.firestore {
   match /users/{id} {
    allow get: if teacher() || (signed() && request.auth.uid == id);
    allow list: if teacher();
+   function validBatch(d) {
+    return (d.get('preferredBatchId','').size() > 0
+      && shortString(d.preferredBatchId,1500)
+      && get(/databases/$(database)/documents/batches/$(d.preferredBatchId)).data.active == true
+      && get(/databases/$(database)/documents/batches/$(d.preferredBatchId)).data.name == d.preferredBatch)
+     || (resource != null && resource.data.get('registrationCompleted',false) == true
+      && d.get('preferredBatchId','') == resource.data.get('preferredBatchId','')
+      && d.preferredBatch == resource.data.preferredBatch);
+   }
    function validProfile() {
     let d = request.resource.data;
     return signed() && request.auth.uid == id
-     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','registrationCompleted','registeredAt'])
+     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','preferredBatchId','registrationCompleted','registeredAt'])
      && d.email == request.auth.token.email && shortString(d.displayName,200) && shortString(d.phone,40)
      && d.get('registrationCompleted',false) is bool
      && (d.get('registrationCompleted',false) == false || (d.displayName.size() > 0
       && d.phone.matches('[+]?[0-9]{9,15}') && d.age is int && d.age >= 5 && d.age <= 120
-      && d.preferredBatch in ['27/A/L','28/A/L','N5','N4','28/O/L']
+      && shortString(d.preferredBatch,200) && d.preferredBatch.size() > 0 && validBatch(d)
       && shortString(d.registeredAt,40) && d.registeredAt.size() > 0));
    }
    allow create: if validProfile();
