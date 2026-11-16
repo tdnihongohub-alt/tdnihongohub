@@ -1,3 +1,4 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({ plugins: [react()], build: { chunkSizeWarningLimit: 700 } });
+import { publicPagesPlugin } from './scripts/public-pages';
+export default defineConfig({ plugins: [react(),publicPagesPlugin()], build: { chunkSizeWarningLimit: 700 } });

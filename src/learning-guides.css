@@ -1,0 +1,21 @@
+.guides-page{min-height:65vh}
+.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.guide-card{display:flex;flex-direction:column;gap:14px;background:white;border:1px solid #edd4e1;border-radius:16px;padding:28px;min-width:0}
+.guide-card:hover{border-color:#b85d8b;box-shadow:0 6px 20px #92395f0b}
+.public-restyle .guide-card h2{font-size:23px;line-height:1.35;margin:0}
+.public-restyle .guide-card p{font-size:15px;line-height:1.8;color:#5e5059;margin:0}
+.guide-card .text-link{margin-top:auto;padding-top:8px}
+.guide-article{max-width:780px;margin:auto;background:#fff;border:1px solid #edd4e1;padding:42px;border-radius:16px;color:#352b32;overflow-wrap:anywhere}
+.guide-article header .eyebrow{margin-top:28px}.public-restyle .guide-article h1{font-size:38px;line-height:1.22}
+.public-restyle .guide-article h2{font-size:24px;line-height:1.4;margin:0 0 16px}
+.public-restyle .guide-article p,.public-restyle .guide-article li{font-size:16px;line-height:1.9;color:#4f414b}
+.public-restyle .guide-article .guide-byline{font-size:13px;color:#72576a}
+.guide-article section{margin-top:38px;scroll-margin-top:30px}
+.guide-article a{color:#8b315d;text-decoration:underline;text-underline-offset:3px}
+.guide-contents{display:grid;gap:12px;padding:22px;background:#fff7fb;border:1px solid #ecd5e1;border-radius:12px;margin-top:28px;font-size:14px}
+.guide-examples{display:grid;gap:14px;padding:20px;background:#fff7fb;border-radius:12px}
+.guide-examples strong,.guide-examples span{display:block}.guide-examples strong{font-size:23px;line-height:1.8}.guide-examples span{font-size:14px;margin-top:3px;color:#72576a}.public-restyle .guide-examples p{margin:5px 0}
+.guide-practice details{border:1px solid #ecd5e1;border-radius:10px;margin:12px 0;padding:16px}
+.guide-practice summary{cursor:pointer;font-weight:600;line-height:1.7}.guide-practice summary:focus-visible{outline:2px solid #92395f;outline-offset:5px}
+.guide-next{display:grid;gap:16px;margin-bottom:26px}
+@media(max-width:720px){.guide-grid{grid-template-columns:1fr;gap:16px}.guide-card{padding:23px}.guide-article{padding:24px 20px}.public-restyle .guide-article h1{font-size:30px}.public-restyle .guide-article h2{font-size:22px}.public-restyle .guide-article p{font-size:16px}.guide-examples{padding:16px}.guide-examples strong{font-size:20px}}
