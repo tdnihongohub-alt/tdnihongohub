@@ -2,17 +2,17 @@
 
 Official Japanese tuition website, student portal and teacher workspace.
 
-**Live website:** https://td-nihongo-hub.web.app
+**Live website:** https://tdnihongohub.com
 
 Built with React, TypeScript, Vite, Firebase Authentication, Firestore and Firebase Hosting. Source repository: https://github.com/tdnihongohub-alt/tdnihongohub
 
 ## Website hosting
 
-GitHub Pages deployment is configured in .github/workflows/pages.yml. Select GitHub Actions as the Pages source in repository settings. The workflow tests and builds Vite, then publishes the dist directory. The custom domain is tdnihongohub.com. Configure its DNS using GitHub's documented Pages addresses.
+Firebase Hosting serves the production site at https://tdnihongohub.com and https://td-nihongo-hub.web.app. GitHub stores the source and runs interface checks.
 
-Pages builds use hash-based navigation, such as /#/student, to support refreshing nested pages on static hosting. The Firebase Hosting build retains its existing browser-based navigation. Firebase Authentication and Firestore continue to provide accounts and teaching records for both hosts. Add the new website hostname to Authentication's authorized domains.
+Build the React/Vite application using npm run build. Deploy the resulting dist directory using Firebase Hosting. The Hosting rewrite supports direct links such as /student, /privacy and /courses.
 
-The workflow contains the Firebase public web configuration. Service-account keys, login tokens, database exports and deployment credentials stay outside the repository.
+Firebase Authentication and Firestore provide student accounts and teaching records. The custom hostname must be included in Authentication's authorized domains. Spaceship DNS points the domain to Firebase using the records shown in the Hosting console.
 
 ## Local setup
 
