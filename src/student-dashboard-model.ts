@@ -1,4 +1,5 @@
 import { assignmentReleased } from './assignment-scheduling';
+import { assignmentForStudent } from './assignment-audience';
 import type { Data, Row } from './domain';
 import { feeBalance } from './domain';
 
@@ -9,7 +10,7 @@ export function studentDashboard(data:Data,uid:string,studentId:string,now=Date.
  const completed=new Set(data.progress.filter(p=>p.uid===uid&&p.complete).map(p=>p.lessonId));
  const activeBatches=new Set(data.enrollments.filter(e=>e.studentId===studentId&&e.status==='active').map(e=>e.batchId));
  const sessions=data.sessions.filter(s=>activeBatches.has(s.batchId)&&s.status!=='cancelled'&&new Date(`${s.date}T${s.time}:00+05:30`).getTime()+Number(s.duration)*60000>now).sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
- const assignments=data.assignments.filter(a=>courseIds.has(a.courseId)&&assignmentReleased(a,now));
+ const assignments=data.assignments.filter(a=>courseIds.has(a.courseId)&&assignmentForStudent(a,data,studentId)&&assignmentReleased(a,now));
  const submissions=data.submissions.filter(s=>s.studentId===studentId);
  const homework=assignments.map<Row & {submission?:Row}>(a=>({...a,submission:submissions.find(s=>s.assignmentId===a.id)})).filter(a=>!a.submission||['draft','returned'].includes(a.submission.status)).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
  const feedback=submissions.filter(s=>s.feedback&&['returned','reviewed'].includes(s.status)).sort((a,b)=>String(b.reviewedAt||b.submittedAt||'').localeCompare(String(a.reviewedAt||a.submittedAt||'')));

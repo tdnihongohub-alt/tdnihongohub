@@ -11,6 +11,7 @@ import { StudentHome, MyClasses, LearningClass, StudentAssignments, StudentPayme
 import { CheckLevel, MonthlyQuiz, MonthlyHistory } from '../src/CheckLevel';
 import { Workspace } from '../src/Workspace';
 import { StudentRegistration } from '../src/StudentRegistration';
+import { AssignmentEditor } from '../src/AssignmentEditor';
 
 function render(node:React.ReactNode,path='/',pattern='*',sample=true,prepare?:(data:ReturnType<typeof initialData>)=>void){
  const data=initialData(sample);
@@ -28,6 +29,12 @@ describe('public website',()=>{
  it('renders the verified public phone without assuming WhatsApp access',()=>{const html=render(<About contact/>);expect(html).toContain('YouTube channel');expect(html).toContain('tel:+94703666043');expect(html).toContain('070 366 6043');expect(html).not.toContain('wa.me/');});
 });
 describe('teacher interface',()=>{
+ it('offers batch assignment targeting and visible payment edit/delete controls',()=>{
+  const work=render(<AssignmentEditor row={{id:'a',courseId:'n5',batchId:'BAT-DEMO'}} onClose={()=>{}}/>);
+  expect(work).toContain('Assign to batch');expect(work).toContain('N5 · Weekend group');expect(work).toContain('only with its actively enrolled students');
+  const payments=render(<Payments/>,'/teacher/payments?view=history','*',true,data=>{data.payments=[{id:'p',studentId:'STU-DEMO',batchId:'BAT-DEMO',month:'2026-11',amount:1000,paidOn:'2026-11-17',method:'Cash',status:'confirmed'}];});
+  expect(payments).toContain('aria-label="Edit payment"');expect(payments).toContain('>Delete</button>');
+ });
  it('exposes saved timetable editing and student registration approval',()=>{
    expect(render(<Schedule/>)).toContain('aria-label="Edit session"');
    const edit=render(<Schedule/>,'/teacher/schedule?edit=SES-DEMO');

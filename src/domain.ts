@@ -30,6 +30,7 @@ const schemas:Partial<Record<Table,z.ZodTypeAny>>={
  lessons:z.object({title:text,courseId:text,module:text,notes:z.string(),recordingUrl:link,resourceUrl:link,published:z.boolean(),visibility:z.enum(['public','members'])}),
  sessions:z.object({batchId:text,courseId:text,lessonId:z.string(),date,time:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),duration:z.coerce.number().int().min(15).max(600),zoomUrl:link,status:z.enum(['scheduled','cancelled'])}),
  students:z.object({fullName:text,phone:text,email:z.union([z.literal(''),z.string().email()]),registeredOn:date,active:z.boolean()}),
+ payments:z.object({studentId:text,batchId:text,month:z.string().regex(/^\d{4}-\d{2}$/),amount:z.coerce.number().finite().positive(),paidOn:date,method:z.enum(['Cash','Bank Transfer','Other']),reference:z.string().default('')}),
  assignments:z.object({title:text,courseId:text,lessonId:z.string(),instructions:text,dueDate:date,worksheetUrl:link,published:z.boolean(),maxMark:z.coerce.number().min(1)}),
  questions:z.object({courseId:text,topic:text,prompt:text,options:z.array(text).length(4),correct:z.coerce.number().int().min(0).max(3),explanation:z.string(),published:z.boolean()}),
  levelAttempts:z.object({uid:text,quizId:z.enum(['AL-B01','AL-I01','AL-H01','N5-B01','N5-I01','N5-H01','N4-B01','N4-I01','N4-H01']),edition:z.literal('2026-11'),score:z.number().int().min(0).max(3),total:z.literal(3),completedAt:z.string().datetime()}),

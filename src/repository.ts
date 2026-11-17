@@ -32,17 +32,17 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
  }
  const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>c.access==='free').map(c=>c.id)])];
- for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('releaseAt','<=',Date.now())]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
+ for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
   data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
   for(const e of data.enrollments.filter(e=>e.status==='active'))data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
  }
- for(const e of data.enrollments.filter(e=>e.status==='active')){data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
+ for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
  return data;
 }
 const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):value;
 export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;await setDoc(doc(db,table,id),clean(values));}
-export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');await deleteDoc(doc(db,table,id));}
+export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This payment has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:'payment_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else await deleteDoc(doc(db,table,id));}
 export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}await batch.commit();}}
 export async function approveClaim(id:string,teacherUid:string){if(!db)throw Error('Firebase is not configured.');await runTransaction(db,async tx=>{
  const ref=doc(db!,'paymentClaims',id),paymentRef=doc(db!,'payments',id);const [claim,payment]=await Promise.all([tx.get(ref),tx.get(paymentRef)]);
