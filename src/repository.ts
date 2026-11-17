@@ -9,7 +9,7 @@ export type Identity={uid:string;email:string;displayName:string;verified:boolea
 export async function readRows(table:Table,...filters:QueryConstraint[]):Promise<Row[]> { if(!db)return [];const result=await getDocs(query(collection(db,table),...filters));return result.docs.map(d=>({...d.data(),id:d.id})); }
 async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'communityLinks'):Promise<Row[]>{
  if(!publicDb)return [];
- const filters:[string,string|boolean][]=table==='courses'?[['published',true]]:table==='lessons'?[['published',true],['visibility','public']]:table==='batches'?[['active',true]]:table==='communityLinks'?[['active',true],['visibility','public']]:[];
+ const filters:[string,string|boolean][]=table==='courses'?[['published',true]]:table==='lessons'?[['published',true],['visibility','public'],['batchId','']]:table==='batches'?[['active',true]]:table==='communityLinks'?[['active',true],['visibility','public']]:[];
  const result=await publicGetDocs(publicQuery(publicCollection(publicDb,table),...filters.map(([field,value])=>publicWhere(field,'==',value))));
  return result.docs.map(d=>({...d.data(),id:d.id}));
 }
@@ -32,12 +32,12 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
  }
  const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>c.access==='free').map(c=>c.id)])];
- for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
+ for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:t==='lessons'?[where('batchId','==','')]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
   data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
   for(const e of data.enrollments.filter(e=>e.status==='active'))data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
  }
- for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
+ for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
  return data;
 }
 const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):value;

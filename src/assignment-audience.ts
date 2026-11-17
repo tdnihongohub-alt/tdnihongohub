@@ -1,7 +1,7 @@
 import type { Data, Row } from './domain';
 
 export function assignmentForStudent(a:Row,data:Data,studentId:string){
- if(!a.batchId)return true; // Existing course-wide work keeps its audience.
+ if(!a.batchId)return data.enrollments.some(e=>e.studentId===studentId&&e.courseId===a.courseId&&e.status==='active')||data.courseAccess.some(c=>c.studentId===studentId&&c.courseId===a.courseId&&c.active)||data.savedCourses.some(c=>c.courseId===a.courseId&&data.studentLinks.some(l=>l.studentId===studentId&&l.id===c.uid));
  return data.students.some(s=>s.id===studentId&&s.active)&&data.enrollments.some(e=>e.studentId===studentId&&e.batchId===a.batchId&&e.courseId===a.courseId&&e.status==='active');
 }
 

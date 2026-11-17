@@ -69,7 +69,7 @@ service cloud.firestore {
   match /enrollments/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }
   match /courseAccess/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }
   match /lessons/{id} {
-   allow read: if teacher() || (resource.data.published == true && (resource.data.visibility == 'public' || courseAllowed(resource.data.courseId)));
+   allow read: if teacher() || (resource.data.published == true && ((resource.data.visibility == 'public' && resource.data.get('batchId','') == '') || (courseAllowed(resource.data.courseId) && assignmentAudience(resource.data))));
    allow write: if teacher();
   }
   match /sessions/{id} { allow read: if teacher() || batchAllowed(resource.data.batchId); allow write: if teacher(); }
@@ -128,6 +128,7 @@ service cloud.firestore {
     && request.resource.data.keys().hasOnly(['uid','lessonId','courseId','complete']) && request.resource.data.uid == request.auth.uid
     && request.resource.data.complete is bool && courseAllowed(request.resource.data.courseId)
     && get(/databases/$(database)/documents/lessons/$(request.resource.data.lessonId)).data.published == true
+    && assignmentAudience(get(/databases/$(database)/documents/lessons/$(request.resource.data.lessonId)).data)
     && get(/databases/$(database)/documents/lessons/$(request.resource.data.lessonId)).data.courseId == request.resource.data.courseId;
    allow delete: if teacher();
   }
