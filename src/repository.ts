@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch } from '@firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch, onSnapshot } from '@firebase/firestore';
 import type { QueryConstraint } from '@firebase/firestore';
 import { db, publicDb } from './firebase';
 import { collection as publicCollection, query as publicQuery, where as publicWhere, getDocs as publicGetDocs } from '@firebase/firestore/lite';
@@ -40,10 +40,13 @@ export async function loadData(identity:Identity|null):Promise<Data> {
  for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
  return data;
 }
+const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','announcements']);
+const learningRevision=()=>({updatedAt:Date.now(),revision:uid()});
+export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','learningRevision'),()=>onChange(),onError);}
 const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):value;
-export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;await setDoc(doc(db,table,id),clean(values));}
-export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This payment has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:'payment_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else await deleteDoc(doc(db,table,id));}
-export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}await batch.commit();}}
+export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
+export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This payment has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:'payment_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
+export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
 export async function approveClaim(id:string,teacherUid:string){if(!db)throw Error('Firebase is not configured.');await runTransaction(db,async tx=>{
  const ref=doc(db!,'paymentClaims',id),paymentRef=doc(db!,'payments',id);const [claim,payment]=await Promise.all([tx.get(ref),tx.get(paymentRef)]);
  if(!claim.exists())throw Error('Claim no longer exists.');if(payment.exists())throw Error('This claim has already been confirmed.');
@@ -72,7 +75,7 @@ export async function acceptRegistration(accountId:string,studentId:string,batch
   const changes=registrationApproval(data,accountId,studentId,batchId);
   for(const {table,row} of changes){const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));}
   const delivery=data.batches.find(b => b.id===batchId)!;
-  tx.update(doc(db!,'batches',batchId),{enrollmentRevision:Number(delivery.enrollmentRevision||0)+1});
+  tx.update(doc(db!,'batches',batchId),{enrollmentRevision:Number(delivery.enrollmentRevision||0)+1});tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
 }
 
@@ -90,5 +93,6 @@ export async function deleteStudent(studentId:string) {
   for(const {table,row} of studentDeletion(data,studentId)){
    const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));
   }
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
 }
