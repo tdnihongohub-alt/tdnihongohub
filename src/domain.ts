@@ -2,7 +2,7 @@ import { validateSchedule } from './assignment-scheduling';
 import { z } from 'zod';
 
 export type Row = { id: string; [key: string]: any };
-export const tables = ['courses','batches','lessons','sessions','students','enrollments','accessRequests','assignments','questions','quizAttempts','levelAttempts','communityLinks','submissions','attendance','feeMonths','paymentClaims','payments','announcements','tasks','teacherNotes','studentLinks','courseAccess','progress','savedCourses','users','settings','audit'] as const;
+export const tables = ['courses','batches','lessons','sessions','students','enrollments','accessRequests','assignments','questions','quizAttempts','levelAttempts','communityLinks','submissions','attendance','feeMonths','paymentClaims','payments','announcements','tasks','teacherNotes','studentLinks','courseAccess','progress','savedCourses','users','settings','audit','contentReads'] as const;
 export type Table = typeof tables[number];
 export type Data = Record<Table, Row[]>;
 export const emptyData = (): Data => Object.fromEntries(tables.map(k=>[k,[]])) as unknown as Data;

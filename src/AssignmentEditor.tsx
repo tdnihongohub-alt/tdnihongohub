@@ -7,8 +7,8 @@ import { today, uid } from './domain';
 import { assignmentDeadline, parseSriLanka, sriLankaInput, validateSchedule } from './assignment-scheduling';
 import type { FormQuestion } from './assignment-scheduling';
 import { validateAssignmentBatch } from './assignment-audience';
-export function AssignmentEditor({row,onClose}:{row?:Row;onClose:()=>void}){
- const {data,save,notify}=useApp();const [v,setV]=useState<Record<string,any>>({title:'',courseId:'',batchId:'',lessonId:'',instructions:'',worksheetUrl:'',maxMark:10,kind:'assignment',published:false,allowLate:true,...row});
+export function AssignmentEditor({row,onClose,initialCourseId='',initialBatchId='',initialLessonId='',initialKind='assignment'}:{row?:Row;onClose:()=>void;initialCourseId?:string;initialBatchId?:string;initialLessonId?:string;initialKind?:string}){
+ const {data,save,notify}=useApp();const [v,setV]=useState<Record<string,any>>({title:'',courseId:initialCourseId,batchId:initialBatchId,lessonId:initialLessonId,instructions:'',worksheetUrl:'',maxMark:10,kind:initialKind,published:false,allowLate:true,...row});
  const [release,setRelease]=useState(sriLankaInput(row?.releaseAt));const [deadline,setDeadline]=useState(sriLankaInput(row?assignmentDeadline(row):Date.parse(`${today()}T23:59:00+05:30`)));
  const [questions,setQuestions]=useState<FormQuestion[]>(row?.formQuestions||[]);const [error,setError]=useState('');const [busy,setBusy]=useState(false);
  const set=(name:string,value:any)=>setV(p=>({...p,[name]:value}));
@@ -18,7 +18,7 @@ export function AssignmentEditor({row,onClose}:{row?:Row;onClose:()=>void}){
  <label className="form-field">Title *<input required value={v.title} onChange={e=>set('title',e.target.value)}/></label>
  <label className="form-field">Course *<select required value={v.courseId} onChange={e=>{set('courseId',e.target.value);set('lessonId','');set('batchId','');}}><option value="">Choose course</option>{data.courses.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
  <label className="form-field">Assign to batch<select value={v.batchId||''} disabled={!v.courseId} onChange={e=>set('batchId',e.target.value)}><option value="">All students with course access</option>{data.batches.filter(b=>b.courseId===v.courseId&&(b.active||b.id===v.batchId)).map(b=><option key={b.id} value={b.id}>{b.name}{b.active?'':' (inactive)'}</option>)}</select><small>Choose a batch to share this work only with its actively enrolled students. Duplicate a draft to set a separate deadline for another batch.</small></label>
- <label className="form-field">Linked lesson<select value={v.lessonId} onChange={e=>set('lessonId',e.target.value)}><option value="">No linked lesson</option>{data.lessons.filter(l=>l.courseId===v.courseId).map(l=><option key={l.id} value={l.id}>{l.title}</option>)}</select></label>
+ <label className="form-field">Week / linked lesson<select value={v.lessonId} onChange={e=>set('lessonId',e.target.value)}><option value="">No linked lesson</option>{data.lessons.filter(l=>l.courseId===v.courseId).map(l=><option key={l.id} value={l.id}>{l.title}</option>)}</select></label>
  <label className="form-field wide">Instructions *<textarea required rows={3} value={v.instructions} onChange={e=>set('instructions',e.target.value)}/></label>
  <label className="form-field">Release at (Sri Lanka time)<input type="datetime-local" value={release} onChange={e=>setRelease(e.target.value)}/><small>Leave empty to release immediately when published.</small></label>
  <label className="form-field">Deadline (Sri Lanka time) *<input required type="datetime-local" value={deadline} onChange={e=>setDeadline(e.target.value)}/></label>

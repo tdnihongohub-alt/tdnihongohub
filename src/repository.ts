@@ -23,7 +23,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
  const binding=await getDoc(doc(db,'studentLinks',identity.uid));if(binding.exists())data.studentLinks=[{...binding.data(),id:binding.id}];
  data.savedCourses=await readRows('savedCourses',where('uid','==',identity.uid));
  data.accessRequests=await readRows('accessRequests',where('uid','==',identity.uid));
- data.progress=await readRows('progress',where('uid','==',identity.uid));
+ data.progress=await readRows('progress',where('uid','==',identity.uid));data.contentReads=await readRows('contentReads',where('uid','==',identity.uid));
  data.levelAttempts=await readRows('levelAttempts',where('uid','==',identity.uid));
  data.quizAttempts=await readRows('quizAttempts',where('uid','==',identity.uid));
  const studentId=binding.data()?.studentId;

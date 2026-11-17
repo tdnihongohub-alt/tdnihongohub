@@ -1,3 +1,4 @@
+import { ModuleCards } from './TeachingModules';
 import { LevelInvitation } from './CheckLevel';
 import { StudentCommunity } from './CommunityLinks';
 import { StudentWelcome } from './StudentWelcome';
@@ -9,14 +10,7 @@ import { batchName, courseName, lkr, readable, safeLink, today, youtubeId } from
 import { Badge, Empty, Panel } from './ui';
 import { studentDashboard } from './student-dashboard-model';
 
-export function LearningCards(){
- const {data,identity,studentId}=useApp();const model=studentDashboard(data,identity?.uid||'',studentId);
- return <div className="learning-course-grid">{model.courses.map(c=>{
-  const lessons=model.lessons.filter(l=>l.courseId===c.id),done=lessons.filter(l=>model.completed.has(l.id)).length,pct=lessons.length?Math.round(done/lessons.length*100):0;
-  const next=lessons.find(l=>!model.completed.has(l.id))||lessons[0];
-  return <Link key={c.id} className="learning-course" to={`/student/course/${c.id}${next?`?lesson=${next.id}`:''}`}><div className={`learning-course-spine ${c.category==='N4'?'spine-red':''}`}><span>{c.category}</span><i lang="ja">日本語</i><small>TD / NH</small></div><div className="learning-course-info"><span className="course-access-label">{c.access==='free'?'FREE LEARNING':'YOUR CLASS'}</span><h3>{c.title}</h3><div className="learning-course-progress"><span>{done} of {lessons.length} lessons</span><b>{pct}%</b></div><div className="course-progress-track" role="progressbar" aria-label={`${c.title} lesson progress`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><span style={{width:`${pct}%`}}/></div><div className="course-open">{next?'Continue this class':'Open class'}<ArrowUpRight size={15}/></div></div></Link>;
- })}{!model.courses.length&&<div className="learning-empty"><BookOpen size={25}/><h3>Your first chapter starts here.</h3><p>Save a free course or request access to a paid class.</p><Link className="button primary" to="/courses">Find your class<ArrowUpRight size={15}/></Link></div>}</div>;
-}
+export function LearningCards(){return <ModuleCards/>;}
 
 export function StudentDashboard(){
  const {data,identity,studentId}=useApp();const m=studentDashboard(data,identity?.uid||'',studentId);const next=m.next;const lesson=m.continueLesson;

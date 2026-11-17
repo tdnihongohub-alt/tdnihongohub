@@ -132,6 +132,21 @@ service cloud.firestore {
     && get(/databases/$(database)/documents/lessons/$(request.resource.data.lessonId)).data.courseId == request.resource.data.courseId;
    allow delete: if teacher();
   }
+  match /contentReads/{id} {
+   allow read: if teacher() || (verified() && resource.data.uid == request.auth.uid);
+   function validRead() {
+    let d = request.resource.data;
+    let source = d.kind == 'announcement' ? get(/databases/$(database)/documents/announcements/$(d.recordId)).data : get(/databases/$(database)/documents/sessions/$(d.recordId)).data;
+    return verified() && d.uid == request.auth.uid && d.kind in ['announcement','session']
+     && id == request.auth.uid + '_' + d.kind + '_' + d.recordId
+     && d.keys().hasOnly(['uid','kind','recordId','version','courseId','batchId'])
+     && shortString(d.recordId,1500) && shortString(d.version,200)
+     && source.courseId == d.courseId && source.batchId == d.batchId && batchAllowed(d.batchId);
+   }
+   allow create: if validRead();
+   allow update: if validRead() && resource.data.uid == request.auth.uid;
+   allow delete: if teacher();
+  }
   match /submissions/{id} {
    allow read: if teacher() || ownStudent(resource.data.studentId);
    allow create: if validSubmission(request.resource.data) && id == request.resource.data.studentId + '_' + request.resource.data.assignmentId
