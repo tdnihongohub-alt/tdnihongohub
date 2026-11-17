@@ -5,10 +5,21 @@ import { emptyData } from '../src/domain';
 import { lessonContentPlan, lessonQuiz, recordingThumbnail } from '../src/lesson-content';
 import { ComingSoon } from '../src/LessonMedia';
 import { FormQuestionBuilder } from '../src/FormQuestionBuilder';
+import { LessonEditor } from '../src/LessonEditor';
+import { AppContext } from '../src/store';
+import { MemoryRouter } from 'react-router-dom';
 const lesson={id:'lesson',title:'My lesson',courseId:'n5',batchId:'a',module:'Reading',notes:'Teacher notes',recordingUrl:'https://youtu.be/abcdefghijk',resourceUrl:'',published:true,visibility:'members',quizState:'linked',quizId:'quiz'};
 const activity={id:'quiz',title:'Lesson activity',courseId:'n5',batchId:'a',lessonId:'lesson',kind:'form',instructions:'Answer the questions',worksheetUrl:'',maxMark:10,published:true,releaseAt:0,deadlineAt:4102444800000,dueDate:'2100-01-01',formQuestions:[{id:'q',type:'choice',label:'Read 山',required:true,options:['やま','かわ']}]};
 function fixture(){const data=emptyData();data.batches=[{id:'a',courseId:'n5'},{id:'b',courseId:'n5'}];data.students=[{id:'s',active:true}];data.enrollments=[{id:'s_a',studentId:'s',batchId:'a',courseId:'n5',status:'active'}];data.assignments=[activity];return data;}
 describe('teacher-managed lesson packages',()=>{
+ it('keeps existing per-batch lesson activities when an older lesson is edited',()=>{
+  const data=fixture();const legacy={...lesson,quizState:undefined,quizId:undefined};
+  const context={data,batch:async()=>{},notify:()=>{}} as any;
+  const html=renderToStaticMarkup(<AppContext.Provider value={context}><MemoryRouter><LessonEditor row={legacy} onClose={()=>{}}/></MemoryRouter></AppContext.Provider>);
+  expect(html).toContain('value="__auto__" selected=""');
+  expect(lessonQuiz(data,legacy,'s')?.id).toBe('quiz');
+  const changes=lessonContentPlan(data,legacy);expect(changes).toHaveLength(1);expect(changes[0].row.quizState).toBeUndefined();
+ });
  it('keeps answer choices on separate editable lines in the shared question builder',()=>{
   const html=renderToStaticMarkup(<FormQuestionBuilder questions={activity.formQuestions as any} setQuestions={()=>{}}/>);
   expect(html).toContain('やま\nかわ');
