@@ -39,7 +39,7 @@ const schemas:Partial<Record<Table,z.ZodTypeAny>>={
  tasks:z.object({title:text,dueDate:date,batchId:z.string(),lessonId:z.string(),done:z.boolean()}),
  announcements:z.object({title:text,body:text,batchId:text,courseId:text}),
  paymentClaims:z.object({amount:z.coerce.number().positive(),month:z.string().regex(/^\d{4}-\d{2}$/),paidOn:date,reference:text,receiptUrl:link,batchId:text}),
- submissions:z.object({answer:z.string().max(20000),fileUrl:link,status:z.enum(['draft','submitted'])}),
+ submissions:z.object({answer:z.string().max(20000),fileUrl:link,status:z.enum(['draft','submitted','returned','reviewed'])}),
 };
 export function validate(table:Table,row:Record<string,any>) { const result=schemas[table]?.safeParse(row);if(result&&!result.success)throw Error(result.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('\n'));if(table==='assignments'&&('releaseAt' in row||'deadlineAt' in row))validateSchedule(row as Row);if(row.endDate&&row.startDate&&row.endDate<row.startDate)throw Error('End date must be after start date.');return {...row,...(result?.success?result.data:{})}; }
 export function recurringSessions(base:Row,until:string) {if(until<base.date)throw Error('Repeat end date must follow the first session.');const dates:Row[]=[];for(let d=base.date;d<=until;d=addDays(d,7)){if(dates.length>=104)throw Error('Limit a recurring series to two years.');dates.push({...base,id:uid('SES-'),date:d});}return dates;}
