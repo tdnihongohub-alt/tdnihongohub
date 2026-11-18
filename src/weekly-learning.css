@@ -10,3 +10,22 @@
 .workspace[data-theme='dark'] .teaching-module-card .module-card-body>strong{color:var(--read-ink)}
 .workspace[data-theme='dark'] .teaching-module-card :is(.module-card-body>small,.module-card-detail){color:var(--read-muted)}
 .workspace[data-theme='dark'] .teaching-module-card .module-card-open{color:var(--accent)}
+
+/* A consistent colour for each week, shared by every resource tab. */
+.workspace .weekly-section{background:var(--read-paper,#fff);border-color:var(--week-border,#e8bfd2);border-inline-start:4px solid var(--week-accent,#b23f76)}
+.workspace .weekly-section>summary{background:var(--week-tint,#fff0f6);color:var(--read-ink,#382b35)}
+.workspace .weekly-section>summary:before{color:var(--week-accent,#b23f76)}
+.workspace .weekly-section[open]>summary{border-bottom:1px solid var(--week-border,#e8bfd2)}
+.workspace .weekly-section>summary:focus-visible{outline-color:var(--week-accent,#b23f76)}
+.workspace .weekly-section.week-tone-0{--week-tint:#fff0f6;--week-border:#e8bfd2;--week-accent:#b23f76}
+.workspace .weekly-section.week-tone-1{--week-tint:#f1edff;--week-border:#d5c9ef;--week-accent:#7956a1}
+.workspace .weekly-section.week-tone-2{--week-tint:#eaf3ff;--week-border:#bed4ee;--week-accent:#3f6f9f}
+.workspace .weekly-section.week-tone-3{--week-tint:#eaf7f0;--week-border:#bedbcd;--week-accent:#39795d}
+.workspace .weekly-section.week-tone-4{--week-tint:#fff0e7;--week-border:#ebcfba;--week-accent:#a96036}
+.workspace .weekly-section.week-tone-5{--week-tint:#fff7df;--week-border:#e7d7a3;--week-accent:#8b6a22}
+.workspace[data-theme='dark'] .weekly-section.week-tone-0{--week-tint:#3d2738;--week-border:#74475f;--week-accent:#f2a6cd}
+.workspace[data-theme='dark'] .weekly-section.week-tone-1{--week-tint:#322a45;--week-border:#655179;--week-accent:#d0b3f0}
+.workspace[data-theme='dark'] .weekly-section.week-tone-2{--week-tint:#233549;--week-border:#426582;--week-accent:#9cc6f1}
+.workspace[data-theme='dark'] .weekly-section.week-tone-3{--week-tint:#243b34;--week-border:#46735f;--week-accent:#9cd1b7}
+.workspace[data-theme='dark'] .weekly-section.week-tone-4{--week-tint:#422f29;--week-border:#7c5946;--week-accent:#efbc95}
+.workspace[data-theme='dark'] .weekly-section.week-tone-5{--week-tint:#3c3525;--week-border:#776640;--week-accent:#e4cf89}
