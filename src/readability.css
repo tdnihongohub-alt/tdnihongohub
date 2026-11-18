@@ -36,6 +36,7 @@
 /* Use theme-aware colours for private reading areas and administrative records. */
 .workspace{--read-ink:#382b35;--read-muted:#61505d;--read-paper:#fff;--read-soft:#fff8fb}
 .workspace[data-theme='dark']{--read-ink:#f4e9f1;--read-muted:#d5c1d0;--read-paper:#241e2b;--read-soft:#302636}
+.workspace[data-theme='dark']{--ink:var(--read-ink);--muted:var(--read-muted);--paper:var(--teacher-card,var(--studio-card,#241e2b));--line:var(--teacher-line,var(--studio-line,#48334b));--accent:var(--teacher-accent,var(--studio-rose,#f0a1c7))}
 :root:has(.student-workspace) .student-workspace{--studio-muted:var(--read-muted);--studio-ink:var(--read-ink)}
 .teacher-workspace{--teacher-muted:var(--read-muted);--teacher-ink:var(--read-ink);--teacher-soft:var(--read-soft)}
 .workspace .workspace-content :is(.panel-heading p,.panel .pad p,.lesson-list small,.submission-answer,.claim-feedback,.feedback-box p,.desk-feedback-item p,.desk-announcements p,.results-note,.form-note){font-size:15px;line-height:1.85;font-weight:400;color:var(--read-muted)}
