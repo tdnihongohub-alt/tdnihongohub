@@ -13,6 +13,7 @@ export function monthlyFeeChanges(data:Data,values:Record<string,any>,original?:
   if(!data.students.some(s=>s.id===row.studentId)||!data.batches.some(b=>b.id===row.batchId))throw Error('Choose a student record and batch.');
   if(!data.enrollments.some(e=>e.studentId===row.studentId&&e.batchId===row.batchId)&&!data.payments.some(p=>p.studentId===row.studentId&&p.batchId===row.batchId))throw Error('Choose a batch with an enrolment or recorded payment for this student.');
  }
+ if(original?.standardAmount!==undefined){const standard=Math.max(Number(original.standardAmount),Number(row.amount));row={...row,standardAmount:standard,discountAmount:Math.round((standard-Number(row.amount))*100)/100};}
  return [{table:'feeMonths',row},{table:'audit',row:{id:uid(),action:original?'monthly_fee_edited':'monthly_fee_created',recordId:row.id,before:original||null,after:row,at:new Date().toISOString()}}];
 }
 
