@@ -1,9 +1,14 @@
-import type { Row } from './domain';
+import type { Data, Row } from './domain';
 
 export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string; preferredBatchId?: string };
 
 export function registrationBatches(batches: Row[]) {
   return batches.filter(b => b.active && b.name).sort((a,b) => a.name.localeCompare(b.name));
+}
+
+export function registrationStudent(data:Data,accountId:string){
+ const binding=data.studentLinks.find(l=>l.id===accountId);
+ return data.students.find(s=>s.id===binding?.studentId)||data.students.find(s=>s.linkedAccountId===accountId||s.id===`STU-${accountId}`);
 }
 
 export function validateRegistration(values: RegistrationDetails): RegistrationDetails {
