@@ -1,4 +1,5 @@
-import { recurringSessions, uid, validate } from './domain';
+import { addDays, recurringSessions, uid, validate } from './domain';
+import { daysBetween } from './timetable-management';
 import type { Data, Row, Table } from './domain';
 
 export function sessionChanges(data:Data, values:Record<string,any>, original:Row|undefined, future:boolean):{table:Table;row:Row}[] {
@@ -11,9 +12,10 @@ export function sessionChanges(data:Data, values:Record<string,any>, original:Ro
   const validated=validate('sessions',base) as Row;
   if(!original&&repeat)return recurringSessions({...validated,seriesId:uid('SER-')},repeat).map(row=>({table:'sessions',row}));
   if(original?.seriesId&&future){
-    if(base.date!==original.date||base.batchId!==original.batchId)throw Error('Change date and batch for this session only. Future edits apply time, duration, link and status.');
-    const later=data.sessions.filter(s=>s.id!==original.id&&s.seriesId===original.seriesId&&s.date>=original.date);
-    return [{table:'sessions',row:validated},...later.map(s=>({table:'sessions' as const,row:{...s,time:validated.time,duration:validated.duration,zoomUrl:validated.zoomUrl,status:validated.status}}))];
+    if(base.batchId!==original.batchId)throw Error('Change the batch for this session only.');
+    const shift=daysBetween(original.date,validated.date);
+    const later=data.sessions.filter(s=>s.id!==original.id&&s.seriesId===original.seriesId&&s.batchId===original.batchId&&s.date>=original.date);
+    return [{table:'sessions',row:validated},...later.map(s=>({table:'sessions' as const,row:{...s,date:addDays(s.date,shift),time:validated.time,duration:validated.duration,zoomUrl:validated.zoomUrl,status:validated.status}}))];
   }
   return [{table:'sessions',row:validated}];
 }

@@ -5,6 +5,8 @@ import { collection as publicCollection, query as publicQuery, where as publicWh
 import { emptyData, tables, key, uid } from './domain';
 import type { Data, Row, Table } from './domain';
 import { registrationApproval, studentDeletion } from './registration-approval';
+import { sameSession, validateTimetableChanges } from './timetable-management';
+import type { TimetableChange } from './timetable-management';
 export type Identity={uid:string;email:string;displayName:string;verified:boolean;teacher:boolean};
 export async function readRows(table:Table,...filters:QueryConstraint[]):Promise<Row[]> { if(!db)return [];const result=await getDocs(query(collection(db,table),...filters));return result.docs.map(d=>({...d.data(),id:d.id})); }
 async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'communityLinks'):Promise<Row[]>{
@@ -47,6 +49,24 @@ const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof
 export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
 export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This payment has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:'payment_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
 export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
+export async function changeTimetable(changes:TimetableChange[],actor:string){
+ if(!db)throw Error('Firebase is not configured.');
+ validateTimetableChanges(changes);
+ await runTransaction(db,async tx=>{
+  const current=await Promise.all(changes.map(c=>tx.get(doc(db!,'sessions',c.before.id))));
+  for(let i=0;i<changes.length;i++){
+   const row=current[i];
+   if(!row.exists()||!sameSession({...row.data(),id:row.id},changes[i].before))throw Error('A selected class has changed. Close this window, refresh the timetable and try again.');
+  }
+  const at=new Date().toISOString(),operationId=uid('TIM-');
+  for(const change of changes){
+   const ref=doc(db!,'sessions',change.before.id);
+   if(change.after){const {id,...values}=change.after;tx.set(ref,clean(values));}else tx.delete(ref);
+   tx.set(doc(db!,'audit',uid()),clean({action:change.after?'session_updated':'session_deleted',operationId,recordId:change.before.id,before:change.before,after:change.after,actor,at}));
+  }
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
 export async function approveClaim(id:string,teacherUid:string){if(!db)throw Error('Firebase is not configured.');await runTransaction(db,async tx=>{
  const ref=doc(db!,'paymentClaims',id),paymentRef=doc(db!,'payments',id);const [claim,payment]=await Promise.all([tx.get(ref),tx.get(paymentRef)]);
  if(!claim.exists())throw Error('Claim no longer exists.');if(payment.exists())throw Error('This claim has already been confirmed.');

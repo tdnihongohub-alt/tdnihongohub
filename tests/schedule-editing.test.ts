@@ -24,4 +24,18 @@ describe('editing saved sessions',()=>{
   expect(changes[1].row.title).toBe('Keep future title');
   expect(changes[1].row.time).toBe('20:00');
  });
+ it('shifts future repeating dates together while preserving earlier classes and other batches',()=>{
+  const data=initialData(true),row={...data.sessions[0],date:'2026-11-23',seriesId:'series'};
+  data.sessions=[row,{...row,id:'older',date:'2026-11-16'},{...row,id:'later',date:'2026-11-30',title:'Keep title',description:'Keep notes'},{...row,id:'other-batch',batchId:'other-batch',date:'2026-11-30'}];
+  const before=structuredClone(data);
+  const changes=sessionChanges(data,{...row,date:'2026-11-25',time:'19:00'},row,true);
+  expect(changes.map(c=>[c.row.id,c.row.date])).toEqual([[row.id,'2026-11-25'],['later','2026-12-02']]);
+  expect(changes[1].row).toMatchObject({title:'Keep title',description:'Keep notes',time:'19:00',seriesId:'series'});
+  expect(data).toEqual(before);
+ });
+ it('changes only one date when future-series editing is off',()=>{
+  const data=initialData(true),row={...data.sessions[0],seriesId:'series'};
+  data.sessions=[row,{...row,id:'later',date:'2026-12-01'}];
+  expect(sessionChanges(data,{...row,date:'2026-12-05'},row,false)).toHaveLength(1);
+ });
 });
