@@ -88,3 +88,6 @@ h1,h2,h3,h4{font-family:var(--font-reading)}
 .public-restyle .course-meta>span:first-child{min-width:0;overflow-wrap:anywhere}
 .public-restyle .course-meta>span:last-child{white-space:nowrap;padding-top:1px}
 .public-restyle .courses-section:before{display:none}
+
+/* Preserve teacher-entered feedback paragraphs, indentation and spacing. */
+.feedback-text{white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4}
