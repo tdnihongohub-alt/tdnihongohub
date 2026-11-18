@@ -8,3 +8,11 @@ export function assignmentForStudent(a:Row,data:Data,studentId:string){
 export function validateAssignmentBatch(a:Row,data:Data){
  if(a.batchId&&!data.batches.some(b=>b.id===a.batchId&&b.courseId===a.courseId))throw Error('Choose a batch belonging to this course.');
 }
+
+export function assignmentLessonChoices(data:Data,courseId:string,batchId:string){
+ return data.lessons.filter(l=>l.courseId===courseId&&(!l.batchId||l.batchId===batchId));
+}
+
+export function validateAssignmentLesson(a:Row,data:Data){
+ if(a.lessonId&&!assignmentLessonChoices(data,a.courseId,a.batchId||'').some(l=>l.id===a.lessonId))throw Error('Choose a week from the selected course and batch.');
+}
