@@ -9,6 +9,7 @@ import { parseSriLanka, sriLankaInput } from './assignment-scheduling';
 import type { FormQuestion } from './assignment-scheduling';
 import { FormQuestionBuilder } from './FormQuestionBuilder';
 import { DeleteLessonButton } from './DeleteLessonButton';
+import { isRecordingRemoved } from './recording-removal';
 import { lessonContentPlan, recordingThumbnail } from './lesson-content';
 import './lesson-content.css';
 import { moduleLessons, nextWeekNumber, weekGroups } from './weekly-learning';
@@ -24,11 +25,11 @@ export function LessonEditor({row,onClose,initialCourseId='',initialBatchId='',i
  return <Modal title={row?'Edit lesson & recording':'Create lesson & recording'} onClose={onClose}><form onSubmit={async e=>{e.preventDefault();setError('');setBusy(true);try{
   const quizId=quizChoice==='__new__'?uid('ASN-'):quizChoice;
   const lesson:Row={...v,id,quizState:quizChoice?'linked':'coming_soon',quizId};
-  if(quizChoice==='__auto__'){delete lesson.quizState;delete lesson.quizId;}
+  if(quizChoice==='__auto__'){delete lesson.quizState;delete lesson.quizId;}if(lesson.recordingUrl)delete lesson.recordingState;
   const quiz=quizChoice==='__new__'?{id:quizId,title:quizTitle.trim()||`${v.title} — quiz`,courseId:v.courseId,batchId:v.batchId||'',lessonId:id,kind:'form',instructions,worksheetUrl:'',formQuestions:questions,maxMark,published:!!v.published&&quizPublished,allowLate,releaseAt:0,deadlineAt:parseSriLanka(deadline),dueDate:deadline.slice(0,10),createdAt:new Date().toISOString()}:undefined;
   await batch(lessonContentPlan(data,lesson,quiz));notify(v.published?'Lesson published. Students receive the update automatically.':'Lesson template saved as a draft.');onClose();
  }catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>
- <div className="form-body"><p className="form-note">Choose the course and batch, add the recording, and prepare its activity. Empty recordings and quizzes appear as Coming soon when the lesson is published.</p><div className="form-grid">
+ <div className="form-body">{row&&isRecordingRemoved(v,initialBatchId||v.batchId||'')&&<div className="notice-bar"><span>This recording was removed from this week. Paste a new video link to add one again.</span>{!v.batchId&&initialBatchId&&v.recordingUrl&&<button type="button" onClick={()=>set('recordingHiddenInBatches',(v.recordingHiddenInBatches||[]).filter((id:string)=>id!==initialBatchId))}>Show recording in this batch</button>}</div>}<p className="form-note">Choose the course and batch, add the recording, and prepare its activity. Empty recordings and quizzes appear as Coming soon when the lesson is published.</p><div className="form-grid">
  <label className="form-field">Course *<select required value={v.courseId} onChange={e=>{set('courseId',e.target.value);set('batchId','');setQuizChoice('');if(!row)set('weekNumber',nextWeekNumber(data,e.target.value,''));}}><option value="">Choose course</option>{data.courses.map(c=><option value={c.id} key={c.id}>{c.title}</option>)}</select></label>
  <label className="form-field">Batch<select value={v.batchId||''} disabled={!v.courseId} onChange={e=>{set('batchId',e.target.value);setQuizChoice('');if(!row)set('weekNumber',nextWeekNumber(data,v.courseId,e.target.value));if(e.target.value)set('visibility','members');}}><option value="">All batches in this course</option>{data.batches.filter(b=>b.courseId===v.courseId).map(b=><option value={b.id} key={b.id}>{b.name}</option>)}</select></label>
  <label className="form-field">Week number *<input type="number" min="1" max="520" required value={v.weekNumber} onChange={e=>set('weekNumber',Number(e.target.value))}/></label><label className="form-field">Week heading (optional)<input value={v.weekTitle||''} placeholder={v.title||'Uses the lesson title'} onChange={e=>set('weekTitle',e.target.value)}/></label>

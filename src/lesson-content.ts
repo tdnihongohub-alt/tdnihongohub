@@ -2,8 +2,9 @@ import { safeLink, validate, youtubeId } from './domain';
 import type { Data, Row, Table } from './domain';
 import { assignmentForStudent, validateAssignmentBatch } from './assignment-audience';
 import { assignmentReleased } from './assignment-scheduling';
+import { isRecordingRemoved } from './recording-removal';
 
-export function recordingThumbnail(lesson:Row){return safeLink(lesson.thumbnailUrl||'')||(youtubeId(lesson.recordingUrl||'')?`https://i.ytimg.com/vi/${youtubeId(lesson.recordingUrl)}/hqdefault.jpg`:'');}
+export function recordingThumbnail(lesson:Row){return isRecordingRemoved(lesson)?'':safeLink(lesson.thumbnailUrl||'')||(youtubeId(lesson.recordingUrl||'')?`https://i.ytimg.com/vi/${youtubeId(lesson.recordingUrl)}/hqdefault.jpg`:'');}
 export function lessonQuiz(data:Data,lesson:Row,studentId:string,now=Date.now()){
  if(lesson.quizState==='coming_soon')return undefined;
  return data.assignments.find(a=>(lesson.quizId?a.id===lesson.quizId:a.lessonId===lesson.id)&&a.kind==='form'&&a.courseId===lesson.courseId&&a.formQuestions?.length>0&&assignmentReleased(a,now)&&assignmentForStudent(a,data,studentId));

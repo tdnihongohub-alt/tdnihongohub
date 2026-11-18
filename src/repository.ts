@@ -8,6 +8,7 @@ import { registrationApproval, studentDeletion } from './registration-approval';
 import { sameSession, validateTimetableChanges } from './timetable-management';
 import type { TimetableChange } from './timetable-management';
 import { lessonDeletionPlan, sameLessonRecord } from './lesson-deletion';
+import { recordingRemovalUpdates, sameRecordingSource } from './recording-removal';
 export type Identity={uid:string;email:string;displayName:string;verified:boolean;teacher:boolean};
 export async function readRows(table:Table,...filters:QueryConstraint[]):Promise<Row[]> { if(!db)return [];const result=await getDocs(query(collection(db,table),...filters));return result.docs.map(d=>({...d.data(),id:d.id})); }
 async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'communityLinks'):Promise<Row[]>{
@@ -50,6 +51,19 @@ const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof
 export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
 export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'||table==='feeMonths'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This financial record has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:table==='payments'?'payment_deleted':'monthly_fee_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
 export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
+export async function removeRecording(original:Row,batchId:string,actor:string){
+ if(!db)throw Error('Firebase is not configured.');
+ await runTransaction(db,async tx=>{
+  const ref=doc(db!,'lessons',original.id),snapshot=await tx.get(ref);
+  if(!snapshot.exists())throw Error('The lesson could not be found. Refresh the class page.');
+  const current={...snapshot.data(),id:snapshot.id} as Row;
+  if(!sameRecordingSource(current,original))throw Error('This recording has changed. Refresh and check the selected copy before removing it.');
+  const updates=recordingRemovalUpdates(current,batchId);
+  tx.update(ref,updates);
+  tx.set(doc(db!,'audit',uid()),clean({action:'recording_removed_from_week',recordId:original.id,batchId:batchId||current.batchId||'',before:current,after:{...current,...updates},actor,at:new Date().toISOString()}));
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
 export async function deleteLesson(original:Row,actor:string){
  if(!db)throw Error('Firebase is not configured.');
  await runTransaction(db,async tx=>{
