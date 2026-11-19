@@ -1,0 +1,127 @@
+/* Keep mobile rules after the desktop themes so controls do not get squeezed. */
+@media(max-width:800px){
+ .landscape-hero .hero-grid,.landscape-hero .hero-copy,.landscape-hero .hero-level-picker{min-width:0;max-width:100%}
+ .hero-japanese-heading{white-space:normal}
+ .landscape-hero .hero-actions{flex-wrap:wrap}
+ .landscape-hero .hero-level-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+ .landscape-hero .hero-level-buttons button{min-width:0;white-space:normal;overflow-wrap:anywhere;flex-wrap:wrap}
+ .landscape-hero .hero-level-buttons button>span{white-space:normal;overflow-wrap:anywhere}
+ .landscape-hero .guided-culture-hero{min-width:0;max-width:100%}
+ .sakura-classroom .guided-culture-hero .culture-image-frame{left:0;right:0}
+ .hero-feature-cards>a>span:nth-child(2){min-width:0;overflow-wrap:anywhere}
+ .hero-3d-controls>span{display:none}
+ .hero-3d-controls{position:relative;left:auto;right:auto;bottom:auto;justify-content:flex-end;padding:0 20px}
+ .hero-3d-controls button{font-size:12px;min-height:44px;padding:10px 14px}
+}
+@media(max-width:720px){
+ .workspace .workspace-main,.workspace .workspace-content,.workspace .workspace-content>*{min-width:0;max-width:100%}
+ .workspace .workspace-main{margin-left:0}
+ .workspace .workspace-content{padding:20px 16px}
+ .workspace .workspace-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 16px;height:auto;min-height:66px}
+ .workspace-top>.actions{min-width:0;flex-wrap:nowrap;gap:6px}
+ .workspace-top>.actions:first-child>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+ .workspace-top i{margin:0 4px}
+ .workspace-top .today-label{display:none}
+ .workspace .workspace-top .icon-button,.workspace .workspace-top .theme-toggle{min-width:44px;min-height:44px;flex-shrink:0}
+ .workspace .workspace-top .theme-toggle>span{display:none}
+ .workspace .sidebar{width:min(290px,calc(100vw - 32px));height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(20px,env(safe-area-inset-bottom));z-index:80}
+ .workspace .sidebar-backdrop{z-index:79}
+ body:has(.workspace .sidebar.open){overflow:hidden}
+ .workspace .sidebar nav a{min-height:44px;font-size:14px}
+ .workspace .sidebar-bottom{flex-shrink:0}
+ .workspace .toolbar{min-width:0;max-width:100%;align-items:stretch}
+ .workspace .toolbar>*,.workspace .toolbar .actions{min-width:0;max-width:100%}
+ .workspace .toolbar>.search-box,.workspace .toolbar>select,.workspace .toolbar>.timetable-date-picker{flex:1 1 100%;width:100%;max-width:100%}
+ .workspace .toolbar>.actions{flex-wrap:wrap;width:100%}
+ .workspace .toolbar .filter-tabs.inline{flex:1 1 100%;justify-content:space-between}
+ .workspace .filter-tabs button,.workspace .weekly-tabs button{min-height:44px;font-size:13px}
+ .workspace .panel,.workspace .table-wrap{min-width:0;max-width:100%}
+ .workspace .table-wrap{overflow-x:auto;overscroll-behavior-inline:contain}
+ .workspace .table-wrap table{min-width:580px}
+ .workspace .panel-heading{flex-wrap:wrap;gap:12px}
+ .workspace :is(.list-row,.queue-row){flex-wrap:wrap;gap:10px}
+ .workspace :is(.list-row,.queue-row)>div:first-of-type{min-width:min(160px,100%)}
+ .workspace :is(.list-row,.queue-row) strong,.workspace :is(.list-row,.queue-row) small{overflow-wrap:anywhere}
+ .workspace .row-actions{flex-wrap:wrap;gap:8px}
+ .workspace .weekly-resource{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start}
+ .workspace .weekly-recording-thumb{width:72px;max-width:100%}
+ .workspace .weekly-resource>div{min-width:0;grid-column:2}
+ .workspace .weekly-resource>:is(button,a,.coming-soon){grid-column:2;justify-self:start;max-width:100%;white-space:normal;min-height:44px}
+ .workspace .weekly-resource strong{font-size:15px}
+ .workspace .weekly-resource small{font-size:13px}
+ .workspace .weekly-resource-heading{flex-wrap:wrap}
+ .workspace .weekly-resource-heading .text-link{min-height:44px}
+ .workspace .weekly-section-body{padding-inline:14px}
+ .workspace .weekly-module-banner .actions>*{max-width:100%;white-space:normal}
+ .workspace .timetable-month-panel{overflow-x:auto;overscroll-behavior-inline:contain}
+ .workspace .timetable-month-panel .month-grid{min-width:630px;grid-template-columns:repeat(7,minmax(0,1fr))}
+ .workspace .timetable-month-panel .calendar-event{height:auto;min-height:44px;font-size:12px;line-height:1.5;padding:8px 5px;white-space:normal;overflow-wrap:anywhere}
+ .workspace .timetable-cell-date .icon-button{min-height:36px;min-width:36px}
+ .workspace .agenda-day{flex-wrap:wrap;gap:10px;line-height:1.6}
+ .workspace .timetable-week-tools,.workspace .timetable-week-tools>.actions{min-width:0;flex-wrap:wrap}
+ .workspace .timetable-week-tools strong{flex-wrap:wrap;line-height:1.6}
+ .workspace .timetable-week-tools .button{white-space:normal;min-height:44px}
+ .workspace .form-grid{grid-template-columns:minmax(0,1fr)}
+ .workspace :is(input,select,textarea),.public-restyle :is(input,select,textarea){font-size:16px;max-width:100%}
+ .workspace :is(input,select),.public-restyle :is(input,select){min-height:44px}
+ .workspace input[type=checkbox],.public-restyle input[type=checkbox]{min-height:20px;width:20px}
+ .workspace .form-field,.workspace .form-field>span{font-size:14px}
+ .workspace .form-field small{font-size:12px;line-height:1.6}
+ .workspace .modal{max-width:calc(100vw - 20px);max-height:calc(100dvh - 24px);margin:auto;overflow-y:auto;overscroll-behavior:contain}
+ .workspace .modal-heading,.workspace .form-body{padding:18px}
+ .workspace .modal-heading{gap:12px}
+ .workspace .modal-heading h2{min-width:0;overflow-wrap:anywhere;font-size:18px;line-height:1.5}
+ .workspace .form-footer{flex-wrap:wrap;padding:16px 18px;gap:10px}
+ .workspace .form-footer .button{min-height:44px;white-space:normal}
+ .workspace .quiz-options{grid-template-columns:minmax(0,1fr)}
+ .workspace .quiz-options button{min-width:0;overflow-wrap:anywhere;min-height:48px}
+ .toast{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));max-width:none;font-size:14px}
+}
+@media(max-width:720px){
+ .public-header{height:auto;min-height:0}
+ .public-header .container.header-inner{height:auto;min-height:0;padding:12px 16px;grid-template-columns:minmax(0,1fr) 44px;gap:10px 12px;position:relative}
+ .public-header .header-inner>.brand{grid-column:1;grid-row:1;max-width:100%}
+ .public-header .brand .brand-name{font-size:14px}
+ .public-header .brand .brand-name>b{font-size:12px;letter-spacing:1px}
+ .public-header .brand-image-shell{width:40px;height:40px}
+ .public-header .brand .brand-wordmark>i{font-size:6px;display:block}
+ .public-header .header-inner>.mobile-menu{grid-column:2;grid-row:1;width:44px;height:44px;justify-self:end}
+ .public-header .header-actions{grid-column:1/-1;grid-row:2;justify-self:stretch;display:flex;flex-wrap:wrap;gap:8px}
+ .public-header .header-social-links{position:static;gap:6px;margin-right:auto}
+ .public-header .header-social-links .hero-whatsapp-menu{position:static;margin:0;padding:0}
+ .public-header .header-social-links .hero-social-icon{width:40px;height:44px}
+ .public-header .header-login,.public-header .public-sign-out{min-height:44px;font-size:12px;padding:10px;flex:1 0 auto}
+ .public-header .header-inner>nav{top:100%;width:100%;max-height:calc(100dvh - 140px);overflow-y:auto;padding:16px}
+ .public-header .header-inner>nav.open{gap:0}
+ .public-header .header-inner>nav a{display:flex;align-items:center;min-height:44px;width:100%;font-size:15px}
+ .public-header .hero-whatsapp-dropdown{position:absolute;top:100%;left:12px;right:12px;width:auto;max-width:none;max-height:calc(100dvh - 155px);overflow-y:auto;margin:0}
+ .public-header .hero-whatsapp-dropdown>a{min-height:52px}
+ .public-header .hero-whatsapp-dropdown strong{font-size:14px}
+ .public-header .hero-whatsapp-dropdown small{font-size:12px}
+ .landscape-hero .hero-copy>p{font-size:16px;line-height:1.65}
+ .landscape-hero .hero-actions{display:grid;grid-template-columns:1fr;gap:8px}
+ .landscape-hero .hero-actions .button.large{min-height:44px;font-size:14px;white-space:normal}
+ .landscape-hero .hero-level-buttons{grid-template-columns:1fr}
+ .landscape-hero .hero-level-buttons button{min-height:44px;justify-content:flex-start;font-size:12px;padding:10px 12px}
+ .landscape-hero .hero-level-buttons button>span{font-size:14px}
+ .landscape-hero .hero-learning-tags>span{font-size:12px;white-space:normal}
+ .landscape-hero .selected-course-link strong{font-size:13px}
+ .landscape-hero .eyebrow{font-size:10px;line-height:1.7;flex-wrap:wrap}
+ .home-community-counts .community-channel-counts{grid-template-columns:1fr}
+ .home-community-counts .community-count-card{flex-direction:row;align-items:center;flex-wrap:wrap}
+ .home-community-counts .community-count-card>a{margin:0;min-height:44px;font-size:14px}
+ .home-community-counts .community-count-label{font-size:14px}
+ .home-community-counts .community-squad>span{font-size:14px}
+ .home-community-counts .community-squad>small{font-size:12px}
+ .home-community-counts .community-squad:last-child{grid-template-columns:auto 1fr}
+ .home-community-counts .community-squad:last-child>strong,.home-community-counts .community-squad:last-child>small{grid-column:1/-1}
+ .public-restyle .section-heading{flex-wrap:wrap;gap:20px}
+ .public-restyle .section-heading>*{min-width:0;max-width:100%}
+ .public-restyle .course-meta{grid-template-columns:minmax(0,1fr)}
+ .public-restyle .course-card-body,.public-restyle .home-free-copy{overflow-wrap:anywhere}
+ .public-restyle .course-card-bottom{flex-wrap:wrap;gap:12px}
+ .public-restyle .home-closing .button{min-height:44px;font-size:14px}
+ .public-restyle iframe{width:100%;max-width:100%;aspect-ratio:16/9;height:auto}
+ .public-restyle .toolbar{flex-wrap:wrap}
+ .public-restyle .toolbar>*{min-width:0;max-width:100%;flex:1 1 100%}
+}
