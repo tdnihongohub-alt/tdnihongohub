@@ -2,7 +2,7 @@ import { beforeEach,describe,expect,it,vi } from 'vitest';
 const mock=vi.hoisted(()=>({set:vi.fn(),commit:vi.fn().mockResolvedValue(undefined),setDoc:vi.fn().mockResolvedValue(undefined),listener:vi.fn(),stop:vi.fn()}));
 vi.mock('../src/firebase',()=>({db:{},publicDb:null}));
 vi.mock('@firebase/firestore',()=>({doc:(_db:unknown,table:string,id:string)=>({path:`${table}/${id}`}),writeBatch:()=>({set:mock.set,commit:mock.commit}),setDoc:mock.setDoc,onSnapshot:mock.listener,collection:vi.fn(),getDoc:vi.fn(),getDocs:vi.fn(),query:vi.fn(),where:vi.fn(),deleteDoc:vi.fn(),runTransaction:vi.fn()}));
-import { batchSave, save, subscribeLearningUpdates } from '../src/repository';
+import { batchSave, save, subscribeLearningUpdates, subscribeCommunityStats } from '../src/repository';
 describe('live learning updates',()=>{
  beforeEach(()=>{vi.clearAllMocks();mock.listener.mockReturnValue(mock.stop);});
  it('commits a recording and its quiz with one update signal in the same batch',async()=>{
@@ -19,5 +19,15 @@ describe('live learning updates',()=>{
   const update=vi.fn(),error=vi.fn();const stop=subscribeLearningUpdates(update,error);
   expect(mock.listener.mock.calls[0][0]).toEqual({path:'settings/learningRevision'});
   mock.listener.mock.calls[0][1]();expect(update).toHaveBeenCalledOnce();stop();expect(mock.stop).toHaveBeenCalledOnce();
+ });
+ it('streams only the public community counts and handles missing records and errors',()=>{
+  const update=vi.fn(),error=vi.fn();const stop=subscribeCommunityStats(update,error);
+  expect(mock.listener.mock.calls[0][0]).toEqual({path:'settings/communityStats'});
+  const receive=mock.listener.mock.calls[0][1];
+  receive({exists:()=>true,id:'communityStats',data:()=>({counts:{youtube:1500}})});
+  expect(update).toHaveBeenLastCalledWith({id:'communityStats',counts:{youtube:1500}});
+  receive({exists:()=>false});expect(update).toHaveBeenLastCalledWith(null);
+  const offline=Error('offline');mock.listener.mock.calls[0][2](offline);expect(error).toHaveBeenCalledWith(offline);
+  stop();expect(mock.stop).toHaveBeenCalledOnce();
  });
 });

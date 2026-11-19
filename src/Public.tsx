@@ -1,9 +1,9 @@
-import { HomeGuides } from './LearningGuides';
+import { HomeCommunity } from './CommunityStats';
 import { registrationBatches, validateRegistration, registrationComplete } from './student-registration';
 import { loginUrl, loginDestination } from './login-navigation';
-import { HomeBenefits, HomePortalTour, HomeFreeShelf, HomeJoining, HomeQuestions, HomeClosing } from './HomeExperience';
+import { HomeFreeShelf, HomeClosing } from './HomeExperience';
 import { ExamExplorer, CrossedFlags } from './ExamExplorer';
-import { PublicCommunity, PublicGroups, HeroSocialLinks } from './CommunityLinks';
+import { PublicGroups, HeroSocialLinks } from './CommunityLinks';
 import { brandDefaults, logoSource } from './brand';
 import { SakuraScene } from './SakuraScene';
 import { TiltCard } from './TiltCard';
@@ -36,14 +36,9 @@ export function Home(){
  </div><div className="hero-3d-controls"><span>桜の風 · A LITTLE WIND, A LITTLE WONDER</span><button type="button" aria-pressed={petalsPaused} onClick={()=>setPetalsPaused(!petalsPaused)}>{petalsPaused?"Let petals drift":"Pause petals"}<span aria-hidden="true">{petalsPaused?"▷":"Ⅱ"}</span></button></div></section>
  <div className="public-restyle home-restyle"><section className="benefit-strip"><div className="container"><span><Video size={18}/>Learn live on Zoom</span><span><Play size={18}/>Revisit every recording</span><span><BookOpen size={18}/>Put it into practice</span><span><Globe2 size={18}/>Your pace. Your place.</span></div></section>
  <section className="section container courses-section"><div className="section-heading"><div><div className="eyebrow">01 / FIND YOUR STARTING POINT</div><h2>Different goals.<br/><span className="serif-accent">The same first step.</span></h2></div><div className="section-heading-aside"><p>A foundation. A next level. An exam goal.<br/>Find a class that moves you forward.</p><Link className="text-link" to="/courses">Explore all classes <ArrowUpRight size={17}/></Link></div></div><div className="course-grid">{data.courses.filter(c=>c.published&&c.access==='paid').slice(0,3).map(c=><CourseCard key={c.id} course={c}/>)}</div></section>
- <HomeGuides/>
- <HomeBenefits/>
- <ExamExplorer/>
- <HomePortalTour/>
  <HomeFreeShelf/>
- <HomeJoining/>
- <HomeQuestions/>
- <PublicCommunity/>
+ <HomeCommunity/>
+ <section className="home-exam-summary container"><details><summary><GraduationCap size={23}/><div><strong>Choosing a Japanese exam?</strong><small>Explore JLPT, JFT-Basic, NAT-TEST, JLCT and J.TEST when you need them.</small></div><span aria-hidden="true">+</span></summary><ExamExplorer/></details></section>
  <HomeClosing/></div>
  </main></PublicLayout>;
 }
