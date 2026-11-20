@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppContext } from '../src/store';
 import { initialData } from '../src/seed';
-import { Home, Courses, CourseDetail, FreeLessons, About, Login } from '../src/Public';
+import { Home, Courses, CourseDetail, FreeLessons, About, Login, CommunityPage } from '../src/Public';
 import { TeacherHome, TeacherRecords, AccessRequests, Submissions } from '../src/Teacher';
 import { Attendance, BrandSettings, Payments, Schedule, Students } from '../src/Administration';
 import { StudentHome, MyClasses, LearningClass, StudentAssignments, StudentPayments } from '../src/Student';
@@ -21,6 +21,13 @@ function render(node:React.ReactNode,path='/',pattern='*',sample=true,prepare?:(
  return renderToString(<AppContext.Provider value={context}><MemoryRouter initialEntries={[path]}><Routes><Route path={pattern} element={node}/></Routes></MemoryRouter></AppContext.Provider>);
 }
 describe('public website',()=>{
+ it('links community from the main navigation and keeps the community figures accessible',()=>{
+  const html=render(<CommunityPage/>,'/community');
+  const nav=html.slice(html.indexOf('<nav id="public-navigation"'),html.indexOf('</nav>'));
+  expect(nav).toContain('href="/community"');expect(nav).toContain('Our community');
+  expect(nav).not.toContain('href="/about"');expect(nav).not.toContain('href="/contact"');
+  expect(html).toContain('Learn with the squad.');expect(html).toContain('1,140');expect(html).toContain('1,260');
+ });
  it('keeps privacy in the footer and shows a labelled sign-out action',()=>{const html=render(<Home/>);expect(html).toContain('public-sign-out');expect(html).toContain('>Sign out</button>');expect((html.match(/Privacy Policy/g)||[]).length).toBe(1);expect(html.indexOf('Privacy Policy')).toBeGreaterThan(html.indexOf('<footer'));});
  it('keeps the homepage focused on classes, free recordings and the community',()=>{const html=render(<Home/>);expect(html).toContain('Explore all classes');expect(html).toContain('JLPT N5 Paper Discussion');expect(html).toContain('Learn with the squad.');expect(html).toContain('YouTube subscribers');expect(html).toContain('Choosing a Japanese exam?');for(const removed of ['Make a little progress today.','WHAT YOU GET WITH TD NIHONGO HUB','Illustrative portal preview','Save a course or request access','A FEW HELPFUL ANSWERS'])expect(html).not.toContain(removed);expect(html).toContain('href="/learn"');expect(html).not.toContain('Guaranteed results');});
  it('renders the brand and class promotion without invented claims',()=>{const html=render(<Home/>);expect(html).toContain('TD NIHONGO');expect(html).toContain('Find your class');expect(html).toContain('Learn Japanese.');expect(html).toContain('日本語を、あなたの力に。');expect(html).toContain('Pause petals');expect(html).toContain('Live Zoom classes');expect(html).not.toContain('100% pass');});

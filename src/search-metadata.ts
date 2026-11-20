@@ -5,6 +5,7 @@ export const publicPages:Record<string,{title:string;description:string}>={
  '/courses':{title:'Japanese classes',description:'Explore Japanese courses at TD Nihongo HUB. Find class information, study goals and teacher-approved enrolment.'},
  '/free-lessons':{title:'Free Japanese video lessons',description:'Watch public TD Nihongo HUB lessons in grammar, kanji, conversation, Japanese culture and exam preparation.'},
  '/learn':{title:'Japanese learning guides',description:'Read free Japanese guides with worked examples and practice answers. Study kana, introductions, particles and N5/N4 preparation.'},
+ '/community':{title:'Our community',description:'Join TD Nihongo HUB on YouTube and WhatsApp. Find your Japanese learning squad and follow our latest community updates.'},
  '/about':{title:'About TD Nihongo HUB',description:'Learn about the Japanese teaching approach at TD Nihongo HUB and explore live classes, recordings and guided practice.'},
  '/contact':{title:'Contact TD Nihongo HUB',description:'Contact TD Nihongo HUB for Japanese class enquiries, enrolment help, account support and learning-material corrections.'},
  '/privacy':{title:'Privacy Policy',description:'Read how TD Nihongo HUB handles account details, class records, learning activities, payments and third-party services.'},
