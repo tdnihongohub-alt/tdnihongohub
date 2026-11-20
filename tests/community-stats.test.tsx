@@ -14,7 +14,7 @@ function render(node:React.ReactNode,row?:Row,teacher=false){
 }
 describe('homepage community figures',()=>{
  it('starts with the supplied figures and does not combine overlapping communities',()=>{
-  expect(communityCounts()).toEqual({youtube:1140,channel:1260,al2027:159,n4:150,n5:110,n3:65,al2028:40});
+  expect(communityCounts()).toEqual({youtube:1140,channel:1260,al2027:159,n4:150,n5:110,n3:65,al2028:40,ol:0});
   const html=render(<HomeCommunity/>);
   for(const value of ['1,140','1,260','159','150','110','65','40'])expect(html).toContain(value);
   for(const label of ['YouTube subscribers','WhatsApp channel followers','2027 A/L squad','2028 A/L squad','N3 squad','N4 squad','N5 squad'])expect(html).toContain(label);
@@ -37,8 +37,8 @@ describe('homepage community figures',()=>{
   expect(validateCommunityCounts({...communityCountDefaults,youtube:0})).toMatchObject({youtube:0});
   expect(communityCounts({id:'communityStats',counts:{youtube:-5}}).youtube).toBe(1140);
  });
- it('provides seven editable count fields only to the teacher',()=>{
-  const html=render(<CommunityStatsEditor/>,undefined,true);expect((html.match(/type="number"/g)||[]).length).toBe(7);expect(html).toContain('Save community counts');expect(html).toContain('not automatically fetched');
+ it('provides eight editable count fields only to the teacher',()=>{
+  const html=render(<CommunityStatsEditor/>,undefined,true);expect((html.match(/type="number"/g)||[]).length).toBe(8);expect(html).toContain('Save community counts');expect(html).toContain('not automatically fetched');
   expect(render(<CommunityStatsEditor/>)).toBe('');
  });
 });

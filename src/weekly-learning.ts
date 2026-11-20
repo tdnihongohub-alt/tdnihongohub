@@ -1,3 +1,4 @@
+import { openFreeCourse } from './free-squads';
 import type { Data, Row } from './domain';
 import { assignmentForStudent } from './assignment-audience';
 import { assignmentReleased } from './assignment-scheduling';
@@ -6,7 +7,7 @@ export type TeachingModule={id:string;courseId:string;batchId:string;title:strin
 export function teachingModules(data:Data,studentId:string,uid:string,teacher=false):TeachingModule[]{
  const batches=teacher?data.batches:data.batches.filter(b=>data.students.some(s=>s.id===studentId&&s.active)&&data.enrollments.some(e=>e.studentId===studentId&&e.batchId===b.id&&e.status==='active'));
  const modules:TeachingModule[]=batches.flatMap(b=>{const c=data.courses.find(c=>c.id===b.courseId);return c?[{id:`batch:${b.id}`,courseId:c.id,batchId:b.id,title:b.name,category:c.category,active:!!b.active}]:[];});
- const courses=teacher?data.courses.filter(c=>!data.batches.some(b=>b.courseId===c.id)):data.courses.filter(c=>!modules.some(m=>m.courseId===c.id)&&(data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===c.id&&a.active)||c.access==='free'&&data.savedCourses.some(s=>s.uid===uid&&s.courseId===c.id)));
+ const courses=teacher?data.courses.filter(c=>!data.batches.some(b=>b.courseId===c.id)):data.courses.filter(c=>!modules.some(m=>m.courseId===c.id)&&(data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===c.id&&a.active)||openFreeCourse(c)&&data.savedCourses.some(s=>s.uid===uid&&s.courseId===c.id)));
  modules.push(...courses.map(c=>({id:`course:${c.id}`,courseId:c.id,batchId:'',title:c.title,category:c.category,active:c.active!==false})));return modules.sort((a,b)=>a.title.localeCompare(b.title,undefined,{numeric:true}));
 }
 export function moduleLessons(data:Data,courseId:string,batchId:string,studentId:string,teacher=false){return data.lessons.filter(l=>l.courseId===courseId&&(!l.batchId||l.batchId===batchId)&&(teacher||l.published&&assignmentForStudent(l,data,studentId))).sort((a,b)=>(Number(a.weekNumber)||Infinity)-(Number(b.weekNumber)||Infinity)||`${a.module}|${a.title}`.localeCompare(`${b.module}|${b.title}`,undefined,{numeric:true}));}

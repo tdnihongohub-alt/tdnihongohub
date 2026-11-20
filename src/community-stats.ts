@@ -1,6 +1,6 @@
 import type { Row } from './domain';
 
-export const communityCountDefaults={youtube:1140,channel:1260,al2027:159,n4:150,n5:110,n3:65,al2028:40};
+export const communityCountDefaults={youtube:1140,channel:1260,al2027:159,n4:150,n5:110,n3:65,al2028:40,ol:0};
 export type CommunityCountKey=keyof typeof communityCountDefaults;
 export const communityCountFields:{key:CommunityCountKey;label:string}[]=[
  {key:'youtube',label:'YouTube subscribers'},
@@ -10,6 +10,7 @@ export const communityCountFields:{key:CommunityCountKey;label:string}[]=[
  {key:'n5',label:'N5 squad'},
  {key:'n3',label:'N3 squad'},
  {key:'al2028',label:'2028 A/L squad'},
+ {key:'ol',label:'O/L squad'},
 ];
 const validCount=(value:unknown):value is number=>typeof value==='number'&&Number.isSafeInteger(value)&&value>=0&&value<=1_000_000_000;
 export function communityCounts(row?:Row|null){

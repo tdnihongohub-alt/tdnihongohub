@@ -11,11 +11,15 @@ import type { Row } from './domain';
 import { Form, Panel } from './ui';
 import './community-stats.css';
 
-export function HomeCommunity(){
+export function useCommunityCounts(){
  const {data,demo}=useApp();const saved=data.settings.find(s=>s.id==='communityStats');
  const [live,setLive]=useState<Row|null|undefined>(undefined);
  useEffect(()=>{setLive(undefined);if(demo||!configured)return;return subscribeCommunityStats(setLive,()=>setLive(undefined));},[demo]);
  const row=demo||live===undefined?saved:live;const counts=communityCounts(row);
+ return {row,counts};
+}
+export function HomeCommunity(){
+ const {data}=useApp();const {row,counts}=useCommunityCounts();
  const brand={...brandDefaults,...data.settings.find(s=>s.id==='brand')};
  const youtube=publicChannelLink(brand.youtube,'youtube'),whatsapp=publicChannelLink(brand.whatsappChannel,'whatsapp');
  const updated=row?.updatedAt?new Date(row.updatedAt):undefined;

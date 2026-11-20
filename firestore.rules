@@ -8,7 +8,7 @@ service cloud.firestore {
   function ownStudent(id) { return verified() && studentId() == id; }
   function activeStudent() { return verified() && get(/databases/$(database)/documents/students/$(studentId())).data.active == true; }
   function courseAllowed(id) {
-   return verified() && ((get(/databases/$(database)/documents/courses/$(id)).data.access == 'free' && get(/databases/$(database)/documents/courses/$(id)).data.published == true)
+   return verified() && ((get(/databases/$(database)/documents/courses/$(id)).data.access == 'free' && get(/databases/$(database)/documents/courses/$(id)).data.get('approvalRequired',false) == false && get(/databases/$(database)/documents/courses/$(id)).data.published == true)
     || (activeStudent() && get(/databases/$(database)/documents/courseAccess/$(studentId() + '_' + id)).data.active == true));
   }
   function batchAllowed(id) { return activeStudent() && get(/databases/$(database)/documents/enrollments/$(studentId() + '_' + id)).data.status == 'active'; }
@@ -49,7 +49,10 @@ service cloud.firestore {
    function validProfile() {
     let d = request.resource.data;
     return signed() && request.auth.uid == id
-     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','preferredBatchId','registrationCompleted','registeredAt'])
+     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','preferredBatchId','registrationCompleted','registeredAt','city','school','candidateType'])
+     && shortString(d.get('city',''),120) && shortString(d.get('school',''),200)
+     && d.get('candidateType','') in ['','school','private']
+     && (d.get('candidateType','') == '' || (d.get('city','').size() > 0 && (d.candidateType == 'private' || d.get('school','').size() > 0)))
      && d.email == request.auth.token.email && shortString(d.displayName,200) && shortString(d.phone,40)
      && d.get('registrationCompleted',false) is bool
      && (d.get('registrationCompleted',false) == false || (d.displayName.size() > 0
@@ -90,6 +93,7 @@ service cloud.firestore {
    allow create: if verified() && id == request.auth.uid + '_' + request.resource.data.courseId
     && request.resource.data.keys().hasOnly(['uid','courseId']) && request.resource.data.uid == request.auth.uid
     && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.access == 'free'
+    && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.get('approvalRequired',false) == false
     && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.published == true;
    allow update: if verified() && resource.data.uid == request.auth.uid && request.resource.data == resource.data;
    allow delete: if teacher() || (verified() && resource.data.uid == request.auth.uid);

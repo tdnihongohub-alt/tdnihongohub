@@ -1,7 +1,8 @@
+import { openFreeCourse } from './free-squads';
 import type { Data, Row } from './domain';
 
 export function availableQuizzes(data:Data){
- const allowed=new Set(data.courses.filter(c=>c.published&&(c.access==='free'||data.courseAccess.some(a=>a.courseId===c.id&&a.active))).map(c=>c.id));
+ const allowed=new Set(data.courses.filter(c=>c.published&&(openFreeCourse(c)||data.courseAccess.some(a=>a.courseId===c.id&&a.active))).map(c=>c.id));
  const groups=new Map<string,{courseId:string;topic:string;questions:Row[]}>();
  for(const question of data.questions.filter(q=>q.published&&allowed.has(q.courseId))){
   const topic=String(question.topic||'General practice');const id=JSON.stringify([question.courseId,topic]);

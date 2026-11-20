@@ -1,6 +1,6 @@
 import type { Data, Row } from './domain';
 
-export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string; preferredBatchId?: string };
+export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string; preferredBatchId?: string; city?:string; school?:string; candidateType?:string };
 
 export function registrationBatches(batches: Row[]) {
   return batches.filter(b => b.active && b.name).sort((a,b) => a.name.localeCompare(b.name));
@@ -25,7 +25,10 @@ export function validateRegistration(values: RegistrationDetails): RegistrationD
   if (!/^\+?[0-9]{9,15}$/.test(phone)) throw Error('Enter a valid phone number, for example 0771234567.');
   if (!Number.isInteger(Number(values.age)) || Number(values.age) < 5 || Number(values.age) > 120) throw Error('Enter your age in years (5–120).');
   if (!values.preferredBatch?.trim() || values.preferredBatch.length > 200) throw Error('Choose your batch.');
-  return { displayName, phone, age: Number(values.age), preferredBatch: values.preferredBatch.trim(), ...(values.preferredBatchId ? {preferredBatchId: values.preferredBatchId} : {}) };
+  const demographics=values.city!==undefined||values.candidateType!==undefined;
+  const city=values.city?.trim()||'',school=values.school?.trim()||'';
+  if(demographics){if(!city||city.length>120)throw Error('Enter your city or town.');if(!['school','private'].includes(values.candidateType||''))throw Error('Choose school student or private candidate.');if(values.candidateType==='school'&&(!school||school.length>200))throw Error('Enter your school name.');}
+  return { ...(demographics?{city,candidateType:values.candidateType,school:values.candidateType==='school'?school:''}:{}), displayName, phone, age: Number(values.age), preferredBatch: values.preferredBatch.trim(), ...(values.preferredBatchId ? {preferredBatchId: values.preferredBatchId} : {}) };
 }
 
 export function requestedBatch(profile: Row, batches: Row[]) {
@@ -37,7 +40,8 @@ export function requestedBatch(profile: Row, batches: Row[]) {
 export function registrationComplete(profile?: Row) {
   if (!profile?.registrationCompleted) return false;
   try {
-    validateRegistration({displayName: profile.displayName, phone: profile.phone, age: profile.age, preferredBatch: profile.preferredBatch});
+    if(!profile.city||!profile.candidateType)return false;
+    validateRegistration({displayName: profile.displayName, phone: profile.phone, age: profile.age, preferredBatch: profile.preferredBatch,city:profile.city,school:profile.school,candidateType:profile.candidateType});
     return true;
   } catch { return false; }
 }

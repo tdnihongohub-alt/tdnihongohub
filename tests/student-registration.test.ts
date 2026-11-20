@@ -14,7 +14,8 @@ describe('student registration', () => {
   it('asks legacy accounts to complete their details without changing their records', () => {
     expect(registrationComplete()).toBe(false);
     expect(registrationComplete({id:'old',displayName:'Old Student',email:'test@example.com',phone:''})).toBe(false);
-    expect(registrationComplete({id:'new',...details,registrationCompleted:true})).toBe(true);
+    expect(registrationComplete({id:'new',...details,registrationCompleted:true})).toBe(false);
+    expect(registrationComplete({id:'new',...details,city:'Kandy',candidateType:'school',school:'Test School',registrationCompleted:true})).toBe(true);
     expect(registrationComplete({id:'incomplete',...details,age:0,registrationCompleted:true})).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import { openFreeCourse } from './free-squads';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Bell, BookOpen, CalendarDays, CheckCircle2, ClipboardCheck, FileText, FolderOpen, Play, Plus, Video } from 'lucide-react';
@@ -22,7 +23,7 @@ export function WeeklyClass({teacher=false}:{teacher?:boolean}){
  const [lessonEdit,setLessonEdit]=useState<Row|undefined|null>(null);const [workEdit,setWorkEdit]=useState<{row?:Row;lessonId:string;kind:string}|null>(null);const [announcementEdit,setAnnouncementEdit]=useState<Row|undefined|null>(null);const [watching,setWatching]=useState<Row|null>(null);const [showPast,setShowPast]=useState(false);const [busy,setBusy]=useState(false);const [expandAll,setExpandAll]=useState<boolean|null>(null);
  useEffect(()=>{if(focusLesson)setWatching({id:focusLesson});},[focusLesson,id]);
  const c=data.courses.find(c=>c.id===id),delivery=data.batches.find(b=>b.id===batchId&&b.courseId===id);
- const allowed=teacher||!!c&&(c.access==='free'||data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===id&&a.active))&&(!batchId||data.enrollments.some(e=>e.studentId===studentId&&e.batchId===batchId&&e.status==='active'));
+ const allowed=teacher||!!c&&(openFreeCourse(c)||data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===id&&a.active))&&(!batchId||data.enrollments.some(e=>e.studentId===studentId&&e.batchId===batchId&&e.status==='active'));
  const lessons=moduleLessons(data,id,batchId,studentId,teacher),weeks=weekGroups(lessons);const completed=(rows:Row[])=>rows.length>0&&rows.every(l=>data.progress.some(p=>p.uid===identity?.uid&&p.lessonId===l.id&&p.complete));const done=weeks.filter(w=>completed(w.lessons)).length;
  const announcements=data.announcements.filter(a=>batchId&&a.batchId===batchId).slice().reverse();const sessions=data.sessions.filter(s=>batchId&&s.batchId===batchId&&(showPast||s.date>=today())).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
  const unseenAnnouncements=announcements.filter(a=>!noticeRead(data,identity?.uid||'',a,'announcement'));const unseenSessions=data.sessions.filter(s=>batchId&&s.batchId===batchId&&s.date>=today()&&!noticeRead(data,identity?.uid||'',s,'session'));

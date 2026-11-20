@@ -17,7 +17,7 @@ export function registrationApproval(data: Data, accountId: string, selectedStud
   if (student?.linkedAccountId && student.linkedAccountId !== accountId) throw Error('This student record is already linked to another account.');
   const changes: {table: Table; row: Row}[] = [];
   if (!student) {
-    student = {id: studentId, fullName: profile.displayName, phone: profile.phone, email: profile.email || '', age: profile.age, registeredOn: today(), active: true};
+    student = {id: studentId, fullName: profile.displayName, phone: profile.phone, email: profile.email || '', age: profile.age,city:profile.city||'',school:profile.school||'',candidateType:profile.candidateType||'', registeredOn: today(), active: true};
   }
   changes.push({table:'students',row:{...student,linkedAccountId:accountId}});
   const enrollmentId = key(studentId, batchId);

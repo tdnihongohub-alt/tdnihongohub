@@ -1,3 +1,4 @@
+import { openFreeCourse } from './free-squads';
 import { collection, doc, getDoc, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch, onSnapshot } from '@firebase/firestore';
 import type { QueryConstraint } from '@firebase/firestore';
 import { db, publicDb } from './firebase';
@@ -35,7 +36,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   const student=await getDoc(doc(db,'students',studentId));if(student.exists())data.students=[{...student.data(),id:student.id}];
   await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
  }
- const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>c.access==='free').map(c=>c.id)])];
+ const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)])];
  for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:t==='lessons'?[where('batchId','==','')]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
   data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
