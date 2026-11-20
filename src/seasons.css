@@ -1,0 +1,48 @@
+/* General intentionally has no palette overrides: it is the original site. */
+html[data-season='spring'],.season-option.spring,.season-preview.spring{--season-accent:#a33167;--season-bright:#f5afcc;--season-wash:#fff7f9;--season-soft:#ffe7ef;--season-line:#edcbd8;--season-deep:#5c2342;--season-night:#241923;--season-night-soft:#402635;--season-night-line:#684458}
+html[data-season='summer'],.season-option.summer,.season-preview.summer{--season-accent:#176b5b;--season-bright:#8ddcc6;--season-wash:#f5fbf7;--season-soft:#e0f2e8;--season-line:#c3dfd2;--season-deep:#17483e;--season-night:#142520;--season-night-soft:#223e34;--season-night-line:#3d6657}
+html[data-season='autumn'],.season-option.autumn,.season-preview.autumn{--season-accent:#a04221;--season-bright:#f5b28b;--season-wash:#fffaf3;--season-soft:#fae6cf;--season-line:#e8cfb3;--season-deep:#5e301e;--season-night:#291f19;--season-night-soft:#483327;--season-night-line:#75533b}
+html[data-season='winter'],.season-option.winter,.season-preview.winter{--season-accent:#32628c;--season-bright:#a3cdf5;--season-wash:#f6f9ff;--season-soft:#e4eefb;--season-line:#c9d8eb;--season-deep:#243e5f;--season-night:#182331;--season-night-soft:#263b52;--season-night-line:#445d7b}
+.season-option.general,.season-preview.general{--season-accent:#ad477b;--season-bright:#eaa0cb;--season-wash:#fffafb;--season-soft:#fbe5f0;--season-deep:#483044;--season-line:#ecdce6}
+.season-options{border:0;margin:0;padding:24px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.season-options legend{padding:24px 24px 0;font-weight:650}
+.season-option{display:flex;flex-direction:column;gap:9px;position:relative;padding:14px;border:2px solid var(--season-line);border-radius:14px;cursor:pointer;min-width:0}
+.season-option:has(input:checked){border-color:var(--season-accent);box-shadow:0 0 0 2px var(--season-soft)}
+.season-option input{align-self:flex-start;accent-color:var(--season-accent);width:17px;height:17px}
+.season-swatch{background:var(--season-soft);color:var(--season-accent);height:75px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;padding:16px;font:500 28px 'Noto Serif JP',serif}
+.season-swatch i{display:block;width:27px;height:27px;background:var(--season-accent);border-radius:50% 50% 50% 6px;transform:rotate(-25deg)}
+.season-option small{font-size:11px;line-height:1.6}.season-option strong{font-size:14px}.season-current{font-size:10px;font-weight:650;color:var(--season-accent);margin-top:auto}
+.season-preview{display:flex;align-items:center;gap:20px;margin:0 24px 24px;padding:22px;border-radius:13px;background:var(--season-soft);border:1px solid var(--season-line);color:var(--season-deep)}
+.season-preview>span{font:500 38px 'Noto Serif JP',serif;flex:none;color:var(--season-accent)}.season-preview p{margin:6px 0;font-size:13px}.season-preview small{font-size:11px}
+.season-preview :is(strong,p,small){color:var(--season-deep)!important}
+.season-current{background:var(--season-soft);color:var(--season-accent)!important;padding:4px 7px;border-radius:5px;align-self:flex-start}
+html[data-season]:not([data-season='general']) .public-restyle{--bloom-rose:var(--season-accent);--bloom-line:var(--season-line);--bloom-wash:var(--season-soft);background:var(--season-wash)}
+html[data-season]:not([data-season='general']) :is(.public-page-head,.home-closing,.public-restyle .course-cover,.public-restyle .course-cover.clay,.public-restyle .course-cover.blue){background:var(--season-soft);border-color:var(--season-line);color:var(--season-deep)}
+html[data-season]:not([data-season='general']) :is(.public-restyle .course-cover .cover-edition,.public-restyle .course-card h3 a,.public-restyle .course-card-bottom,.public-restyle .course-meta){color:var(--season-accent)}
+html[data-season]:not([data-season='general']) :is(.public-restyle .course-card,.public-restyle .panel,.community-count-card,.home-exam-summary>details){border-color:var(--season-line)}
+html[data-season]:not([data-season='general']) .landscape-hero{background:var(--season-wash)}
+html[data-season]:not([data-season='general']) .hero-copy :is(h1 em,.hero-japanese-heading,.eyebrow){color:var(--season-accent)}
+html[data-season]:not([data-season='general']) .hero-3d-controls{color:var(--season-accent)}
+html[data-season]:not([data-season='general']) .culture-discovery{background:var(--season-wash);border-color:var(--season-line)}
+html[data-season]:not([data-season='general']) .culture-tabs button.active{background:var(--season-accent);border-color:var(--season-accent);color:#fff}
+html[data-season]:not([data-season='general']) :is(.culture-discovery p,.discovery-title,.culture-tabs button){color:var(--season-deep)}
+html[data-season]:not([data-season='general']) .hero-feature-cards>a{border-color:var(--season-line)}
+html[data-season]:not([data-season='general']) .workspace{--teacher-bg:var(--season-wash);--teacher-soft:var(--season-soft);--teacher-accent:var(--season-accent);--teacher-line:var(--season-line);--teacher-welcome:var(--season-soft);--studio-bg:var(--season-wash);--studio-soft:var(--season-soft);--studio-rose:var(--season-accent);--studio-line:var(--season-line);--studio-button:var(--season-accent);--garden-bg:var(--season-soft);--accent:var(--season-accent)}
+html[data-season]:not([data-season='general']) .workspace :is(.workspace-main,.workspace-content){background:var(--season-wash)}
+html[data-season]:not([data-season='general']) :is(.workspace,.public-restyle,.hero-copy) :is(.button.primary,.button.primary:hover){background:var(--season-accent);border-color:var(--season-accent);color:#fff}
+html[data-season]:not([data-season='general']) .workspace :is(.text-link,.eyebrow,.desk-section-number,.garden-greeting){color:var(--season-accent)}
+html[data-season]:not([data-season='general']) .workspace .sidebar nav a.active{background:var(--season-soft);color:var(--season-accent);box-shadow:inset 3px 0 var(--season-accent);border-color:var(--season-line)}
+html[data-season]:not([data-season='general']) .workspace :is(.page-head,.weekly-module-banner,.study-garden-welcome){background:var(--season-soft);border-color:var(--season-line)}
+html[data-season]:not([data-season='general']) .workspace :is(.weekly-module-banner h1,.weekly-module-banner>span){color:var(--season-deep)}
+html[data-season]:not([data-season='general']) .workspace :is(.module-cover,.class-card-cover){background:var(--season-soft);color:var(--season-deep)}
+html[data-season]:not([data-season='general']) .workspace .module-cover :is(h2,span,svg){color:var(--season-deep)}
+/* Keep personal dark mode dark, with the chosen season's accent. */
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark']{--teacher-bg:var(--season-night);--teacher-soft:var(--season-night-soft);--teacher-accent:var(--season-bright);--teacher-line:var(--season-night-line);--teacher-welcome:var(--season-night-soft);--studio-bg:var(--season-night);--studio-soft:var(--season-night-soft);--studio-rose:var(--season-bright);--studio-line:var(--season-night-line);--garden-bg:var(--season-night-soft)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] :is(.workspace-main,.workspace-content){background:var(--season-night)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] :is(.sidebar,.workspace-top,.panel,.stat,.teaching-module-card){background:var(--season-night);border-color:var(--season-night-line)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] :is(.page-head,.weekly-module-banner,.study-garden-welcome,.module-cover,.sidebar nav a.active){background:var(--season-night-soft);border-color:var(--season-night-line)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] :is(.text-link,.eyebrow,.garden-greeting,.sidebar nav a.active,.module-cover h2,.module-cover span,.module-cover svg,.weekly-module-banner h1,.weekly-module-banner>span,.desk-section-number){color:var(--season-bright)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] .season-preview :is(strong,p,small){color:var(--season-deep)}
+html[data-season]:not([data-season='general']) .workspace[data-theme='dark'] .season-current{color:var(--season-bright)}
+@media(max-width:1050px){.season-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.season-options{grid-template-columns:repeat(2,minmax(0,1fr));padding:16px;gap:10px}.season-preview{margin:0 16px 16px;padding:16px;gap:12px}.season-preview>span{font-size:25px}.season-option{padding:10px}.season-options legend{padding-left:16px}}
