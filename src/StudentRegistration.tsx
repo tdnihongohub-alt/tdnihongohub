@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from './store';
-import { registrationBatches, registrationStudent, requestedBatch, validateRegistration } from './student-registration';
+import { registrationBatches, registrationNeedsReview, requestedBatch, validateRegistration } from './student-registration';
 import { readable } from './domain';
 import { Panel, Badge, Modal, Form } from './ui';
 import type { Row } from './domain';
@@ -42,19 +42,17 @@ export function StudentRegistration() {
 export function StudentRegistrations() {
   const { data, acceptRegistration, notify } = useApp();
   const [selected,setSelected] = useState<Row|null>(null);
-  const profiles = data.users.filter(p => p.registrationCompleted === true && !registrationStudent(data,p.id)?.deleted).sort((a,b) => String(b.registeredAt).localeCompare(String(a.registeredAt)));
+  const profiles = data.users.filter(p => registrationNeedsReview(data,p)).sort((a,b) => String(b.registeredAt).localeCompare(String(a.registeredAt)));
   const pendingRequests=data.accessRequests.filter(r=>r.status==='pending').length;
   const requestsLink=pendingRequests ? <Link className="button small" to="/teacher/classes?view=requests">Review class access requests ({pendingRequests})</Link> : null;
   if (!profiles.length) return requestsLink ? <Panel className="section-gap" title="Pending students"><div className="pad">{requestsLink}</div></Panel> : null;
   const link = selected && data.studentLinks.find(l => l.id === selected.id);
   const suggested = selected && requestedBatch(selected,data.batches);
-  return <><Panel className="section-gap" title="Student registrations" description="Review pending students, match their student record, and accept them into a batch." action={requestsLink}>
+  return <><Panel className="section-gap" title="Student registrations" description="Only registrations awaiting review appear here. Accepted students move to your student list below." action={requestsLink}>
     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Age</th><th>Requested batch</th><th>Received</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>{profiles.map(p => {
-        const student=registrationStudent(data,p.id);
         const target=requestedBatch(p,data.batches);
-        const accepted=!!student?.active && !student.deleted && data.enrollments.some(e=>e.studentId===student.id && e.status==='active' && (!target || e.batchId===target.id));
-        return <tr key={p.id}><td><strong>{p.displayName}</strong><small>{p.email}</small></td><td><a href={`tel:${p.phone}`}>{p.phone}</a></td><td>{p.age}</td><td>{target?.name || p.preferredBatch}</td><td>{readable(String(p.registeredAt).slice(0,10))}</td><td><Badge tone={accepted?'green':'amber'}>{student?.deleted?'Deleted':accepted?'Accepted':'Pending'}</Badge></td><td>{!student?.deleted&&<button className="button small" onClick={()=>setSelected(p)}>{accepted?'Review enrolment':'Review & accept'}</button>}</td></tr>;
+        return <tr key={p.id}><td><strong>{p.displayName}</strong><small>{p.email}</small></td><td><a href={`tel:${p.phone}`}>{p.phone}</a></td><td>{p.age}</td><td>{target?.name || p.preferredBatch}</td><td>{readable(String(p.registeredAt).slice(0,10))}</td><td><Badge tone="amber">Pending</Badge></td><td><button className="button small" onClick={()=>setSelected(p)}>Review & accept</button></td></tr>;
       })}</tbody>
     </table></div>
   </Panel>{selected&&<Modal title="Accept student registration" onClose={()=>setSelected(null)}>

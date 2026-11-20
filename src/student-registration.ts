@@ -11,6 +11,13 @@ export function registrationStudent(data:Data,accountId:string){
  return data.students.find(s=>s.id===binding?.studentId)||data.students.find(s=>s.linkedAccountId===accountId||s.id===`STU-${accountId}`);
 }
 
+export function registrationNeedsReview(data:Data,profile:Row){
+ const student=registrationStudent(data,profile.id);
+ // Enrolment history means onboarding has been handled, even if access is later suspended.
+ return profile.registrationCompleted===true&&!student?.deleted&&
+  (!student||!data.enrollments.some(e=>e.studentId===student.id));
+}
+
 export function validateRegistration(values: RegistrationDetails): RegistrationDetails {
   const displayName = values.displayName.trim();
   const phone = values.phone.replace(/[\s()-]/g, '');
