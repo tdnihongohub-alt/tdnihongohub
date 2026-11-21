@@ -17,7 +17,7 @@ export function LessonQuizCollection(){
 }
 export function LessonQuizCard({lesson}:{lesson:Row}){
  const {data,studentId}=useApp();const quiz=lessonQuiz(data,lesson,studentId);
- return <section className="lesson-activity-card"><div className="lesson-activity-icon"><BrainCircuit size={23}/></div><div><span className="eyebrow">AFTER THE RECORDING</span><h3>{quiz?.title||'Lesson quiz'}</h3><p>{quiz?'Practise what you learned with an activity inside your learning space.':'Your teacher is preparing an activity for this lesson.'}</p>{quiz?<Link className="button primary small" to={`/student/assignments?assignment=${quiz.id}`}>Start lesson quiz →</Link>:<ComingSoon/>}{quiz&&<small>Teacher-reviewed · {quiz.formQuestions.length} questions</small>}</div></section>;
+ return <section className="lesson-activity-card"><div className="lesson-activity-icon"><BrainCircuit size={23}/></div><div><span className="eyebrow">AFTER THE RECORDING</span><h3>{quiz?.title||'Lesson quiz'}</h3><p>{quiz?'Practise what you learned with an activity inside your learning space.':'Your teacher is preparing an activity for this lesson.'}</p>{quiz?<Link className="button primary small" to={`/student/assignments?assignment=${quiz.id}`}>Start lesson quiz →</Link>:<ComingSoon/>}{quiz&&<small>{quiz.autoGrade?'Automatically checked':'Teacher-reviewed'} · {quiz.formQuestions.length} questions</small>}</div></section>;
 }
 export function LessonMedia({lesson,preview=false}:{lesson:Row;preview?:boolean}){
  const {data,identity,save,notify}=useApp();const [playing,setPlaying]=useState(false);const videoId=youtubeId(lesson.recordingUrl||'');const complete=data.progress.some(p=>p.lessonId===lesson.id&&p.uid===identity?.uid&&p.complete);

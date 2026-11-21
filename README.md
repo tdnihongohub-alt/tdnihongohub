@@ -51,6 +51,22 @@ The Windows `Start Preview.cmd` also serves an existing `dist` build after you r
 - Teacher management of courses, batches, enrolments, lessons, attendance, fees, payment clarification, homework and preparation tasks.
 - Separate light/dark workspace themes; LKR and Asia/Colombo defaults.
 
+## Culture quiz collection
+
+Teacher workspace → Lesson library → **Culture quizzes** contains 56 editable templates: two 20-question quizzes for each of the 28 requested weeks, including revision. The original week numbering is preserved and Week 22 is February. Questions use English with Japanese terms. Repeated lifestyle, etiquette, clothing and education topics have different learning points. Each pair combines recognition with situations and definition choices.
+
+Preview the answer key and reference reading, then choose **Configure quiz** to select the Culture course, batches, linked lesson, release and deadline. Templates do not create database records or publish themselves. Saving uses a new assignment ID; an already saved template opens its existing assignment for editing. Existing teacher-authored content is preserved. Multiple selected batches must belong to the chosen course, as described in the release prerequisite below.
+
+Automatic checking is optional for single-choice activities. Each question has one correct answer and one practice mark. Students answer inside the website; submitting saves their response before revealing the score, correct answers and explanations. Reopening a submitted quiz restores its result, and Practice history includes it. Automatic scores remain separate from official teacher-reviewed marks. Valid automatic responses do not create a homework-review alert; malformed or incomplete responses still do. The teacher can inspect responses and return work for another attempt. As with other client-side practice, answer keys are accessible to authorized clients and this is not secure exam grading. Results use the saved responses against the current quiz key; retain a duplicate rather than rewriting a published quiz when its original version needs to be preserved.
+
+Generate an offline teacher-review booklet and expanded JSON collection with:
+
+```sh
+node scripts/export-culture-quizzes.cjs
+```
+
+The files are written to the sibling `culture-quiz-collection` output folder. The booklet includes all questions, answer keys, explanations, topic reference links, search and a local practice checker. It contains no student information or Firebase credentials. Sources include Japan Foundation teaching materials, Web Japan, JNTO, official holiday information and museum/local tourism references; festival descriptions distinguish customary observances from national holidays. Dates describe customary patterns rather than event-year schedules. A teacher should review suitability before assigning a quiz.
+
 ## Firebase deployment
 
 The included `.firebaserc` selects the existing `td-nihongo-hub` project. Confirm that you intend to deploy to this project before running a deployment. No deployment credentials are included.

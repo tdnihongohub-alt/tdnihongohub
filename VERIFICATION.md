@@ -117,3 +117,16 @@ TypeScript, application tests and production build checked. Browser layout verif
 ## Font family refinement — 15 November 2026
 
 Consolidated Latin UI and reading typography from DM Sans / Manrope to Inter (400–800), with Noto Sans JP and Noto Sans Sinhala fallback families. Existing decorative serif accents remain. Added final typography stylesheet with regular-weight 16px long descriptions, semibold benefit headings, consistent label spacing and tabular numbers for records. Preserved the recent high-contrast palette. TypeScript, 72 tests and production build passed. Live browser appearance not visually verified in this chat.
+
+
+## Culture collection and automatic practice checking — 21 November 2026
+
+Added a lazy-loaded teacher Culture library containing 56 unpublished templates / 1,120 multiple-choice questions across the 28 requested weeks. Week 22 is February; week gaps are retained. Each quiz has 20 required questions, four distinct options, a valid correct-answer index, an explanation, source reading and balanced answer positions. Revision draws learning points from all 27 earlier topics. Recognition questions and scenario/definition questions form each pair. Templates are independent of existing teacher records and are not automatically saved, assigned or published.
+
+The editor supports answer keys, explanations and one-mark-per-question automatic practice scoring. Student results appear only after a saved submission, restore when reopened, and appear separately in Practice history. Official teacher marks remain unchanged. Approved class access and release times govern quiz visibility. The teacher attention queue omits successfully checked practice but retains incomplete responses for review. Answer keys remain client-accessible practice material; this is not secure examination grading.
+
+Validation: all 286 tests across 43 files passed. Coverage includes counts and answer-key integrity across all 56 quizzes, February and revision coverage, 20/20, 0/20 and mixed scores, missing/invalid answers, key editing, draft concealment, submitted result display, history, audience/release restrictions and preservation of ordinary homework feedback. TypeScript and the Vite production build passed. The Culture bank is a separate 86 kB lazy-loaded chunk (about 31 kB compressed); the pre-existing large main bundle still produces a size warning. No browser visual or real-account end-to-end test was performed.
+
+The export script generated a standalone searchable teacher-review HTML booklet with local practice checking and expanded JSON. Structural checks verified 28 sections, 56 forms, 1,120 questions, 4,480 choices and 1,120 correct-answer flags; its JavaScript parsed successfully.
+
+Release status: not deployed. A separate read-only Firebase access check still returned 429 RESOURCE_EXHAUSTED / Quota exceeded. The pending multi-batch access-metadata prerequisite has not run, so the live interface and production data were left unchanged. No student, enrollment, payment, lesson or existing assignment record was modified.
