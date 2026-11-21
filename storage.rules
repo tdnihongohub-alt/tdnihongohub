@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  // Firestore checks class access before issuing short-lived file grants.
+  // Storage stays within its two Firestore-document lookup limit per request.
+  function grant(path,name,operation){
+   let g=firestore.get(/databases/(default)/documents/fileGrants/$(request.auth.uid + '_' + name)).data;
+   return request.auth != null && request.auth.token.email_verified == true && g.uid == request.auth.uid &&
+    g.path == path && g.operation == operation &&
+    g.issuedAt <= request.time && request.time < g.issuedAt + (operation == 'read' ? duration.value(1,'m') : duration.value(15,'m'));
+  }
+  function validFile(name){return request.resource.size > 0 && request.resource.size <= 10*1024*1024 &&
+   ((name.matches('.*\\.pdf') && request.resource.contentType == 'application/pdf') ||
+    (name.matches('.*\\.doc') && request.resource.contentType == 'application/msword') ||
+    (name.matches('.*\\.docx') && request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
+    (name.matches('.*\\.txt') && request.resource.contentType == 'text/plain') ||
+    (name.matches('.*\\.jpe?g') && request.resource.contentType == 'image/jpeg') ||
+    (name.matches('.*\\.png') && request.resource.contentType == 'image/png') ||
+    (name.matches('.*\\.webp') && request.resource.contentType == 'image/webp'));
+  }
+  function enabled(){return firestore.get(/databases/(default)/documents/settings/uploads).data.enabled == true;}
+  function publicLesson(id){let l=firestore.get(/databases/(default)/documents/lessons/$(id)).data;
+   return l.published == true && l.visibility == 'public' && l.get('batchId','') == '';
+  }
+  match /lessonFiles/{lesson}/{owner}/{name}{
+   allow get: if publicLesson(lesson) || grant('lessonFiles/' + lesson + '/' + owner + '/' + name,name,'read');
+   allow create: if enabled() && validFile(name) && grant('lessonFiles/' + lesson + '/' + owner + '/' + name,name,'write');
+  }
+  match /worksheets/{assignment}/{owner}/{name}{
+   allow get: if grant('worksheets/' + assignment + '/' + owner + '/' + name,name,'read');
+   allow create: if enabled() && validFile(name) && grant('worksheets/' + assignment + '/' + owner + '/' + name,name,'write');
+  }
+  match /submissions/{assignment}/{owner}/{name}{
+   allow get: if grant('submissions/' + assignment + '/' + owner + '/' + name,name,'read');
+   allow create: if enabled() && validFile(name) && grant('submissions/' + assignment + '/' + owner + '/' + name,name,'write');
+  }
+ }
+}

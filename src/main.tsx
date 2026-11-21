@@ -1,3 +1,4 @@
+import './document-files.css';
 import { SeasonTheme } from './SeasonTheme';
 import { TeachingModules } from './TeachingModules';
 import { WeeklyClass } from './WeeklyClass';

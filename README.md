@@ -66,7 +66,21 @@ GitHub Actions runs dependency installation, tests and a build on pushes and pul
 
 ## Data and scope
 
-Private records stay in Firestore. This repository contains application code, authored learning material, public brand assets and labelled fictitious preview fixtures; it does not include a student database or Firebase credentials. Public YouTube videos remain public. Homework, worksheets and receipts use external links/WhatsApp; direct uploads, payment gateways and automated WhatsApp sending are not implemented. AdSense and Google Analytics are not enabled.
+Private records stay in Firestore. This repository contains application code, authored learning material, public brand assets and labelled fictitious preview fixtures; it does not include a student database or Firebase credentials. Public YouTube videos remain public. Document uploads are prepared but remain disabled until Firebase Storage is provisioned. External document links and WhatsApp receipts continue to work. Payment gateways and automated WhatsApp sending are not implemented. AdSense code is present; Google Analytics is not enabled.
+
+## Activating document uploads
+
+The project currently has billing disabled and no Storage bucket. The owner must first choose Firebase's Blaze plan and create a Storage bucket. This code does not enable billing or provision chargeable resources.
+
+After that setup:
+
+1. Confirm the bucket name (the default is `td-nihongo-hub.firebasestorage.app`); set `VITE_FIREBASE_STORAGE_BUCKET` if different.
+2. Deploy `firestore.rules` and `storage.rules`. Storage's cross-service Firestore access requires its service-agent permission setup through Firebase.
+3. Configure the bucket CORS policy for authenticated browser downloads from the production and development origins.
+4. Test teacher lesson/worksheet uploads, permitted student submissions, other-student denials, expired file grants and downloads. No complete upload/download test is possible until the bucket exists.
+5. Only after those checks, set the teacher-only-writable Firestore document `settings/uploads` to `{ "enabled": true }` and refresh the workspace.
+
+Files are limited to 10 MB, with PDF, Word, text and selected image types. File fields support drop, choose, progress and cancellation. Existing links are preserved. Files use authenticated downloads without embedding permanent download tokens in teaching records. Short-lived Firestore grants check lesson and assignment permissions before Storage reads/writes, within Storage's two-document lookup limit. Removing an attachment from a form removes its reference; it does not delete the stored object. Storage object listing, overwrites and deletions are denied by default. Unused objects can be reviewed by the owner in Firebase Storage. Videos continue to use YouTube.
 
 Firestore rules enforce record ownership and teacher permissions. Practice answer keys are available to the client for immediate feedback, so practice scores must not be treated as secure examination results.
 

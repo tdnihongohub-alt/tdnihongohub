@@ -34,6 +34,33 @@ service cloud.firestore {
 
   match /teachers/{id} { allow get: if signed() && request.auth.uid == id; allow list, write: if false; }
   match /settings/{id} { allow read: if true; allow write: if teacher(); }
+  match /fileGrants/{id} {
+   function validGrant(d){
+    return verified() && id == request.auth.uid + '_' + d.name && d.uid == request.auth.uid
+     && d.keys().hasOnly(['uid','path','kind','recordId','owner','name','operation','issuedAt'])
+     && d.kind in ['lesson','worksheet','submission'] && d.operation in ['read','write']
+     && d.issuedAt == request.time && shortString(d.recordId,1500) && d.recordId.matches('[^/]+')
+     && shortString(d.owner,1500) && d.owner.matches('[^/]+') && shortString(d.name,160) && d.name.matches('[^/]+')
+     && d.path == (d.kind == 'lesson' ? 'lessonFiles/' : d.kind == 'worksheet' ? 'worksheets/' : 'submissions/') + d.recordId + '/' + d.owner + '/' + d.name;
+   }
+   function canRead(d){
+    return teacher() || (d.kind == 'submission' ? d.owner == request.auth.uid :
+     d.kind == 'lesson' ? (get(/databases/$(database)/documents/lessons/$(d.recordId)).data.published == true &&
+      ((get(/databases/$(database)/documents/lessons/$(d.recordId)).data.visibility == 'public' && get(/databases/$(database)/documents/lessons/$(d.recordId)).data.get('batchId','') == '') ||
+      (courseAllowed(get(/databases/$(database)/documents/lessons/$(d.recordId)).data.courseId) && assignmentAudience(get(/databases/$(database)/documents/lessons/$(d.recordId)).data)))) :
+     (assignmentOpen(get(/databases/$(database)/documents/assignments/$(d.recordId)).data) && courseAllowed(get(/databases/$(database)/documents/assignments/$(d.recordId)).data.courseId) && assignmentAudience(get(/databases/$(database)/documents/assignments/$(d.recordId)).data)));
+   }
+   function canWrite(d){
+    return get(/databases/$(database)/documents/settings/uploads).data.enabled == true && d.owner == request.auth.uid &&
+     (teacher() ? d.kind in ['lesson','worksheet'] : d.kind == 'submission' &&
+      acceptsWork(get(/databases/$(database)/documents/assignments/$(d.recordId)).data) &&
+      courseAllowed(get(/databases/$(database)/documents/assignments/$(d.recordId)).data.courseId) && assignmentAudience(get(/databases/$(database)/documents/assignments/$(d.recordId)).data) &&
+      (!exists(/databases/$(database)/documents/submissions/$(studentId() + '_' + d.recordId)) || get(/databases/$(database)/documents/submissions/$(studentId() + '_' + d.recordId)).data.status in ['draft','returned']));
+   }
+   allow create, update: if validGrant(request.resource.data) && (request.resource.data.operation == 'read' ? canRead(request.resource.data) : canWrite(request.resource.data));
+   allow get: if verified() && resource.data.uid == request.auth.uid;
+   allow delete: if teacher() || (verified() && resource.data.uid == request.auth.uid);
+  }
   match /users/{id} {
    allow get: if teacher() || (signed() && request.auth.uid == id);
    allow list: if teacher();
