@@ -1,3 +1,4 @@
+import { CopyQuizLink } from './CopyQuizLink';
 import { ComingSoon, LessonQuizCollection } from './LessonMedia';
 import { LevelInvitation, MonthlyHistory } from './CheckLevel';
 import { useState } from 'react';
@@ -16,7 +17,7 @@ export function StudentQuizzes(){
 }
 export function StudentQuiz(){
  const {courseId=''}=useParams();const [params]=useSearchParams();const {data}=useApp();const topic=params.get('topic')||'';const quizzes=availableQuizzes(data);const allowed=quizzes.some(q=>q.courseId===courseId&&(!topic||q.topic===topic));
- return <><Link className="text-link" to="/student/quizzes">← All quizzes</Link><PageHead eyebrow={courseName(data,courseId)} title={topic||'Practice quizzes'} description="Take your time. Each answer is a chance to learn."/>{allowed?<Practice key={`${courseId}_${topic}`} courseId={courseId} topic={topic||undefined}/>:<Empty title="This quiz isn’t available">It may be unpublished or require class approval.<br/><Link className="text-link" to="/student/quizzes">Browse available quizzes →</Link></Empty>}</>;
+ return <><Link className="text-link" to="/student/quizzes">← All quizzes</Link><PageHead eyebrow={courseName(data,courseId)} title={topic||'Practice quizzes'} description="Take your time. Each answer is a chance to learn."/><div className="actions section-gap">{allowed&&<CopyQuizLink target={{kind:'practice',courseId,topic}} title={topic||'Practice quiz'}/>}</div>{allowed?<Practice key={`${courseId}_${topic}`} courseId={courseId} topic={topic||undefined}/>:<Empty title="This quiz isn’t available">It may be unpublished or require class approval.<br/><Link className="text-link" to="/student/quizzes">Browse available quizzes →</Link></Empty>}</>;
 }
 export function StudentMarks(){
  const {data,identity,studentId}=useApp();const [params,setParams]=useSearchParams();const view=params.get('view')==='practice'?'practice':'marks';const [course,setCourse]=useState('');const marks=teacherMarks(data,studentId);const attempts=practiceHistory(data,identity?.uid||'');const rows=view==='marks'?marks:attempts;const courseIds=[...new Set(rows.map(r=>r.courseId))];
