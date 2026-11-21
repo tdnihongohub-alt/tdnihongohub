@@ -1,3 +1,5 @@
+import { affectsBatchAccess,withBatchAccess } from './batch-access';
+import type { RecordChange } from './batch-access';
 import { openFreeCourse } from './free-squads';
 import { collection, doc, getDoc, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch, onSnapshot } from '@firebase/firestore';
 import type { QueryConstraint } from '@firebase/firestore';
@@ -43,6 +45,12 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   for(const e of data.enrollments.filter(e=>e.status==='active'))data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
  }
  for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
+ const seen=new Set(data.assignments.map(a=>a.id));
+ if(studentId&&data.students.some(s=>s.id===studentId&&s.active))for(const e of data.enrollments.filter(e=>e.status==='active')){
+  if(!courseIds.includes(e.courseId))continue;
+  const rows=await readRows('assignments',where('courseId','==',e.courseId),where('batchIds','array-contains',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));
+  for(const a of rows)if(!seen.has(a.id)){data.assignments.push(a);seen.add(a.id);}
+ }
  return data;
 }
 const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','announcements']);
@@ -51,9 +59,25 @@ export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)
 export function subscribeAppearance(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','appearance'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}
 export function subscribeCommunityStats(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','communityStats'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}
 const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):value;
-export async function save(table:Table,row:Row){if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
+async function accessBatchSave(changes:RecordChange[]){
+ if(!db)throw Error('Firebase is not configured.');
+ if(changes.length>200)throw Error('Save up to 200 access changes at a time.');
+ await runTransaction(db,async tx=>{
+  await tx.get(doc(db!,'settings','learningRevision'));
+  const data=emptyData(),ids=new Set(changes.flatMap(c=>c.table==='students'?[c.row.id]:['enrollments','studentLinks'].includes(c.table)?[c.row.studentId]:[]));
+  for(const c of changes.filter(c=>c.table==='studentLinks')){const current=await tx.get(doc(db!,'studentLinks',c.row.id));if(current.exists())ids.add(current.data().studentId);}
+  for(const id of ids){
+   const student=await tx.get(doc(db!,'students',id));if(student.exists())data.students.push({...student.data(),id:student.id});
+   data.enrollments.push(...await readRows('enrollments',where('studentId','==',id)));
+   data.studentLinks.push(...await readRows('studentLinks',where('studentId','==',id)));
+  }
+  for(const {table,row} of withBatchAccess(data,changes)){const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));}
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
+export async function save(table:Table,row:Row){if(affectsBatchAccess([{table,row}]))return accessBatchSave([{table,row}]);if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
 export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'||table==='feeMonths'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This financial record has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:table==='payments'?'payment_deleted':'monthly_fee_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
-export async function batchSave(changes:{table:Table;row:Row}[]){if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
+export async function batchSave(changes:{table:Table;row:Row}[]){if(affectsBatchAccess(changes))return accessBatchSave(changes);if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
 export async function removeRecording(original:Row,batchId:string,actor:string){
  if(!db)throw Error('Firebase is not configured.');
  await runTransaction(db,async tx=>{
@@ -146,7 +170,7 @@ export async function deleteStudent(studentId:string) {
  if(!db)throw Error('Firebase is not configured.');
  await runTransaction(db,async tx => {
   const data=emptyData();
-  await Promise.all((['students','enrollments','courseAccess'] as const).map(async table=>{data[table]=await readRows(table);}));
+  await Promise.all((['students','enrollments','courseAccess','studentLinks'] as const).map(async table=>{data[table]=await readRows(table);}));
   const proposal=studentDeletion(data,studentId);
   for(const {table,row} of proposal){
    const current=await tx.get(doc(db!,table,row.id));

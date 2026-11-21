@@ -1,3 +1,4 @@
+import { assignmentAppliesToBatch } from './assignment-audience';
 import { openFreeCourse } from './free-squads';
 import type { Data, Row } from './domain';
 import { assignmentForStudent } from './assignment-audience';
@@ -17,7 +18,7 @@ export function weekGroups(lessons:Row[]){
  return [...groups.values()].sort((a,b)=>a.number-b.number);
 }
 export function nextWeekNumber(data:Data,courseId:string,batchId:string){const groups=weekGroups(moduleLessons(data,courseId,batchId,'',true));return Math.max(0,...groups.map(w=>w.number))+1;}
-export function weeklyWork(data:Data,lessons:Row[],courseId:string,batchId:string,studentId:string,teacher=false){const ids=new Set(lessons.map(l=>l.id)),quizzes=new Set(lessons.map(l=>l.quizId).filter(Boolean));return data.assignments.filter(a=>a.courseId===courseId&&(!a.batchId||a.batchId===batchId)&&(ids.has(a.lessonId)||quizzes.has(a.id))&&(teacher||assignmentReleased(a)&&assignmentForStudent(a,data,studentId)));}
+export function weeklyWork(data:Data,lessons:Row[],courseId:string,batchId:string,studentId:string,teacher=false){const ids=new Set(lessons.map(l=>l.id)),quizzes=new Set(lessons.map(l=>l.quizId).filter(Boolean));return data.assignments.filter(a=>a.courseId===courseId&&assignmentAppliesToBatch(a,batchId)&&(ids.has(a.lessonId)||quizzes.has(a.id))&&(teacher||assignmentReleased(a)&&assignmentForStudent(a,data,studentId)));}
 export type NoticeKind='announcement'|'session';
 export function noticeVersion(row:Row,kind:NoticeKind){const fields=kind==='announcement'?['title','body','batchId','courseId']:['title','date','time','duration','status','zoomUrl','batchId','courseId'];const value=JSON.stringify(fields.map(k=>row[k]??''));let hash=2166136261;for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);return (hash>>>0).toString(16);}
 export function noticeRead(data:Data,uid:string,row:Row,kind:NoticeKind){return data.contentReads.some(r=>r.uid===uid&&r.recordId===row.id&&r.kind===kind&&r.version===noticeVersion(row,kind));}

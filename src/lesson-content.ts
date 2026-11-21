@@ -1,3 +1,4 @@
+import { assignmentAppliesToBatch } from './assignment-audience';
 import { safeLink, validate, youtubeId } from './domain';
 import type { Data, Row, Table } from './domain';
 import { assignmentForStudent, validateAssignmentBatch } from './assignment-audience';
@@ -19,7 +20,7 @@ export function lessonContentPlan(data:Data,lesson:Row,newQuiz?:Row):{table:Tabl
  const changes:{table:Table;row:Row}[]=[];
  if(row.quizState==='linked'){
   const quiz=newQuiz?validate('assignments',newQuiz) as Row:data.assignments.find(a=>a.id===row.quizId);
-  if(!quiz||quiz.id!==row.quizId||quiz.kind!=='form'||quiz.courseId!==row.courseId||quiz.batchId&&quiz.batchId!==row.batchId)throw Error('Choose an interactive quiz for the same course and batch, or a shared course quiz.');
+  if(!quiz||quiz.id!==row.quizId||quiz.kind!=='form'||quiz.courseId!==row.courseId||row.batchId&&!assignmentAppliesToBatch(quiz,row.batchId))throw Error('Choose an interactive quiz for the same course and batch, or a shared course quiz.');
   if(newQuiz){validateAssignmentBatch(quiz,data);changes.push({table:'assignments',row:quiz});}
  }else if(row.quizState==='coming_soon')row.quizId='';
  changes.push({table:'lessons',row});return changes;

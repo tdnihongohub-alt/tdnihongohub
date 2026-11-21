@@ -66,6 +66,8 @@ GitHub Actions runs dependency installation, tests and a build on pushes and pul
 
 ## Data and scope
 
+Multi-batch quiz release prerequisite: initialize `studentLinks.activeBatchIds` from each linked active student's active enrollments before deploying this release's interface and Firestore rules. Existing quiz IDs, submissions, marks and original single-batch/course-wide audiences are preserved. Multi-batch work uses one canonical assignment with `audience: "batches"`, a `batchIds` array and the `__multiple__` batch sentinel; a single selected batch keeps its actual `batchId`. Deploy the additional assignment array index as well. Teacher enrollment, linking and status writes synchronize the trusted access index atomically and signal live updates. Students cannot edit that index. The release adds course/batch filters, a multi-batch picker and the same sharing URL across selected batches, with one submission per student. Multiple selected batches must belong to the chosen course; use a shared lesson or leave the week empty.
+
 Private records stay in Firestore. This repository contains application code, authored learning material, public brand assets and labelled fictitious preview fixtures; it does not include a student database or Firebase credentials. Public YouTube videos remain public. Document uploads are prepared but remain disabled until Firebase Storage is provisioned. External document links and WhatsApp receipts continue to work. Payment gateways and automated WhatsApp sending are not implemented. AdSense code is present; Google Analytics is not enabled.
 
 ## Activating document uploads

@@ -1,3 +1,4 @@
+import { assignmentAppliesToBatch } from './assignment-audience';
 import { DocumentField } from './DocumentField';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -22,7 +23,7 @@ export function LessonEditor({row,onClose,initialCourseId='',initialBatchId='',i
  const [questions,setQuestions]=useState<FormQuestion[]>([]);const [quizTitle,setQuizTitle]=useState('');const [instructions,setInstructions]=useState('Complete this activity after watching the recording.');
  const [deadline,setDeadline]=useState(sriLankaInput(Date.parse(`${today()}T23:59:00+05:30`)));const [quizPublished,setQuizPublished]=useState(true);const [maxMark,setMaxMark]=useState(10);const [allowLate,setAllowLate]=useState(true);const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [uploadBusy,setUploadBusy]=useState(false);
  const set=(name:string,value:any)=>setV(p=>({...p,[name]:value}));const thumb=recordingThumbnail(v);
- const quizzes=data.assignments.filter(a=>a.kind==='form'&&a.courseId===v.courseId&&(!a.batchId||a.batchId===v.batchId));
+ const quizzes=data.assignments.filter(a=>a.kind==='form'&&a.courseId===v.courseId&&(!v.batchId||assignmentAppliesToBatch(a,v.batchId)));
  return <Modal title={row?'Edit lesson & recording':'Create lesson & recording'} onClose={onClose}><form onSubmit={async e=>{e.preventDefault();if(uploadBusy)return;setError('');setBusy(true);try{
   const quizId=quizChoice==='__new__'?uid('ASN-'):quizChoice;
   const lesson:Row={...v,id,quizState:quizChoice?'linked':'coming_soon',quizId};

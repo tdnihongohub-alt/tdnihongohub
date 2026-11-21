@@ -1,3 +1,4 @@
+import { withBatchAccess } from './batch-access';
 import { key, monthNow, today } from './domain';
 import type { Data, Row, Table } from './domain';
 
@@ -28,15 +29,15 @@ export function registrationApproval(data: Data, accountId: string, selectedStud
   const access = data.courseAccess.find(a => a.id === key(studentId, batch.courseId));
   changes.push({table:'courseAccess',row:{...access,id:key(studentId,batch.courseId),studentId,courseId:batch.courseId,active:true}});
   for (const request of data.accessRequests.filter(r => r.uid === accountId && r.courseId === batch.courseId && r.status === 'pending')) changes.push({table:'accessRequests',row:{...request,studentId,status:'approved'}});
-  return changes;
+  return withBatchAccess(data,changes);
 }
 
 export function studentDeletion(data: Data, studentId: string): {table: Table; row: Row}[] {
   const student = data.students.find(s => s.id === studentId);
   if (!student) throw Error('Student record could not be found.');
-  return [
+  return withBatchAccess(data,[
     {table:'students',row:{...student,active:false,deleted:true}},
     ...data.enrollments.filter(e => e.studentId === studentId).map(e => ({table:'enrollments' as const,row:{...e,status:'suspended'}})),
     ...data.courseAccess.filter(a => a.studentId === studentId).map(a => ({table:'courseAccess' as const,row:{...a,active:false}})),
-  ];
+  ]);
 }

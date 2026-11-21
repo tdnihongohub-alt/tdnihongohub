@@ -21,7 +21,11 @@ service cloud.firestore {
     && exists(/databases/$(database)/documents/feeMonths/$(d.studentId + '_' + d.batchId + '_' + d.month));
   }
   function assignmentOpen(a) { return a.published == true && a.get('releaseAt',0) <= request.time.toMillis(); }
-  function assignmentAudience(a) { return a.get('batchId','') == '' || batchAllowed(a.batchId); }
+  function assignmentAudience(a) {
+   return a.get('batchIds',[]).size() > 1 || a.get('batchId','') == '__multiple__'
+    ? (activeStudent() && a.get('batchIds',[]).hasAny(get(/databases/$(database)/documents/studentLinks/$(request.auth.uid)).data.get('activeBatchIds',[])))
+    : (a.get('audience','') == 'batches' && a.get('batchIds',[]).size() == 0 ? false : (a.get('batchId','') == '' || batchAllowed(a.batchId)));
+  }
   function acceptsWork(a) { return assignmentOpen(a) && (a.get('allowLate',true) == true || a.get('deadlineAt',0) >= request.time.toMillis()); }
   function validSubmission(d) {
    return ownStudent(d.studentId) && d.assignmentId is string && d.courseId is string

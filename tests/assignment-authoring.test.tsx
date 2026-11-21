@@ -37,7 +37,7 @@ describe('assignment authoring inside class folders',()=>{
  });
  it('preselects the class and week and opens native question authoring for new homework',()=>{
   const html=render(<AssignmentEditor initialCourseId="al" initialBatchId="a" initialLessonId="week-a" onClose={()=>{}}/>);
-  expect(html).toContain('Create assignment');expect(html).toContain('value="a" selected=""');expect(html).toContain('value="week-a" selected=""');
+  expect(html).toContain('Create assignment');expect(html).toContain('type="checkbox" checked="" value="a"');expect(html).toContain('value="week-a" selected=""');
   expect(html).toContain('Assignment questions');expect(html).toContain('Question 1');expect(html).toContain('Deadline (Sri Lanka time)');
   expect(html).not.toContain('Other class week');expect(html).not.toContain('<iframe');
  });
