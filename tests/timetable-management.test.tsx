@@ -10,6 +10,11 @@ const first={id:'one',batchId:'a',courseId:'al',lessonId:'lesson',date:'2026-11-
 const second={...first,id:'two',date:'2026-11-26',time:'20:00',title:'Reading'};
 function render(node:React.ReactNode,student=false,path='/teacher/schedule?date=2026-11-23'){
  const data=emptyData();data.batches=[{id:'a',name:'2027 A/L Theory',courseId:'al',active:true}];data.courses=[{id:'al',title:'A/L Japanese'}];data.sessions=[first,second];
+ data.courses.push({id:'n4',title:'Japanese N4'});
+ data.batches.push({id:'b',name:'December N4',courseId:'n4',active:true});
+ data.sessions.push({...first,id:'n4-class',title:'N4 class',batchId:'b',courseId:'n4'});
+ data.practiceSeries=[{id:'theory',title:'Theory Kaiwa',batchId:'a',courseId:'al',startDate:'2026-11-26',endDate:'2027-12-31',time:'08:00',active:true,questionCount:1},{id:'n4',title:'N4 Kanji practice',batchId:'b',courseId:'n4',startDate:'2026-11-26',endDate:'2027-12-31',time:'08:00',active:true,questionCount:10}];
+ data.students=[{id:'s',active:true}];data.courseAccess=[{id:'s_al',studentId:'s',courseId:'al',active:true,allModules:true}];
  const context={data,studentId:'s',identity:{uid:'u',verified:true,teacher:!student},batch:async()=>{},changeTimetable:async()=>{},notify:()=>{}} as any;
  return renderToStaticMarkup(<AppContext.Provider value={context}><MemoryRouter initialEntries={[path]}>{node}</MemoryRouter></AppContext.Provider>);
 }
@@ -48,6 +53,18 @@ describe('weekly timetable management',()=>{
   const html=render(<Schedule/>);expect(html).toContain('Reschedule week');expect(html).toContain('Manage / delete');expect(html).toContain('Delete session on 2026-11-23');
   const create=render(<Schedule/>,false,'/teacher/schedule?date=2026-12-01&batch=a&new=1');expect(create).toContain('value="2026-12-01"');expect(create).toContain('value="a" selected=""');expect(create).toContain('Repeat weekly until');
   const edit=render(<Schedule/>,false,'/teacher/schedule?edit=one');expect(edit).toContain('Delete scheduled class');expect(edit).toContain('Apply date shift');
+ });
+ it('isolates classes and practice by course and denies an unapproved student course URL',()=>{
+  for(const student of [false,true]){
+   const html=render(<Schedule student={student}/>,student,'/student/schedule?course=al&date=2026-11-23');
+   expect(html).toContain('A/L Japanese timetable');
+   expect(html).toContain('Grammar');
+   expect(html).toContain('Theory Kaiwa');
+   expect(html).not.toContain('N4 class');
+   expect(html).not.toContain('N4 Kanji practice');
+   expect(html).not.toContain('December N4');
+  }
+  expect(render(<Schedule student/>,true,'/student/schedule?course=n4')).toContain('This course timetable is unavailable');
  });
  it('keeps student timetables read-only and previews exactly which sessions will be deleted',()=>{
   const student=render(<Schedule student/>,true,'/student/schedule?date=2026-11-23');

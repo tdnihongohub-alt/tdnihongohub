@@ -1,9 +1,11 @@
 import { AssignmentEditor } from './AssignmentEditor';
 import { PracticeEntry,PracticeSeriesEditor } from './PracticeTimetable';
+import { teachingModules } from './weekly-learning';
+import { canOpenModule } from './course-enrollment';
 import { practiceSlots,practiceTemplate } from './practice-schedule';
 import type { PracticeSlot } from './practice-schedule';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link,useSearchParams } from 'react-router-dom';
 import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useApp } from './store';
 import { AddButton, Badge, Empty, Form, Modal, OutLink, PageHead, Panel, SearchBox } from './ui';
@@ -17,14 +19,26 @@ import './timetable.css';
 type Management={rows:Row[];action:'move'|'delete';futureRows?:Row[]};
 
 export function Schedule({student=false}:{student?:boolean}){
- const {data}=useApp();
  const [params]=useSearchParams();
- const initialEdit=data.sessions.find(s=>s.id===params.get('edit'));
+ const courseId=params.get('course')||'';
+ return <CourseTimetable key={courseId} student={student} courseId={courseId}/>;
+}
+
+function CourseTimetable({student,courseId}:{student:boolean;courseId:string}){
+ const {data,identity,studentId}=useApp();
+ const [params,setParams]=useSearchParams();
+ const available=student?new Set(teachingModules(data,studentId,identity?.uid||'').map(module=>module.courseId)):null;
+ const courses=data.courses.filter(course=>!available||available.has(course.id)).sort((a,b)=>a.title.localeCompare(b.title));
+ const course=courses.find(row=>row.id===courseId);
+ const modules=data.batches.filter(module=>(!courseId||module.courseId===courseId)&&(!student||canOpenModule(data,studentId,module)));
+ const moduleIds=new Set(modules.map(module=>module.id));
+ const inCourse=(item:Row)=>(!student&&!courseId)||moduleIds.has(item.batchId);
+ const initialEdit=data.sessions.find(s=>s.id===params.get('edit')&&inCourse(s));
  const [view,setView]=useState(['day','week','month',...(!student?['list']:[])].includes(params.get('view')||'')?params.get('view')!:'week');
  const [date,setDate]=useState(validDate(params.get('date')||'')?params.get('date')!:initialEdit?.date||today());
  const [edit,setEdit]=useState<Row|undefined|null>(student?null:initialEdit|| (params.get('new')==='1'?undefined:null));
  const [newDate,setNewDate]=useState(date);
- const [batchFilter,setBatchFilter]=useState(params.get('batch')||'');
+ const [batchFilter,setBatchFilter]=useState(moduleIds.has(params.get('batch')||'')?params.get('batch')!:'');
  const [search,setSearch]=useState('');
  const [management,setManagement]=useState<Management|null>(null);
  const [practiceEdit,setPracticeEdit]=useState<PracticeSlot|null>(null);
@@ -32,8 +46,8 @@ export function Schedule({student=false}:{student?:boolean}){
  const monday=weekStart(date),first=date.slice(0,7)+'-01',monthStart=weekStart(first);
  const dates=view==='day'?[date]:Array.from({length:view==='month'?42:7},(_,i)=>addDays(view==='month'?monthStart:monday,i));
  const title=(s:Row)=>s.title||data.lessons.find(l=>l.id===s.lessonId)?.title||'Live class';
- const rows=data.sessions.filter(s=>(!batchFilter||s.batchId===batchFilter)&&[title(s),batchName(data,s.batchId),s.date,s.time].join(' ').toLowerCase().includes(search.toLowerCase()));
- const recurring=(data.practiceSeries||[]).filter(r=>(!batchFilter||r.batchId===batchFilter)&&[r.title,batchName(data,r.batchId)].join(' ').toLowerCase().includes(search.toLowerCase().trim()));
+ const rows=data.sessions.filter(s=>inCourse(s)&&(!batchFilter||s.batchId===batchFilter)&&[title(s),batchName(data,s.batchId),s.date,s.time].join(' ').toLowerCase().includes(search.toLowerCase()));
+ const recurring=(data.practiceSeries||[]).filter(r=>inCourse(r)&&(!batchFilter||r.batchId===batchFilter)&&[r.title,batchName(data,r.batchId)].join(' ').toLowerCase().includes(search.toLowerCase().trim()));
  const slots=practiceSlots(recurring,data.assignments,dates[0],dates[dates.length-1]);
  const slotsOn=(day:string)=>slots.filter(slot=>slot.date===day);
  const practiceEntries=(day:string,compact=false)=>slotsOn(day).map(slot=><PracticeEntry key={slot.id} slot={slot} student={student} compact={compact} onEdit={()=>setPracticeEdit(slot)}/>);
@@ -49,32 +63,40 @@ export function Schedule({student=false}:{student?:boolean}){
   setManagement({rows:[s],action:'delete',futureRows:s.seriesId?data.sessions.filter(l=>l.seriesId===s.seriesId&&l.batchId===s.batchId&&l.date>=s.date).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)):undefined});
  }
  const controls=(s:Row)=><div className="actions"><button className="button small" aria-label="Edit session" onClick={()=>openEdit(s)}><Pencil size={14}/>Edit</button><button className="button small timetable-delete" aria-label={`Delete session on ${s.date} at ${s.time}`} onClick={()=>openDelete(s)}><Trash2 size={14}/>Delete</button></div>;
+ function selectCourse(id:string){
+  const next=new URLSearchParams({date,view});
+  if(id)next.set('course',id);
+  setParams(next);
+ }
+ if(courseId&&!course)return <Empty title="This course timetable is unavailable"><Link className="text-link" to={student?'/student/schedule':'/teacher/schedule'}>Back to timetable</Link></Empty>;
  return <>
-  <PageHead eyebrow={student?'YOUR LEARNING SPACE':undefined} title="Your timetable." description="Plan your classes and keep every date clear. Classes and practice releases use Sri Lanka time.">{!student&&<><AddButton onClick={()=>create()}>Schedule class</AddButton><button className="button" onClick={()=>setPracticeManager(true)}>Recurring practice</button></>}</PageHead>
+  {course&&<Link className="text-link" to={(student?'/student/course/':'/teacher/modules/')+encodeURIComponent(course.id)}>Back to {course.title}</Link>}
+  <PageHead eyebrow={student?'YOUR LEARNING SPACE':undefined} title={course?course.title+' timetable':'Your timetable.'} description="Plan your classes and keep every date clear. Classes and practice releases use Sri Lanka time.">{!student&&<><AddButton onClick={()=>create()}>Schedule class</AddButton><button className="button" onClick={()=>setPracticeManager(true)}>Recurring practice</button></>}</PageHead>
   <div className="toolbar spread">
+   <label className="timetable-date-picker">Course<select value={courseId} onChange={e=>selectCourse(e.target.value)}><option value="">All courses</option>{courses.map(c=><option value={c.id} key={c.id}>{c.title}</option>)}</select></label>
    <div className="actions"><div className="filter-tabs inline">{(student?['day','week','month']:['day','week','month','list']).map(v=><button className={v===view?'active':''} key={v} onClick={()=>setView(v)}>{v==='list'?'All sessions':v[0].toUpperCase()+v.slice(1)}</button>)}</div><button className="icon-button" onClick={()=>shift(-1)} aria-label="Previous period"><ChevronLeft size={18}/></button><strong>{view==='month'?readable(date.slice(0,7)):readable(date)}</strong><button className="icon-button" onClick={()=>shift(1)} aria-label="Next period"><ChevronRight size={18}/></button><button className="button small" onClick={()=>setDate(today())}>Today</button></div>
    <label className="timetable-date-picker">Jump to date<input type="date" value={date} onChange={e=>{if(validDate(e.target.value))setDate(e.target.value);}}/></label>
    <SearchBox value={search} onChange={setSearch} placeholder="Search classes or practice"/>
-   <select aria-label="Filter timetable batch" value={batchFilter} onChange={e=>setBatchFilter(e.target.value)}><option value="">All batches</option>{data.batches.map(b=><option value={b.id} key={b.id}>{b.name}</option>)}</select>
+   <select aria-label="Filter timetable module" value={batchFilter} onChange={e=>setBatchFilter(e.target.value)}><option value="">All modules</option>{modules.map(b=><option value={b.id} key={b.id}>{b.name}</option>)}</select>
   </div>
   {!student&&<section className="timetable-week-tools" aria-label="Manage this week's timetable"><div><strong><CalendarDays size={18}/>Week of {readable(monday)} – {readable(addDays(monday,6))}</strong><p>{weekRows.length} {weekRows.length===1?'class':'classes'} matching your filters. Select classes to move or delete, or reschedule the whole week.</p></div><div className="actions"><button className="button" disabled={!weekRows.length} onClick={()=>setManagement({rows:weekRows,action:'delete'})}><Trash2 size={15}/>Manage / delete</button><button className="button primary" disabled={!weekRows.length} onClick={()=>setManagement({rows:weekRows,action:'move'})}>Reschedule week</button></div></section>}
   <Panel className={view==='month'?'timetable-month-panel':''}>
-   {view==='list'?<div className="table-wrap"><table><thead><tr><th>Date & time</th><th>Batch</th><th>Session</th><th>Status</th><th>Actions</th></tr></thead><tbody>{rows.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(s=><tr key={s.id}><td>{readable(s.date)}<small>{s.time} · {s.duration} minutes</small></td><td>{batchName(data,s.batchId)}</td><td>{title(s)}</td><td><Badge>{s.status==='cancelled'?'Cancelled':'Scheduled'}</Badge></td><td>{controls(s)}</td></tr>)}</tbody></table>{!rows.length&&<Empty title="No sessions found"/>}</div>
+   {view==='list'?<div className="table-wrap"><table><thead><tr><th>Date & time</th><th>Module</th><th>Session</th><th>Status</th><th>Actions</th></tr></thead><tbody>{rows.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(s=><tr key={s.id}><td>{readable(s.date)}<small>{s.time} · {s.duration} minutes</small></td><td>{batchName(data,s.batchId)}</td><td>{title(s)}</td><td><Badge>{s.status==='cancelled'?'Cancelled':'Scheduled'}</Badge></td><td>{controls(s)}</td></tr>)}</tbody></table>{!rows.length&&<Empty title="No sessions found"/>}</div>
    :view==='month'?<div className="month-grid">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><div className="weekday" key={day}>{day}</div>)}{dates.map(day=><div className={`calendar-cell ${day===today()?'today':''} ${day.slice(0,7)!==date.slice(0,7)?'dim':''}`} key={day}><div className="timetable-cell-date"><span>{Number(day.slice(-2))}</span>{!student&&<button className="icon-button" aria-label={`Schedule class on ${day}`} onClick={()=>create(day)}><Plus size={12}/></button>}</div>{rows.filter(s=>s.date===day).sort((a,b)=>a.time.localeCompare(b.time)).map(s=><button className={`calendar-event ${s.status==='cancelled'?'cancelled':''}`} key={s.id} disabled={student} aria-label={student?undefined:`Edit session on ${s.date} at ${s.time}`} onClick={()=>openEdit(s)}>{!student&&<Pencil size={12}/>} {s.time} · {batchName(data,s.batchId)}{s.status==='cancelled'?' · cancelled':''}</button>)}{practiceEntries(day,true)}</div>)}</div>
    :dates.map(day=><div key={day}><div className="agenda-day">{new Date(day+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}{day===today()&&<Badge tone="green">Today</Badge>}{!student&&<button className="text-link" onClick={()=>create(day)}><Plus size={13}/>Add class</button>}</div>{rows.filter(s=>s.date===day).length?rows.filter(s=>s.date===day).sort((a,b)=>a.time.localeCompare(b.time)).map(s=><div className="list-row timetable-session-row" key={s.id}><span className="time-chip">{s.time}</span><div><strong>{title(s)}</strong><small>{batchName(data,s.batchId)} · {s.duration} minutes</small></div>{s.status==='cancelled'?<Badge>Cancelled</Badge>:<OutLink url={s.zoomUrl} className="button small">Join Zoom</OutLink>}{!student&&controls(s)}</div>):(!slotsOn(day).length&&<p className="agenda-empty">Nothing scheduled.</p>)}{practiceEntries(day)}</div>)}
   </Panel>
   {view==='list'&&slots.length>0&&<Panel title="Practice this week">{dates.filter(day=>slotsOn(day).length).map(day=><div key={day}><div className="agenda-day">{readable(day)}</div>{practiceEntries(day)}</div>)}</Panel>}
-  {!student&&practiceManager&&<PracticeSeriesEditor date={date} batchId={batchFilter} onClose={()=>setPracticeManager(false)}/>}
+  {!student&&practiceManager&&<PracticeSeriesEditor date={date} batchId={batchFilter} courseId={courseId} onClose={()=>setPracticeManager(false)}/>}
   {!student&&practiceEdit&&<AssignmentEditor key={practiceEdit.id} row={practiceEdit.assignment} initialTemplate={practiceTemplate(practiceEdit)} onClose={()=>setPracticeEdit(null)}/>}
-  {!student&&edit!==null&&<Modal title={edit?'Edit scheduled class':'Schedule a class'} onClose={()=>setEdit(null)}><SessionForm key={edit?.id||'new-'+newDate} row={edit} date={newDate} batchId={batchFilter} onClose={()=>setEdit(null)} onDelete={edit?()=>openDelete(edit):undefined}/></Modal>}
+  {!student&&edit!==null&&<Modal title={edit?'Edit scheduled class':'Schedule a class'} onClose={()=>setEdit(null)}><SessionForm key={edit?.id||'new-'+newDate} row={edit} date={newDate} batchId={batchFilter} courseId={courseId} onClose={()=>setEdit(null)} onDelete={edit?()=>openDelete(edit):undefined}/></Modal>}
   {!student&&management&&<TimetableManager {...management} onClose={()=>setManagement(null)} onMoved={day=>setDate(day)}/>}
  </>;
 }
 
-function SessionForm({row,date,batchId,onClose,onDelete}:{row?:Row;date:string;batchId:string;onClose:()=>void;onDelete?:()=>void}){
+function SessionForm({row,date,batchId,courseId,onClose,onDelete}:{row?:Row;date:string;batchId:string;courseId:string;onClose:()=>void;onDelete?:()=>void}){
  const {data,batch,changeTimetable,notify}=useApp();const [future,setFuture]=useState(false);
- const fields=[{name:'batchId',label:'Batch',type:'select',required:true,options:[{value:'',label:'Choose batch'},...data.batches.filter(b=>b.active||b.id===row?.batchId).map(b=>({value:b.id,label:b.name+(b.active?'':' (inactive)')}))]},
-  {name:'lessonId',label:'Reusable lesson',type:'select',options:[{value:'',label:'No linked lesson'},...data.lessons.map(l=>({value:l.id,label:l.title}))]},
+ const fields=[{name:'batchId',label:'Module',type:'select',required:true,options:[{value:'',label:'Choose module'},...data.batches.filter(b=>(!courseId||b.courseId===courseId)&&(b.active||b.id===row?.batchId)).map(b=>({value:b.id,label:b.name+(b.active?'':' (inactive)')}))]},
+  {name:'lessonId',label:'Reusable lesson',type:'select',options:[{value:'',label:'No linked lesson'},...data.lessons.filter(l=>!courseId||l.courseId===courseId).map(l=>({value:l.id,label:l.title}))]},
   {name:'title',label:'Session title (optional)'},{name:'date',label:'Date',type:'date',required:true},{name:'time',label:'Start time (Sri Lanka)',type:'time',required:true},
   {name:'duration',label:'Duration (minutes)',type:'number',required:true,min:15,max:600},{name:'zoomUrl',label:'Zoom meeting link',type:'url'},
   {name:'status',label:'Status',type:'select',options:[{value:'scheduled',label:'Scheduled'},{value:'cancelled',label:'Cancelled'}]},

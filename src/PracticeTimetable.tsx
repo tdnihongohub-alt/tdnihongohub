@@ -23,11 +23,12 @@ export function PracticeEntry({slot,student,compact,onEdit}:{slot:PracticeSlot;s
  </div>;
 }
 
-export function PracticeSeriesEditor({date,batchId,onClose}:{date:string;batchId:string;onClose:()=>void}){
+export function PracticeSeriesEditor({date,batchId,courseId='',onClose}:{date:string;batchId:string;courseId?:string;onClose:()=>void}){
  const {data,save,notify}=useApp();
  const [selected,setSelected]=useState('');
  const existing=data.practiceSeries.find(row=>row.id===selected);
- const modules=data.batches.filter(b=>b.active);
+ const modules=data.batches.filter(b=>b.active&&(!courseId||b.courseId===courseId));
+ const series=data.practiceSeries.filter(row=>!courseId||row.courseId===courseId);
  const fields=[
   ...(!existing?[{name:'batchId',label:'Course module',type:'select',required:true,options:[{value:'',label:'Choose a module'},...modules.map(b=>({value:b.id,label:`${courseName(data,b.courseId)} · ${b.name}`}))]},{name:'startDate',label:'First date',type:'date',required:true}]:[]),
   {name:'title',label:'Practice title',required:true},
@@ -37,7 +38,7 @@ export function PracticeSeriesEditor({date,batchId,onClose}:{date:string;batchId
   {name:'kind',label:'Question format',type:'select',options:[{value:'form',label:'Multiple choice with automatic marks'},{value:'assignment',label:'Written answers for teacher review'}]},
   {name:'active',label:'Show recurring slots',type:'checkbox'}
  ];
- return <Modal title="Recurring practice" onClose={onClose}><div className="pad"><label className="form-field">Practice series<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Create a series</option>{data.practiceSeries.map(row=><option key={row.id} value={row.id}>{row.title} · {batchName(data,row.batchId)} · {row.startDate}</option>)}</select></label></div>
+ return <Modal title="Recurring practice" onClose={onClose}><div className="pad"><label className="form-field">Practice series<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Create a series</option>{series.map(row=><option key={row.id} value={row.id}>{row.title} · {batchName(data,row.batchId)} · {row.startDate}</option>)}</select></label></div>
   <Form key={selected} initial={existing||{batchId,startDate:date,endDate:'2027-12-31',time:'08:00',questionCount:10,kind:'form',active:true}} fields={fields} extra={<p className="form-note">The first date sets the weekday. Add questions to individual slots from the timetable. Saved assignments keep their own release dates.</p>} onCancel={onClose} submit="Save practice series" onSave={async values=>{
    const record=practiceSeriesRecord(data,{...existing,...values},existing?.id||uid('SER-'));
    await save('practiceSeries',record);
