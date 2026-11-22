@@ -22,47 +22,85 @@ async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'co
  const result=await publicGetDocs(publicQuery(publicCollection(publicDb,table),...filters.map(([field,value])=>publicWhere(field,'==',value))));
  return result.docs.map(d=>({...d.data(),id:d.id}));
 }
-export async function loadData(identity:Identity|null):Promise<Data> {
+export async function loadData(identity:Identity|null,onAccess?:(data:Data)=>void,onIncomplete?:()=>void):Promise<Data> {
  const data=emptyData();if(!db)return data;
  if(identity?.teacher){await Promise.all(tables.map(async t=>{data[t]=await readRows(t);}));return data;}
- await Promise.all((['courses','lessons','communityLinks','settings','batches'] as const).map(async table=>{data[table]=await readPublicRows(table);}));
- if(!identity)return data;
- const user=await getDoc(doc(db,'users',identity.uid));if(user.exists())data.users=[{...user.data(),id:user.id}];
- if(!identity.verified)return data;
- const binding=await getDoc(doc(db,'studentLinks',identity.uid));if(binding.exists())data.studentLinks=[{...binding.data(),id:binding.id}];
- data.savedCourses=await readRows('savedCourses',where('uid','==',identity.uid));
- data.accessRequests=await readRows('accessRequests',where('uid','==',identity.uid));
- data.progress=await readRows('progress',where('uid','==',identity.uid));data.contentReads=await readRows('contentReads',where('uid','==',identity.uid));
- data.levelAttempts=await readRows('levelAttempts',where('uid','==',identity.uid));
- data.quizAttempts=await readRows('quizAttempts',where('uid','==',identity.uid));
- const studentId=binding.data()?.studentId;
- if(studentId){
-  const student=await getDoc(doc(db,'students',studentId));if(student.exists())data.students=[{...student.data(),id:student.id}];
-  await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
+
+ // Resolve access before fetching class materials and other workspace records.
+ if(identity){
+  const [user,binding]=await Promise.all([
+   getDoc(doc(db,'users',identity.uid)),
+   identity.verified?getDoc(doc(db,'studentLinks',identity.uid)):null,
+  ]);
+  if(user.exists())data.users=[{...user.data(),id:user.id}];
+  if(binding?.exists())data.studentLinks=[{...binding.data(),id:binding.id}];
  }
- if(studentId)data.studentAlerts=await readRows('studentAlerts',where('studentId','==',studentId),where('audience','==','student'));
- const missingCourses=data.courseAccess.filter(a=>a.active&&!data.courses.some(c=>c.id===a.courseId));
- const privateCourses=await Promise.all(missingCourses.map(a=>getDoc(doc(db!,'courses',a.courseId))));
- for(const course of privateCourses)if(course.exists())data.courses.push({...course.data(),id:course.id});
- const accessibleModules=data.batches.filter(b=>canOpenModule(data,studentId,b)).map(b=>({batchId:b.id,courseId:b.courseId}));
- const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)])];
- for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:t==='lessons'?[where('batchId','==','')]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
- if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
-  data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
-  for(const e of accessibleModules)data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
+ const studentId=data.studentLinks[0]?.studentId;
+ await Promise.all([
+  ...(['courses','batches'] as const).map(async table=>{data[table]=await readPublicRows(table);}),
+  ...(studentId?[
+   getDoc(doc(db,'students',studentId)).then(student=>{if(student.exists())data.students=[{...student.data(),id:student.id}];}),
+   ...(['enrollments','courseAccess'] as const).map(async table=>{data[table]=await readRows(table,where('studentId','==',studentId));}),
+  ]:[]),
+ ]);
+ const activeStudent=data.students.some(s=>s.id===studentId&&s.active&&!s.deleted);
+ const missingCourses=activeStudent?data.courseAccess.filter(a=>a.active&&!data.courses.some(c=>c.id===a.courseId)):[];
+ const privateCourses=await Promise.allSettled(missingCourses.map(a=>getDoc(doc(db!,'courses',a.courseId))));
+ for(const result of privateCourses)if(result.status==='fulfilled'&&result.value.exists()){
+  const course=result.value;data.courses.push({...course.data(),id:course.id});
  }
- for(const e of accessibleModules){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.practiceSeries.push(...await readRows('practiceSeries',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
- const seen=new Set(data.assignments.map(a=>a.id));
- if(studentId&&data.students.some(s=>s.id===studentId&&s.active))for(const e of accessibleModules){
-  if(!courseIds.includes(e.courseId))continue;
-  const rows=await readRows('assignments',where('courseId','==',e.courseId),where('batchIds','array-contains',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));
-  for(const a of rows)if(!seen.has(a.id)){data.assignments.push(a);seen.add(a.id);}
+ onAccess?.({...data});
+ let incomplete=privateCourses.some(result=>result.status==='rejected');
+ async function load(table:Table,read:()=>Promise<Row[]>){
+  try{
+   const rows=await read();
+   data[table]=[...new Map([...data[table],...rows].map(row=>[row.id,row])).values()];
+  }catch{incomplete=true;}
  }
+ const tasks=(['lessons','communityLinks','settings'] as const).map(table=>load(table,()=>readPublicRows(table)));
+ if(identity?.verified){
+  for(const table of ['savedCourses','accessRequests','progress','contentReads','levelAttempts','quizAttempts'] as const)tasks.push(load(table,()=>readRows(table,where('uid','==',identity.uid))));
+  if(studentId){
+   for(const table of ['submissions','attendance','feeMonths','paymentClaims','payments'] as const)tasks.push(load(table,()=>readRows(table,where('studentId','==',studentId))));
+   tasks.push(load('studentAlerts',()=>readRows('studentAlerts',where('studentId','==',studentId),where('audience','==','student'))));
+  }
+  const courseIds=new Set([...data.courseAccess.filter(a=>activeStudent&&a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)]);
+  const visible=where('published','==',true),released=where('releaseAt','<=',Date.now());
+  for(const courseId of courseIds){
+   const course=where('courseId','==',courseId),shared=where('batchId','==','');
+   tasks.push(load('lessons',()=>readRows('lessons',course,shared,visible)));
+   tasks.push(load('assignments',()=>readRows('assignments',course,shared,visible,released)));
+   tasks.push(load('questions',()=>readRows('questions',course,visible)));
+  }
+  if(activeStudent)tasks.push(load('communityLinks',()=>readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',''))));
+  for(const module of data.batches.filter(b=>canOpenModule(data,studentId,b))){
+   const batch=where('batchId','==',module.id),course=where('courseId','==',module.courseId);
+   if(courseIds.has(module.courseId)){
+    tasks.push(load('lessons',()=>readRows('lessons',course,batch,visible)));
+    tasks.push(load('assignments',()=>readRows('assignments',course,batch,visible,released)));
+    tasks.push(load('assignments',()=>readRows('assignments',course,where('batchIds','array-contains',module.id),visible,released)));
+   }
+   for(const table of ['sessions','practiceSeries','announcements'] as const)tasks.push(load(table,()=>readRows(table,batch)));
+   tasks.push(load('communityLinks',()=>readRows('communityLinks',where('active','==',true),where('visibility','==','students'),batch)));
+  }
+ }
+ await Promise.all(tasks);
+ if(incomplete)onIncomplete?.();
  return data;
 }
 const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','practiceSeries','announcements','payments','feeMonths','attendance','studentAlerts']);
 const learningRevision=()=>({updatedAt:Date.now(),revision:uid()});
-export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','learningRevision'),()=>onChange(),onError);}
+export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)=>void){
+ if(!db)return ()=>{};
+ let previous:string|undefined;
+ return onSnapshot(doc(db,'settings','learningRevision'),{includeMetadataChanges:true},snapshot=>{
+  if(snapshot.metadata.fromCache||snapshot.metadata.hasPendingWrites)return;
+  const revision=String(snapshot.data()?.revision??'');
+  const changed=previous!==undefined&&revision!==previous;
+  previous=revision;
+  if(changed)onChange();
+ },onError);
+}
 export function subscribeAppearance(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','appearance'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}
 export function subscribeCommunityStats(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','communityStats'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}
 const clean=(value:any):any=>Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):value;

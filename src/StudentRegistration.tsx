@@ -51,6 +51,8 @@ export function StudentRegistrations() {
   if (!profiles.length) return requestsLink ? <Panel className="section-gap" title="Pending students"><div className="pad">{requestsLink}</div></Panel> : null;
   const link = selected && data.studentLinks.find(l => l.id === selected.id);
   const suggested = selected && requestedCourse(selected,data);
+  const matchingStudents=selected?.email?data.students.filter(s=>s.active&&!s.deleted&&s.email?.trim().toLowerCase()===selected.email.trim().toLowerCase()&&!data.studentLinks.some(l=>l.studentId===s.id&&l.id!==selected.id)):[];
+  const defaultStudent=link?.studentId||(matchingStudents.length===1?matchingStudents[0].id:matchingStudents.length?'':'__new__');
   return <><Panel className="section-gap" title="Student registrations" description="Only registrations awaiting review appear here. Accepted students move to your student list below." action={requestsLink}>
     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Age</th><th>City / school</th><th>Requested course</th><th>Received</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>{profiles.map(p => {
@@ -63,7 +65,7 @@ export function StudentRegistrations() {
     <Form key={selected.id} fields={[
       {name:'studentId',label:'Student record',type:'select',required:true,options:link?[{value:link.studentId,label:data.students.find(s=>s.id===link.studentId)?.fullName || link.studentId}]:[{value:'',label:'Choose a student record'},{value:'__new__',label:'Create a new student from these details'},...data.students.filter(s=>s.active&&!s.deleted&&!data.studentLinks.some(l=>l.studentId===s.id&&l.id!==selected.id)).map(s=>({value:s.id,label:`${s.fullName} · ${s.phone} · ${s.id}`}))]},
       {name:'batchId',label:'Accept into course',type:'select',required:true,options:[{value:'',label:'Choose an active course'},...data.courses.filter(c=>c.active!==false).map(b=>({value:b.id,label:b.title}))]},
-    ]} initial={{studentId:link?.studentId || '',batchId:suggested&&suggested.active!==false?suggested.id:''}} onCancel={()=>setSelected(null)} submit="Accept student" onSave={async values=>{
+    ]} initial={{studentId:defaultStudent,batchId:suggested&&suggested.active!==false?suggested.id:''}} onCancel={()=>setSelected(null)} submit="Accept student" onSave={async values=>{
       await acceptRegistration(selected.id,values.studentId,values.batchId);
       setSelected(null);notify('Student accepted. All active modules in this course are available.');
     }}/>

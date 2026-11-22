@@ -26,14 +26,74 @@ export const AppContext=createContext<Context>(null!);
 export const useApp=()=>useContext(AppContext);
 const cacheKey='td-nihongo-preview-v2';
 export function Provider({children}:{children:ReactNode}){
- const pendingRegistration=useRef<{email:string;ready:Promise<void>}|null>(null);const loadVersion=useRef(0);const [data,setData]=useState<Data>(initialData());const [identity,setIdentity]=useState<Identity|null>(null);const [demo,setDemo]=useState(false);const [loading,setLoading]=useState(configured);const [error,setError]=useState('');const [toast,setToast]=useState('');
+ const pendingRegistration=useRef<{email:string;ready:Promise<void>}|null>(null);const loadVersion=useRef(0);const initialAccessLoaded=useRef(false);const [data,setData]=useState<Data>(initialData());const [identity,setIdentity]=useState<Identity|null>(null);const [demo,setDemo]=useState(false);const [authReady,setAuthReady]=useState(!configured);const [loading,setLoading]=useState(configured);const [error,setError]=useState('');const [toast,setToast]=useState('');
  const notify=useCallback((message:string)=>{setToast(message);},[]);
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(timer);},[toast]);
- const refresh=useCallback(async()=>{if(demo||!configured)return;const version=++loadVersion.current;try{const next=await repo.loadData(identity);if(version===loadVersion.current){setData(next);setError('');}}catch(e){if(version===loadVersion.current)setError((e as Error).message);}finally{if(version===loadVersion.current)setLoading(false);}},[identity,demo]);
+ const refresh=useCallback(async()=>{
+  if(demo||!configured||!authReady)return;
+  const version=++loadVersion.current;
+  let incomplete=false;
+  try{
+   const next=await repo.loadData(identity,partial=>{
+    if(version===loadVersion.current&&!initialAccessLoaded.current){
+     initialAccessLoaded.current=true;
+     setData(partial);
+     setLoading(false);
+     setError('');
+    }
+   },()=>{incomplete=true;});
+   if(version===loadVersion.current){
+    setData(next);
+    setError(incomplete?'Some records could not load. Select Refresh records to try again.':'');
+   }
+  }catch(e){
+   if(version===loadVersion.current){
+    const problem=e as Error & {code?:string};
+    const limited=problem.code==='resource-exhausted'||/quota exceeded/i.test(problem.message);
+    setError(limited?'The database has reached its usage limit. Try again after the limit resets.':'The workspace could not load. Select Refresh records to try again.');
+   }
+  }finally{if(version===loadVersion.current)setLoading(false);}
+ },[identity,demo,authReady]);
  useEffect(()=>{void refresh();},[refresh]);
- useEffect(()=>{if(demo||!configured||!identity?.verified)return;let timer:ReturnType<typeof setTimeout>|undefined;const unsubscribe=repo.subscribeLearningUpdates(()=>{clearTimeout(timer);timer=setTimeout(()=>void refresh(),200);},()=>notify('Live updates are temporarily unavailable. Use Refresh records to check for changes.'));return()=>{clearTimeout(timer);unsubscribe();};},[demo,identity?.verified,refresh,notify]);
- useEffect(()=>{if(demo||!configured||!identity?.verified||identity.teacher)return;const timer=setInterval(()=>void refresh(),60000);return()=>clearInterval(timer);},[demo,identity,refresh]);
- useEffect(()=>{if(!auth)return;return onAuthStateChanged(auth,async user=>{const version=++loadVersion.current;setData(initialData());setLoading(true);let nextIdentity:Identity|null=null;try{if(!user){setIdentity(null);const publicData=await repo.loadData(null);if(version===loadVersion.current)setData(publicData);return;}const teacher=await getDoc(doc(db!,'teachers',user.uid));nextIdentity={uid:user.uid,email:user.email||'',displayName:user.displayName||user.email||'Student',verified:user.emailVerified,teacher:teacher.exists()&&teacher.data()?.enabled===true};const pending=pendingRegistration.current;if(pending&&pending.email===user.email?.toLowerCase())await pending.ready;const nextData=await repo.loadData(nextIdentity);if(version===loadVersion.current){setData(nextData);setIdentity(nextIdentity);setError('');}}catch(e){if(version===loadVersion.current){setIdentity(nextIdentity);setError((e as Error).message);}}finally{if(version===loadVersion.current)setLoading(false);}});},[]);
+ useEffect(()=>{
+  if(demo||!configured||!authReady||!identity?.verified)return;
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  const unsubscribe=repo.subscribeLearningUpdates(()=>{
+   clearTimeout(timer);
+   timer=setTimeout(()=>{if(document.visibilityState==='visible')void refresh();},1200);
+  },()=>{});
+  return()=>{clearTimeout(timer);unsubscribe();};
+ },[demo,authReady,identity?.verified,refresh]);
+ useEffect(()=>{
+  if(demo||!configured||!authReady||!identity?.verified||identity.teacher)return;
+  const refreshWhileVisible=()=>{if(document.visibilityState==='visible')void refresh();};
+  const timer=setInterval(refreshWhileVisible,5*60000);
+  return()=>clearInterval(timer);
+ },[demo,authReady,identity,refresh]);
+ useEffect(()=>{
+  if(!auth)return;
+  let current=0;
+  const unsubscribe=onAuthStateChanged(auth,async user=>{
+   const authVersion=++current;
+   ++loadVersion.current;initialAccessLoaded.current=false;
+   setAuthReady(false);setLoading(true);setData(initialData());setError('');
+   let nextIdentity:Identity|null=null;
+   try{
+    if(user){
+     nextIdentity={uid:user.uid,email:user.email||'',displayName:user.displayName||user.email||'Student',verified:user.emailVerified,teacher:false};
+     const teacher=await getDoc(doc(db!,'teachers',user.uid));
+     nextIdentity.teacher=teacher.exists()&&teacher.data()?.enabled===true;
+     const pending=pendingRegistration.current;
+     if(pending&&pending.email===user.email?.toLowerCase())await pending.ready;
+    }
+   }catch{
+    // A failed role read grants no teacher privileges.
+   }finally{
+    if(authVersion===current){setIdentity(nextIdentity);setAuthReady(true);}
+   }
+  });
+  return()=>{++current;unsubscribe();};
+ },[]);
  useEffect(()=>{if(demo)localStorage.setItem(cacheKey,JSON.stringify(data));},[data,demo]);
  const policyBusy=useRef(false);const [policyTick,setPolicyTick]=useState(0);
  useEffect(()=>{const timer=setInterval(()=>setPolicyTick(t=>t+1),15*60000);return()=>clearInterval(timer);},[]);

@@ -29,7 +29,11 @@ describe('live learning updates',()=>{
  it('delivers updates and returns a cleanup function for sign-out',()=>{
   const update=vi.fn(),error=vi.fn();const stop=subscribeLearningUpdates(update,error);
   expect(mock.listener.mock.calls[0][0]).toEqual({path:'settings/learningRevision'});
-  mock.listener.mock.calls[0][1]();expect(update).toHaveBeenCalledOnce();stop();expect(mock.stop).toHaveBeenCalledOnce();
+  const receive=mock.listener.mock.calls[0][2];
+  const snapshot=(revision:string,fromCache=false)=>({metadata:{fromCache,hasPendingWrites:false},data:()=>({revision})});
+  receive(snapshot('initial',true));receive(snapshot('initial'));expect(update).not.toHaveBeenCalled();
+  receive(snapshot('changed'));receive(snapshot('changed'));expect(update).toHaveBeenCalledOnce();
+  stop();expect(mock.stop).toHaveBeenCalledOnce();
  });
  it('streams only the public community counts and handles missing records and errors',()=>{
   const update=vi.fn(),error=vi.fn();const stop=subscribeCommunityStats(update,error);
