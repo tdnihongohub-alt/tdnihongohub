@@ -1,0 +1,17 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Routes,Route } from 'react-router-dom';
+import { describe,it,expect } from 'vitest';
+import { cultureQuizzes } from '../src/culture-quizzes';
+import { cultureModulePlan } from '../src/culture-module-plan';
+import { emptyData } from '../src/domain';
+import { weeklyWork } from '../src/weekly-learning';
+import { WeeklyClass } from '../src/WeeklyClass';
+import { AppContext } from '../src/store';
+function fixture(){const d=emptyData();d.courses=[{id:'al',title:'A/L',category:'A/L'}];d.batches=[{id:'culture',name:'Culture',courseId:'al',active:true}];d.lessons=[...new Set(cultureQuizzes.map(q=>q.week))].map(week=>({id:'week-'+week,courseId:'al',batchId:'culture',weekNumber:week,title:'Week topic '+week,published:true,recordingUrl:'https://youtu.be/abcdefghijk',notes:'Teacher notes'}));return d;}
+describe('Culture quizzes inside weekly modules',()=>{
+ it('places two quizzes in every existing week without changing lessons or broadening access',()=>{const d=fixture(),before=structuredClone(d),plan=cultureModulePlan(d,'culture',Date.parse('2026-11-22T00:00:00Z'));expect(plan).toHaveLength(56);d.assignments=plan.map(p=>p.row);for(const l of d.lessons){const rows=weeklyWork(d,[l],'al','culture','',true);expect(rows).toHaveLength(2);expect(rows.every(a=>a.lessonId===l.id&&a.batchId==='culture'&&!a.published)).toBe(true);expect(weeklyWork(d,[l],'al','other','',true)).toHaveLength(0);}expect(d.lessons).toEqual(before.lessons);expect(plan.every(p=>p.table==='assignments')).toBe(true);});
+ it('preserves saved quiz IDs, questions, publication, timer and marks; subsequent runs create no duplicates',()=>{const d=fixture();const saved={id:'saved',sourceQuizId:'CUL-W01-A',courseId:'al',lessonId:'',batchId:'',title:'My edited title',published:true,timeLimitMinutes:12,formQuestions:[{id:'mine',label:'Teacher edited question'}]};d.assignments=[saved];const plan=cultureModulePlan(d,'culture');expect(plan[0]).toMatchObject({before:saved,row:{...saved,lessonId:'week-1',batchId:'culture'}});expect(plan[0].patch).not.toHaveProperty('formQuestions');expect(plan[0].patch).not.toHaveProperty('published');d.assignments=plan.map(p=>p.row);expect(cultureModulePlan(d,'culture').every(p=>p.before)).toBe(true);});
+ it('fails before writing when a week is missing or saved copies are ambiguous',()=>{const d=fixture();d.lessons=d.lessons.slice(1);expect(()=>cultureModulePlan(d,'culture')).toThrow('Week 1');const full=fixture();full.assignments=[{id:'one',courseId:'al',batchId:'',sourceQuizId:'CUL-W01-A'},{id:'two',courseId:'al',batchId:'',sourceQuizId:'CUL-W01-A'}];expect(()=>cultureModulePlan(full,'culture')).toThrow('Multiple saved');});
+ it('renders real quiz rows inside Week 1 instead of the coming-soon placeholder',()=>{const d=fixture();d.assignments=cultureModulePlan(d,'culture').map(p=>p.row);const html=renderToStaticMarkup(<AppContext.Provider value={{data:d,identity:{uid:'teacher',teacher:true},studentId:''} as any}><MemoryRouter initialEntries={['/teacher/modules/al?batch=culture']}><Routes><Route path="/teacher/modules/:id" element={<WeeklyClass teacher/>}/></Routes></MemoryRouter></AppContext.Provider>);expect(html).toContain('Week 1 · Basic Information About Japan · Quiz 1');expect(html).toContain('Week 1 · Basic Information About Japan · Quiz 2');expect(html).not.toContain('Quiz coming soon');expect(html).toContain('Teacher notes');});
+});

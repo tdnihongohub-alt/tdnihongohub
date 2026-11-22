@@ -148,3 +148,10 @@ Release completed: Firebase Hosting, Firestore rules and indexes deployed succes
 Added per-quiz optional 1–240 minute limits, explicit Start quiz, persistent Firebase server start timestamps, captured durations, countdown, draft syncing/local backup, timeout lock and partial auto-submission. Existing quizzes remain untimed; existing teaching data was not edited. Teacher return history distinguishes fresh attempts. Unanswered timeout questions score zero; ordinary forms still require required answers.
 
 All 319 tests across 46 files passed, with new coverage for timing boundaries, captured durations, deadlines, attempt identities, validation, countdown formatting, teacher fields and partial scoring. App TypeScript passed. Ten new Firebase Rules API tests passed for valid start, forged duration/start denial, reset/delete denial, ownership, premature timeout denial, late ordinary submission denial and timeout partial submission. Thirteen previous access-policy rules tests also passed. No visual browser or real-account timer end-to-end test was performed.
+
+
+## Culture quizzes moved into weekly module — 22 November 2026
+
+Removed the separate Culture quiz tab and redirected its old URL into the Culture batch. A backed-up, concurrency-guarded Firestore commit placed 56 quizzes into the 28 existing Culture weeks: 2 existing quizzes retained their IDs, content, timing and publication state, with only audience/week links adjusted; 54 new quizzes were created as batch-scoped unpublished drafts. No lesson, recording, note, submission, student or financial record was edited or deleted.
+
+All 323 tests across 47 files and TypeScript passed. New tests verify two quizzes per week, saved-content preservation, idempotent matching, missing/ambiguous-record failure, and quiz rows rendering within the weekly module rather than coming-soon placeholders.
