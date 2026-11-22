@@ -161,6 +161,21 @@ export async function deleteLesson(original:Row,actor:string){
   tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
 }
+export async function convertSessionToHomework(source:Row,series:Row,assignment:Row,actor:string){
+ if(!db)throw Error('Firebase is not configured.');
+ await runTransaction(db,async tx=>{
+  const sourceRef=doc(db!,'sessions',source.id),seriesRef=doc(db!,'practiceSeries',series.id),assignmentRef=doc(db!,'assignments',assignment.id);
+  const [current,existingSeries,existingAssignment]=await Promise.all([tx.get(sourceRef),tx.get(seriesRef),tx.get(assignmentRef)]);
+  if(!current.exists()||!sameSession({...current.data(),id:current.id},source))throw Error('The class changed. Refresh the timetable and try again.');
+  if(existingSeries.exists()||existingAssignment.exists())throw Error('Homework has already been created for this class.');
+  const {id:seriesId,...seriesValues}=series,{id:assignmentId,...assignmentValues}=assignment;
+  tx.set(seriesRef,clean(seriesValues));
+  tx.set(assignmentRef,clean(assignmentValues));
+  tx.set(doc(db!,'audit',uid()),clean({action:'session_converted_to_homework',recordId:source.id,assignmentId,seriesId,before:source,actor,at:new Date().toISOString()}));
+  tx.delete(sourceRef);
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
 export async function changeTimetable(changes:TimetableChange[],actor:string){
  if(!db)throw Error('Firebase is not configured.');
  validateTimetableChanges(changes);

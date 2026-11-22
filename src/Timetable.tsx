@@ -1,3 +1,5 @@
+import { ExamCountdowns } from './ExamCountdown';
+import { TimetableHomeworkEditor } from './TimetableHomeworkEditor';
 import { moduleColour } from './module-colour';
 import { AssignmentEditor } from './AssignmentEditor';
 import { PracticeEntry,PracticeSeriesEditor } from './PracticeTimetable';
@@ -45,6 +47,7 @@ function CourseTimetable({student,courseId}:{student:boolean;courseId:string}){
  const [management,setManagement]=useState<Management|null>(null);
  const [practiceEdit,setPracticeEdit]=useState<PracticeSlot|null>(null);
  const [practiceManager,setPracticeManager]=useState(false);
+ const [homework,setHomework]=useState<{source?:Row;reuse?:Row}|null>(null);
  const monday=weekStart(date),first=date.slice(0,7)+'-01',monthStart=weekStart(first);
  const dates=view==='day'?[date]:Array.from({length:view==='month'?42:7},(_,i)=>addDays(view==='month'?monthStart:monday,i));
  const title=(s:Row)=>s.title||data.lessons.find(l=>l.id===s.lessonId)?.title||'Live class';
@@ -73,7 +76,9 @@ function CourseTimetable({student,courseId}:{student:boolean;courseId:string}){
  if(courseId&&!course)return <Empty title="This course timetable is unavailable"><Link className="text-link" to={student?'/student/schedule':'/teacher/schedule'}>Back to timetable</Link></Empty>;
  return <>
   {course&&<Link className="text-link" to={(student?'/student/course/':'/teacher/modules/')+encodeURIComponent(course.id)}>Back to {course.title}</Link>}
-  <PageHead eyebrow={student?'YOUR LEARNING SPACE':undefined} title={course?course.title+' timetable':'Your timetable.'} description="Plan your classes and keep every date clear. Classes and practice releases use Sri Lanka time.">{!student&&<><AddButton onClick={()=>create()}>Schedule class</AddButton><button className="button" onClick={()=>setPracticeManager(true)}>Recurring practice</button></>}</PageHead>
+  <PageHead eyebrow={student?'YOUR LEARNING SPACE':undefined} title={course?course.title+' timetable':'Your timetable.'} description="Plan your classes and keep every date clear. Classes and practice releases use Sri Lanka time.">{!student&&<><AddButton onClick={()=>create()}>Schedule class</AddButton><button className="button" onClick={()=>setHomework({})}>Schedule homework</button><button className="button" onClick={()=>setPracticeManager(true)}>Recurring homework & quizzes</button></>}</PageHead>
+  <ExamCountdowns courses={course?[course]:courses}/>
+  {course&&!student&&<Link className="button small section-gap" to={`/teacher/classes?edit=${encodeURIComponent(course.id)}`}>Set exam date & quote</Link>}
   <div className="toolbar spread">
    <label className="timetable-date-picker">Course<select value={courseId} onChange={e=>selectCourse(e.target.value)}><option value="">All courses</option>{courses.map(c=><option value={c.id} key={c.id}>{c.title}</option>)}</select></label>
    <div className="actions"><div className="filter-tabs inline">{(student?['day','week','month']:['day','week','month','list']).map(v=><button className={v===view?'active':''} key={v} onClick={()=>setView(v)}>{v==='list'?'All sessions':v[0].toUpperCase()+v.slice(1)}</button>)}</div><button className="icon-button" onClick={()=>shift(-1)} aria-label="Previous period"><ChevronLeft size={18}/></button><strong>{view==='month'?readable(date.slice(0,7)):readable(date)}</strong><button className="icon-button" onClick={()=>shift(1)} aria-label="Next period"><ChevronRight size={18}/></button><button className="button small" onClick={()=>setDate(today())}>Today</button></div>
@@ -92,14 +97,15 @@ function CourseTimetable({student,courseId}:{student:boolean;courseId:string}){
    :dates.map(day=><div key={day}><div className="agenda-day">{new Date(day+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}{day===today()&&<Badge tone="green">Today</Badge>}{!student&&<button className="text-link" onClick={()=>create(day)}><Plus size={13}/>Add class</button>}</div>{rows.filter(s=>s.date===day).length?rows.filter(s=>s.date===day).sort((a,b)=>a.time.localeCompare(b.time)).map(s=><div className="list-row timetable-session-row" data-module-colour={colour(s.batchId)} key={s.id}><span className="time-chip">{s.time}</span><div><strong>{title(s)}</strong><small>{batchName(data,s.batchId)} · {s.duration} minutes</small></div>{s.status==='cancelled'?<Badge>Cancelled</Badge>:<OutLink url={s.zoomUrl} className="button small">Join Zoom</OutLink>}{!student&&controls(s)}</div>):(!slotsOn(day).length&&<p className="agenda-empty">Nothing scheduled.</p>)}{practiceEntries(day)}</div>)}
   </Panel>
   {view==='list'&&slots.length>0&&<Panel title="Practice this week">{dates.filter(day=>slotsOn(day).length).map(day=><div key={day}><div className="agenda-day">{readable(day)}</div>{practiceEntries(day)}</div>)}</Panel>}
+  {!student&&homework&&<TimetableHomeworkEditor source={homework.source} reuse={homework.reuse} date={date} batchId={batchFilter} courseId={courseId} onClose={()=>setHomework(null)}/>}
   {!student&&practiceManager&&<PracticeSeriesEditor date={date} batchId={batchFilter} courseId={courseId} onClose={()=>setPracticeManager(false)}/>}
-  {!student&&practiceEdit&&<AssignmentEditor key={practiceEdit.id} row={practiceEdit.assignment} initialTemplate={practiceTemplate(practiceEdit)} onClose={()=>setPracticeEdit(null)}/>}
-  {!student&&edit!==null&&<Modal title={edit?'Edit scheduled class':'Schedule a class'} onClose={()=>setEdit(null)}><SessionForm key={edit?.id||'new-'+newDate} row={edit} date={newDate} batchId={batchFilter} courseId={courseId} onClose={()=>setEdit(null)} onDelete={edit?()=>openDelete(edit):undefined}/></Modal>}
+  {!student&&practiceEdit&&<AssignmentEditor key={practiceEdit.id} row={practiceEdit.assignment} initialTemplate={practiceTemplate(practiceEdit)} onReuse={practiceEdit.assignment?.kind==='assignment'&&practiceEdit.assignment.formQuestions?.length===1&&practiceEdit.assignment.formQuestions[0].type==='long'?()=>{setHomework({reuse:practiceEdit.assignment});setPracticeEdit(null);}:undefined} onClose={()=>setPracticeEdit(null)}/>}
+  {!student&&edit!==null&&<Modal title={edit?'Edit scheduled class':'Schedule a class'} onClose={()=>setEdit(null)}><SessionForm key={edit?.id||'new-'+newDate} row={edit} date={newDate} batchId={batchFilter} courseId={courseId} onClose={()=>setEdit(null)} onDelete={edit?()=>openDelete(edit):undefined} onConvert={edit?()=>{setEdit(null);setHomework({source:edit});}:undefined}/></Modal>}
   {!student&&management&&<TimetableManager {...management} onClose={()=>setManagement(null)} onMoved={day=>setDate(day)}/>}
  </>;
 }
 
-function SessionForm({row,date,batchId,courseId,onClose,onDelete}:{row?:Row;date:string;batchId:string;courseId:string;onClose:()=>void;onDelete?:()=>void}){
+function SessionForm({row,date,batchId,courseId,onClose,onDelete,onConvert}:{row?:Row;date:string;batchId:string;courseId:string;onClose:()=>void;onDelete?:()=>void;onConvert?:()=>void}){
  const {data,batch,changeTimetable,notify}=useApp();const [future,setFuture]=useState(false);
  const fields=[{name:'batchId',label:'Module',type:'select',required:true,options:[{value:'',label:'Choose module'},...data.batches.filter(b=>(!courseId||b.courseId===courseId)&&(b.active||b.id===row?.batchId)).map(b=>({value:b.id,label:b.name+(b.active?'':' (inactive)')}))]},
   {name:'lessonId',label:'Reusable lesson',type:'select',options:[{value:'',label:'No linked lesson'},...data.lessons.filter(l=>!courseId||l.courseId===courseId).map(l=>({value:l.id,label:l.title}))]},
@@ -108,7 +114,7 @@ function SessionForm({row,date,batchId,courseId,onClose,onDelete}:{row?:Row;date
   {name:'status',label:'Status',type:'select',options:[{value:'scheduled',label:'Scheduled'},{value:'cancelled',label:'Cancelled'}]},
   ...(!row?[{name:'repeatUntil',label:'Repeat weekly until (optional)',type:'date',help:'Choose an end date to schedule this class on the same weekday each week.'}]:[])];
  return <Form fields={fields} initial={{batchId,date,time:'18:00',duration:90,status:'scheduled',zoomUrl:'',lessonId:'',...row}} onCancel={onClose}
-  extra={<>{row?.seriesId&&<label className="check-line"><input type="checkbox" checked={future} onChange={e=>setFuture(e.target.checked)}/>Apply date shift, time, duration, Zoom link and status to this and future classes in this series</label>}{future&&<p className="form-note">Changing the date moves each remaining class by the same number of days. Earlier classes keep their dates.</p>}{onDelete&&<div className="timetable-form-delete"><button className="button timetable-delete" type="button" onClick={onDelete}><Trash2 size={15}/>Delete scheduled class</button><small>You can choose this class only or the remaining repeating classes.</small></div>}</>}
+  extra={<>{row?.seriesId&&<label className="check-line"><input type="checkbox" checked={future} onChange={e=>setFuture(e.target.checked)}/>Apply date shift, time, duration, Zoom link and status to this and future classes in this series</label>}{future&&<p className="form-note">Changing the date moves each remaining class by the same number of days. Earlier classes keep their dates.</p>}{onConvert&&<div className="timetable-form-delete"><button className="button" type="button" onClick={onConvert}>Convert to homework</button><small>Set a question and let students type their answers.</small></div>}{onDelete&&<div className="timetable-form-delete"><button className="button timetable-delete" type="button" onClick={onDelete}><Trash2 size={15}/>Delete scheduled class</button><small>You can choose this class only or the remaining repeating classes.</small></div>}</>}
   submit={row?'Save session changes':'Schedule class'} onSave={async values=>{
    const changes=sessionChanges(data,values,row,future);
    if(row)await changeTimetable(changes.map(c=>({before:c.row.id===row.id?row:data.sessions.find(s=>s.id===c.row.id)!,after:c.row})));

@@ -10,7 +10,7 @@ vi.mock('@firebase/firestore',()=>({
  }),
  collection:vi.fn(),getDoc:vi.fn(),getDocs:vi.fn(),query:vi.fn(),where:vi.fn(),setDoc:vi.fn(),deleteDoc:vi.fn(),writeBatch:vi.fn(),onSnapshot:vi.fn()
 }));
-import { changeTimetable } from '../src/repository';
+import { changeTimetable,convertSessionToHomework } from '../src/repository';
 const first={id:'one',batchId:'a',courseId:'al',lessonId:'lesson',date:'2026-11-23',time:'18:00',duration:90,zoomUrl:'',status:'scheduled'};
 const second={...first,id:'two',date:'2026-11-24'};
 describe('atomic timetable changes',()=>{
@@ -23,6 +23,12 @@ describe('atomic timetable changes',()=>{
   expect(audit).toHaveLength(2);expect(audit[0][1]).toMatchObject({action:'session_deleted',before:first,after:null,actor:'teacher'});
   expect(mock.set.mock.calls.filter(c=>c[0].path==='settings/learningRevision')).toHaveLength(1);
   expect(mock.events.some(e=>/attendance|payments|lessons/.test(e))).toBe(false);
+ });
+ it('replaces only the selected session with a homework slot and its published assignment',async()=>{
+  await convertSessionToHomework(first,{id:'homework',batchId:'a'},{id:'PRACTICE-homework-2026-11-23',batchId:'a',published:true},'teacher');
+  expect(mock.events.slice(0,3)).toEqual(['read sessions/one','read practiceSeries/homework','read assignments/PRACTICE-homework-2026-11-23']);
+  expect(mock.remove.mock.calls.map(c=>c[0].path)).toEqual(['sessions/one']);
+  expect(mock.set.mock.calls.map(c=>c[0].path)).toEqual(['practiceSeries/homework','assignments/PRACTICE-homework-2026-11-23',expect.stringMatching(/^audit/),'settings/learningRevision']);
  });
  it('updates the same session ID and retains its lesson link',async()=>{
   await changeTimetable([{before:first,after:{...first,date:'2026-11-30'}}],'teacher');

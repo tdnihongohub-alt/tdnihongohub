@@ -26,7 +26,7 @@ const text=z.string().trim().min(1,'This field is required.');
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Choose a date.');
 const link=z.string().refine(v=>!v||!!safeLink(v),'Use a full http:// or https:// link.');
 const schemas:Partial<Record<Table,z.ZodTypeAny>>={
- courses:z.object({title:text,category:text,description:text,access:z.enum(['free','paid']),monthlyFee:z.coerce.number().min(0),published:z.boolean(),active:z.boolean()}),
+ courses:z.object({title:text,category:text,description:text,access:z.enum(['free','paid']),monthlyFee:z.coerce.number().min(0),published:z.boolean(),active:z.boolean(),examDate:z.union([date,z.literal('')]).optional(),examQuote:z.string().trim().max(280).optional()}),
  batches:z.object({name:text,courseId:text,capacity:z.coerce.number().int().min(1),monthlyFee:z.coerce.number().min(0),startDate:date,endDate:z.string(),active:z.boolean(),colour:z.enum(moduleColours).optional()}),
  lessons:z.object({title:text,courseId:text,module:text,notes:z.string(),recordingUrl:link,resourceUrl:link,published:z.boolean(),visibility:z.enum(['public','members'])}),
  sessions:z.object({batchId:text,courseId:text,lessonId:z.string(),date,time:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),duration:z.coerce.number().int().min(15).max(600),zoomUrl:link,status:z.enum(['scheduled','cancelled'])}),

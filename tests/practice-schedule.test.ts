@@ -1,3 +1,4 @@
+import { timetableHomework } from '../src/timetable-homework';
 import { describe,it,expect } from 'vitest';
 import { emptyData } from '../src/domain';
 import { practiceSeriesRecord,practiceSlots,practiceStatus,practiceTemplate } from '../src/practice-schedule';
@@ -6,6 +7,12 @@ describe('recurring timetable practice',()=>{
  const data=emptyData();
  data.batches=[{id:'kanji',active:true,courseId:'theory'}];
  const series=practiceSeriesRecord(data,{batchId:'kanji',title:'Kanji practice',startDate:'2026-11-27',endDate:'2027-12-31',time:'08:00',questionCount:10,kind:'form'},'friday');
+ it('schedules a required typed response without creating a live class',()=>{
+  const {series:item,assignment}=timetableHomework(data,'homework',{batchId:'kanji',title:'Kaiwa Question',question:'日本語で答えてください。',date:'2028-01-06',time:'18:00',deadline:'2028-01-07T18:00'});
+  expect(practiceSlots([item],[assignment],'2028-01-01','2028-01-31')).toHaveLength(1);
+  expect(assignment).toMatchObject({kind:'assignment',responseMode:'questions',autoGrade:false,batchId:'kanji',courseId:'theory',formQuestions:[{type:'long',required:true,label:'日本語で答えてください。'}]});
+  expect(assignment.releaseAt).toBe(Date.parse('2028-01-06T12:30:00Z'));
+ });
  it('preserves the same Friday when switching calendar views and includes the final Friday',()=>{
   const year=practiceSlots([series],[],'2026-11-23','2028-01-02');
   expect(year[0].date).toBe('2026-11-27');

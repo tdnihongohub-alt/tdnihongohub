@@ -10,7 +10,7 @@ export function practiceSeriesRecord(data:Data,values:Record<string,any>,id:stri
  const module=data.batches.find(b=>b.id===values.batchId&&b.active);
  if(!module)throw Error('Choose an active module.');
  if(!validDate(values.startDate)||!validDate(values.endDate)||values.startDate>values.endDate)throw Error('Choose a valid first date and repeat-until date.');
- if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time)||values.time==='23:59')throw Error('Choose a release time before 23:59.');
+ if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time))throw Error('Choose a valid release time.');
  const count=Number(values.questionCount);
  if(!Number.isInteger(count)||count<1||count>20)throw Error('Choose 1 to 20 questions.');
  if(!String(values.title||'').trim())throw Error('Enter a practice title.');
@@ -36,7 +36,7 @@ export function practiceSlots(series:Row[],assignments:Row[],from:string,to:stri
 
 export function practiceTemplate(slot:PracticeSlot){
  const {series,date,id}=slot;
- return {id,...assignmentAudienceFields([series.batchId]),courseId:series.courseId,title:series.title,kind:series.kind,responseMode:'questions',instructions:`Answer all ${series.questionCount} ${series.questionCount===1?'question':'questions'}.`,maxMark:series.questionCount,autoGrade:series.kind==='form',published:true,releaseAt:parseSriLanka(date+'T'+series.time),deadlineAt:parseSriLanka(date+'T23:59'),allowLate:true,practiceSeriesId:series.id,practiceDate:date,expectedQuestionCount:series.questionCount};
+ return {id,...assignmentAudienceFields([series.batchId]),courseId:series.courseId,title:series.title,kind:series.kind,responseMode:'questions',instructions:`Answer all ${series.questionCount} ${series.questionCount===1?'question':'questions'}.`,maxMark:series.kind==='assignment'?10:series.questionCount,autoGrade:series.kind==='form',published:true,releaseAt:parseSriLanka(date+'T'+series.time),deadlineAt:parseSriLanka((series.time==='23:59'?addDays(date,1):date)+'T23:59'),allowLate:true,practiceSeriesId:series.id,practiceDate:date,expectedQuestionCount:series.questionCount,...(series.kind==='assignment'?{formQuestions:Array.from({length:series.questionCount},(_,i)=>({id:'question-'+(i+1),label:'',type:'long',required:true,options:[]}))}:{})};
 }
 
 export function practiceStatus(slot:PracticeSlot,now=Date.now()){

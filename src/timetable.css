@@ -20,3 +20,10 @@
 .workspace [data-module-colour].teaching-module-card .module-cover h2{color:inherit}
 .workspace[data-theme="dark"] :is(.calendar-event[data-module-colour],[data-module-colour]>.time-chip,[data-module-colour].teaching-module-card .module-cover){background:var(--module-dark);color:var(--module-light)}
 .workspace[data-theme="dark"] .teaching-module-card[data-module-colour] .module-cover{background:var(--module-dark);color:var(--module-light)}
+.exam-countdowns{display:grid;gap:12px;margin-block:14px 22px}
+.exam-countdown{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px;border:1px solid var(--line);border-inline-start:4px solid var(--accent);border-radius:12px;background:var(--paper);color:var(--ink)}
+.exam-countdown h2{margin:5px 0;font-size:19px}
+.exam-countdown p{margin:0;color:var(--muted);white-space:pre-line}
+.exam-countdown-label{display:flex;align-items:center;gap:7px;color:var(--accent);font-weight:650;font-size:12px}
+.exam-countdown>strong{flex-shrink:0;color:var(--accent);font-size:clamp(18px,3vw,27px)}
+@media(max-width:540px){.exam-countdown{align-items:flex-start;flex-direction:column;padding:15px}}
