@@ -1,3 +1,4 @@
+import { canOpenModule } from './course-enrollment';
 import { assignmentReleased } from './assignment-scheduling';
 import { assignmentForStudent } from './assignment-audience';
 import type { Data, Row } from './domain';
@@ -8,7 +9,7 @@ export function studentDashboard(data:Data,uid:string,studentId:string,now=Date.
  const courses=data.courses.filter(c=>courseIds.has(c.id));
  const lessons=data.lessons.filter(l=>courseIds.has(l.courseId)&&l.published&&assignmentForStudent(l,data,studentId)).sort((a,b)=>`${a.courseId}|${a.module}|${a.title}`.localeCompare(`${b.courseId}|${b.module}|${b.title}`));
  const completed=new Set(data.progress.filter(p=>p.uid===uid&&p.complete).map(p=>p.lessonId));
- const activeBatches=new Set(data.enrollments.filter(e=>e.studentId===studentId&&e.status==='active').map(e=>e.batchId));
+ const activeBatches=new Set(data.batches.filter(b=>canOpenModule(data,studentId,b)).map(b=>b.id));
  const sessions=data.sessions.filter(s=>activeBatches.has(s.batchId)&&s.status!=='cancelled'&&new Date(`${s.date}T${s.time}:00+05:30`).getTime()+Number(s.duration)*60000>now).sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
  const assignments=data.assignments.filter(a=>courseIds.has(a.courseId)&&assignmentForStudent(a,data,studentId)&&assignmentReleased(a,now));
  const submissions=data.submissions.filter(s=>s.studentId===studentId);

@@ -1,13 +1,15 @@
+import { courseEnrollmentRow } from './course-enrollment';
 import { manualEnrollmentChange } from './student-access-policy';
 import { withBatchAccess } from './batch-access';
 import { key, monthNow, today } from './domain';
 import type { Data, Row, Table } from './domain';
 
-export function registrationApproval(data: Data, accountId: string, selectedStudentId: string, batchId: string): {table: Table; row: Row}[] {
+export function registrationApproval(data: Data, accountId: string, selectedStudentId: string, batchId: string,wholeCourse=false): {table: Table; row: Row}[] {
   const profile = data.users.find(u => u.id === accountId);
   if (!profile?.registrationCompleted) throw Error('This student has not completed registration.');
-  const batch = data.batches.find(b => b.id === batchId && b.active);
-  if (!batch) throw Error('Choose an active batch.');
+  const module=data.batches.find(b=>b.id===batchId&&b.active);
+  const courseId=wholeCourse?batchId:module?.courseId;
+  if(!courseId)throw Error('Choose an active module.');
   const link = data.studentLinks.find(l => l.id === accountId);
   const studentId = selectedStudentId === '__new__' ? `STU-${accountId}` : selectedStudentId;
   if (!studentId) throw Error('Choose an existing student or create a new student.');
@@ -22,6 +24,13 @@ export function registrationApproval(data: Data, accountId: string, selectedStud
     student = {id: studentId, fullName: profile.displayName, phone: profile.phone, email: profile.email || '', age: profile.age,city:profile.city||'',school:profile.school||'',candidateType:profile.candidateType||'', registeredOn: today(), active: true};
   }
   changes.push({table:'students',row:{...student,linkedAccountId:accountId}});
+  if(wholeCourse){
+   changes.push({table:'studentLinks',row:{...link,id:accountId,studentId}});
+   changes.push({table:'courseAccess',row:courseEnrollmentRow({...data,students:[student,...data.students.filter(s=>s.id!==studentId)]},studentId,courseId)});
+   for(const request of data.accessRequests.filter(r=>r.uid===accountId&&r.courseId===courseId&&r.status==='pending'))changes.push({table:'accessRequests',row:{...request,studentId,status:'approved'}});
+   return withBatchAccess(data,changes);
+  }
+  const batch=module!;
   const enrollmentId = key(studentId, batchId);
   const existing = data.enrollments.find(e => e.id === enrollmentId);
   if (existing?.status !== 'active' && data.enrollments.filter(e => e.batchId === batchId && e.id !== enrollmentId && (e.status === 'active' || e.autoPaymentSuspended)).length >= Number(batch.capacity)) throw Error('This batch is full.');

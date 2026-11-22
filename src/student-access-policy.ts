@@ -82,7 +82,11 @@ export function studentPolicyPlan(data:Data,now=Date.now()):RecordChange[]{
  for(const id of affectedCourses){
   const changed=nextEnrollments.find(e=>key(e.studentId,e.courseId)===id)!,existing=data.courseAccess.find(a=>a.id===id);
   const active=nextEnrollments.some(e=>e.studentId===changed.studentId&&e.courseId===changed.courseId&&e.status==='active');
-  if(!active)upsert('courseAccess',{...existing,id,studentId:changed.studentId,courseId:changed.courseId,active:false,autoPaymentBlocked:!!existing?.active||!!existing?.autoPaymentBlocked});
+  const paymentHold=nextEnrollments.some(e=>e.studentId===changed.studentId&&e.courseId===changed.courseId&&e.autoPaymentSuspended&&e.status==='suspended');
+  if(existing?.allModules){
+   if(paymentHold&&existing.active)upsert('courseAccess',{...existing,active:false,autoPaymentBlocked:true});
+   else if(!paymentHold&&existing.autoPaymentBlocked)upsert('courseAccess',{...existing,active:true,autoPaymentBlocked:false});
+  }else if(!active)upsert('courseAccess',{...existing,id,studentId:changed.studentId,courseId:changed.courseId,active:false,autoPaymentBlocked:!!existing?.active||!!existing?.autoPaymentBlocked});
   else if(existing?.autoPaymentBlocked)upsert('courseAccess',{...existing,active:true,autoPaymentBlocked:false});
  }
  return withBatchAccess(data,changes);

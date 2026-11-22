@@ -11,7 +11,15 @@ service cloud.firestore {
    return verified() && ((get(/databases/$(database)/documents/courses/$(id)).data.access == 'free' && get(/databases/$(database)/documents/courses/$(id)).data.get('approvalRequired',false) == false && get(/databases/$(database)/documents/courses/$(id)).data.published == true)
     || (activeStudent() && get(/databases/$(database)/documents/courseAccess/$(studentId() + '_' + id)).data.active == true));
   }
-  function batchAllowed(id) { return activeStudent() && get(/databases/$(database)/documents/enrollments/$(studentId() + '_' + id)).data.status == 'active'; }
+  function courseGrant(id) { return /databases/$(database)/documents/courseAccess/$(studentId() + '_' + id); }
+  function allModules(id) { return exists(courseGrant(id)) && get(courseGrant(id)).data.get('allModules',false) == true; }
+  function wholeCourseAllowed(id) { return allModules(id) && get(courseGrant(id)).data.active == true; }
+  function batchAllowed(id) {
+   let module = get(/databases/$(database)/documents/batches/$(id)).data;
+   return activeStudent() && (allModules(module.courseId)
+    ? module.active == true && wholeCourseAllowed(module.courseId)
+    : get(/databases/$(database)/documents/enrollments/$(studentId() + '_' + id)).data.status == 'active');
+  }
   function shortString(value,max) { return value is string && value.size() <= max; }
   function link(value) { return value == '' || (value is string && value.size() <= 2000 && value.matches('https?://.*')); }
   function validClaim(d) {
@@ -23,7 +31,7 @@ service cloud.firestore {
   function assignmentOpen(a) { return a.published == true && a.get('releaseAt',0) <= request.time.toMillis(); }
   function assignmentAudience(a) {
    return a.get('batchIds',[]).size() > 1 || a.get('batchId','') == '__multiple__'
-    ? (activeStudent() && a.get('batchIds',[]).hasAny(get(/databases/$(database)/documents/studentLinks/$(request.auth.uid)).data.get('activeBatchIds',[])))
+    ? (activeStudent() && (allModules(a.courseId) ? wholeCourseAllowed(a.courseId) : a.get('batchIds',[]).hasAny(get(/databases/$(database)/documents/studentLinks/$(request.auth.uid)).data.get('activeBatchIds',[]))))
     : (a.get('audience','') == 'batches' && a.get('batchIds',[]).size() == 0 ? false : (a.get('batchId','') == '' || batchAllowed(a.batchId)));
   }
   function acceptsWork(a) { return assignmentOpen(a) && (a.get('allowLate',true) == true || a.get('deadlineAt',0) >= request.time.toMillis()); }
@@ -105,7 +113,7 @@ service cloud.firestore {
    function validProfile() {
     let d = request.resource.data;
     return signed() && request.auth.uid == id
-     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','preferredBatchId','registrationCompleted','registeredAt','city','school','candidateType'])
+     && d.keys().hasOnly(['displayName','email','phone','age','preferredBatch','preferredBatchId','preferredCourseId','registrationCompleted','registeredAt','city','school','candidateType'])
      && shortString(d.get('city',''),120) && shortString(d.get('school',''),200)
      && d.get('candidateType','') in ['','school','private']
      && (d.get('candidateType','') == '' || (d.get('city','').size() > 0 && (d.candidateType == 'private' || d.get('school','').size() > 0)))
@@ -113,7 +121,9 @@ service cloud.firestore {
      && d.get('registrationCompleted',false) is bool
      && (d.get('registrationCompleted',false) == false || (d.displayName.size() > 0
       && d.phone.matches('[+]?[0-9]{9,15}') && d.age is int && d.age >= 5 && d.age <= 120
-      && shortString(d.preferredBatch,200) && d.preferredBatch.size() > 0 && validBatch(d)
+      && (d.get('preferredCourseId','') != ''
+       ? shortString(d.preferredCourseId,1500) && get(/databases/$(database)/documents/courses/$(d.preferredCourseId)).data.published == true && get(/databases/$(database)/documents/courses/$(d.preferredCourseId)).data.get('active',true) == true
+       : shortString(d.preferredBatch,200) && d.preferredBatch.size() > 0 && validBatch(d))
       && shortString(d.registeredAt,40) && d.registeredAt.size() > 0));
    }
    allow create: if validProfile();
@@ -123,7 +133,7 @@ service cloud.firestore {
   match /studentLinks/{id} { allow get: if teacher() || (verified() && request.auth.uid == id); allow list, write: if teacher(); }
   match /students/{id} { allow read: if teacher() || ownStudent(id); allow write: if teacher(); }
   match /teacherNotes/{id} { allow read, write: if teacher(); }
-  match /courses/{id} { allow read: if teacher() || resource.data.published == true; allow write: if teacher(); }
+  match /courses/{id} { allow read: if teacher() || resource.data.published == true; allow get: if activeStudent() && exists(courseGrant(id)) && get(courseGrant(id)).data.active == true; allow write: if teacher(); }
   match /batches/{id} { allow read: if teacher() || resource.data.active == true; allow write: if teacher(); }
   match /enrollments/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }
   match /courseAccess/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }

@@ -1,3 +1,4 @@
+import { canOpenModule } from './course-enrollment';
 import type { Data, Row } from './domain';
 
 export function assignmentBatchIds(a:Row):string[]{return Array.isArray(a.batchIds)?a.batchIds: a.batchId&&a.batchId!=='__multiple__'?[a.batchId]:[];}
@@ -11,8 +12,10 @@ export function assignmentAppliesToBatch(a:Row,batchId:string){return !assignmen
 export function assignmentBatchLabel(a:Row,data:Data){return assignmentBatchScoped(a)?assignmentBatchIds(a).map(id=>data.batches.find(b=>b.id===id)?.name||id).join(' · '):'All course students';}
 
 export function assignmentForStudent(a:Row,data:Data,studentId:string){
+ const grant=data.courseAccess.find(c=>c.studentId===studentId&&c.courseId===a.courseId&&c.allModules);
+ if(grant&&!grant.active)return false;
  if(!assignmentBatchScoped(a))return data.enrollments.some(e=>e.studentId===studentId&&e.courseId===a.courseId&&e.status==='active')||data.courseAccess.some(c=>c.studentId===studentId&&c.courseId===a.courseId&&c.active)||data.savedCourses.some(c=>c.courseId===a.courseId&&data.studentLinks.some(l=>l.studentId===studentId&&l.id===c.uid));
- return data.students.some(s=>s.id===studentId&&s.active)&&data.enrollments.some(e=>e.studentId===studentId&&assignmentBatchIds(a).includes(e.batchId)&&e.courseId===a.courseId&&e.status==='active');
+ return data.batches.some(b=>b.courseId===a.courseId&&assignmentBatchIds(a).includes(b.id)&&canOpenModule(data,studentId,b))||assignmentBatchIds(a).some(id=>!data.batches.some(b=>b.id===id)&&canOpenModule(data,studentId,{id,courseId:a.courseId}));
 }
 
 export function validateAssignmentBatch(a:Row,data:Data){

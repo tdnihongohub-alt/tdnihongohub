@@ -1,3 +1,4 @@
+import { canOpenModule } from './course-enrollment';
 import { limitedPolicyPlan,policyPatch,policySourceTables,studentPolicyPlan } from './student-access-policy';
 import { affectsBatchAccess,withBatchAccess } from './batch-access';
 import type { RecordChange } from './batch-access';
@@ -40,15 +41,19 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
  }
  if(studentId)data.studentAlerts=await readRows('studentAlerts',where('studentId','==',studentId),where('audience','==','student'));
+ const missingCourses=data.courseAccess.filter(a=>a.active&&!data.courses.some(c=>c.id===a.courseId));
+ const privateCourses=await Promise.all(missingCourses.map(a=>getDoc(doc(db!,'courses',a.courseId))));
+ for(const course of privateCourses)if(course.exists())data.courses.push({...course.data(),id:course.id});
+ const accessibleModules=data.batches.filter(b=>canOpenModule(data,studentId,b)).map(b=>({batchId:b.id,courseId:b.courseId}));
  const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)])];
  for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:t==='lessons'?[where('batchId','==','')]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
   data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
-  for(const e of data.enrollments.filter(e=>e.status==='active'))data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
+  for(const e of accessibleModules)data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
  }
- for(const e of data.enrollments.filter(e=>e.status==='active')){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
+ for(const e of accessibleModules){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
  const seen=new Set(data.assignments.map(a=>a.id));
- if(studentId&&data.students.some(s=>s.id===studentId&&s.active))for(const e of data.enrollments.filter(e=>e.status==='active')){
+ if(studentId&&data.students.some(s=>s.id===studentId&&s.active))for(const e of accessibleModules){
   if(!courseIds.includes(e.courseId))continue;
   const rows=await readRows('assignments',where('courseId','==',e.courseId),where('batchIds','array-contains',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));
   for(const a of rows)if(!seen.has(a.id)){data.assignments.push(a);seen.add(a.id);}
@@ -149,22 +154,22 @@ export async function setEnrollment(row:Row,allEnrollments:Row[]){
  await batchSave([{table:'enrollments',row},{table:'courseAccess',row:{id:key(row.studentId,row.courseId),studentId:row.studentId,courseId:row.courseId,active:row.status==='active'||otherActive}}]);
 }
 
-export async function acceptRegistration(accountId:string,studentId:string,batchId:string) {
+export async function acceptRegistration(accountId:string,studentId:string,batchId:string,wholeCourse=false) {
  if (!db) throw Error('Firebase is not configured.');
  await runTransaction(db,async tx => {
   const data=emptyData();
-  await Promise.all((['users','students','studentLinks','batches','enrollments','courseAccess','accessRequests'] as const).map(async table => {data[table]=await readRows(table);}));
-  const proposal=registrationApproval(data,accountId,studentId,batchId);
+  await Promise.all((['users','students','studentLinks','batches','courses','enrollments','courseAccess','accessRequests'] as const).map(async table => {data[table]=await readRows(table);}));
+  const proposal=registrationApproval(data,accountId,studentId,batchId,wholeCourse);
   // Read every affected record before writing so concurrent approvals retry safely.
-  for (const change of [...proposal,{table:'batches' as const,row:{id:batchId}},{table:'users' as const,row:{id:accountId}}]) {
+  for (const change of [...proposal,{table:wholeCourse?'courses' as const:'batches' as const,row:{id:batchId}},{table:'users' as const,row:{id:accountId}}]) {
    const current=await tx.get(doc(db!,change.table,change.row.id));
    data[change.table]=data[change.table].filter(r => r.id !== change.row.id);
    if(current.exists())data[change.table].push({...current.data(),id:current.id});
   }
-  const changes=registrationApproval(data,accountId,studentId,batchId);
+  const changes=registrationApproval(data,accountId,studentId,batchId,wholeCourse);
   for(const {table,row} of changes){const {id,...values}=row;tx.set(doc(db!,table,id),clean(values));}
   const delivery=data.batches.find(b => b.id===batchId)!;
-  tx.update(doc(db!,'batches',batchId),{enrollmentRevision:Number(delivery.enrollmentRevision||0)+1});tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+  if(!wholeCourse)tx.update(doc(db!,'batches',batchId),{enrollmentRevision:Number(delivery.enrollmentRevision||0)+1});tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
 }
 

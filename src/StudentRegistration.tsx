@@ -2,7 +2,7 @@ import { StudentDetailsFields } from './StudentDetailsFields';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from './store';
-import { registrationBatches, registrationNeedsReview, requestedBatch, validateRegistration } from './student-registration';
+import { registrationCourses, registrationNeedsReview, requestedCourse, validateRegistration } from './student-registration';
 import { readable } from './domain';
 import { Panel, Badge, Modal, Form } from './ui';
 import type { Row } from './domain';
@@ -10,7 +10,7 @@ import type { Row } from './domain';
 export function StudentRegistration() {
   const { identity, data, save, notify } = useApp();
   const profile = data.users.find(u => u.id === identity!.uid);
-  const batches = registrationBatches(data.batches);
+  const batches = registrationCourses(data.courses);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return <section className="registration-card panel">
@@ -21,9 +21,9 @@ export function StudentRegistration() {
         const form = new FormData(event.currentTarget);
         setBusy(true); setError('');
         try {
-          const selected = batches.find(b => b.id === form.get('preferredBatchId'));
-          if (!selected) throw Error('Choose a current batch.');
-          const details = validateRegistration({displayName: String(form.get('displayName') || ''), phone: String(form.get('phone') || ''), age: Number(form.get('age')), preferredBatch: selected.name, preferredBatchId: selected.id,city:String(form.get('city')||''),candidateType:String(form.get('candidateType')||''),school:String(form.get('school')||'')});
+          const selected = batches.find(b => b.id === form.get('preferredCourseId'));
+          if (!selected) throw Error('Choose a current course.');
+          const details = validateRegistration({displayName: String(form.get('displayName') || ''), phone: String(form.get('phone') || ''), age: Number(form.get('age')), preferredCourseId: selected.id,city:String(form.get('city')||''),candidateType:String(form.get('candidateType')||''),school:String(form.get('school')||'')});
           await save('users', {id: identity!.uid, email: identity!.email, ...details, registrationCompleted: true, registeredAt: profile?.registeredAt || new Date().toISOString()});
           notify('Your details have been sent to your teacher.');
         } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
@@ -32,8 +32,8 @@ export function StudentRegistration() {
         <label>Phone number<input name="phone" type="tel" autoComplete="tel" required maxLength={40} defaultValue={profile?.phone || ''} placeholder="0771234567"/></label>
         <label>Age<input name="age" type="number" required min={5} max={120} step={1} defaultValue={profile?.age || ''}/></label>
         <StudentDetailsFields profile={profile}/>
-        <label>Batch<select name="preferredBatchId" required defaultValue={profile ? requestedBatch(profile,batches)?.id || '' : ''}><option value="" disabled>Choose your batch</option>{batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
-        {!batches.length && <p>No batches are currently open. Please contact your teacher.</p>}
+        <label>Course<select name="preferredCourseId" required defaultValue={profile ? requestedCourse(profile,data)?.id || '' : ''}><option value="" disabled>Choose your course</option>{batches.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
+        {!batches.length && <p>No courses are currently open. Please contact your teacher.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         <button className="button primary" disabled={busy || !batches.length}>{busy ? 'Saving your details…' : 'Complete registration'}</button>
       </form>
@@ -49,22 +49,22 @@ export function StudentRegistrations() {
   const requestsLink=pendingRequests ? <Link className="button small" to="/teacher/classes?view=requests">Review class access requests ({pendingRequests})</Link> : null;
   if (!profiles.length) return requestsLink ? <Panel className="section-gap" title="Pending students"><div className="pad">{requestsLink}</div></Panel> : null;
   const link = selected && data.studentLinks.find(l => l.id === selected.id);
-  const suggested = selected && requestedBatch(selected,data.batches);
+  const suggested = selected && requestedCourse(selected,data);
   return <><Panel className="section-gap" title="Student registrations" description="Only registrations awaiting review appear here. Accepted students move to your student list below." action={requestsLink}>
-    <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Age</th><th>City / school</th><th>Requested batch</th><th>Received</th><th>Status</th><th>Action</th></tr></thead>
+    <div className="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Age</th><th>City / school</th><th>Requested course</th><th>Received</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>{profiles.map(p => {
-        const target=requestedBatch(p,data.batches);
-        return <tr key={p.id}><td><strong>{p.displayName}</strong><small>{p.email}</small></td><td><a href={`tel:${p.phone}`}>{p.phone}</a></td><td>{p.age}</td><td>{p.city||'—'}<small>{p.candidateType==='private'?'Private candidate':p.school||'School not supplied'}</small></td><td>{target?.name || p.preferredBatch}</td><td>{readable(String(p.registeredAt).slice(0,10))}</td><td><Badge tone="amber">Pending</Badge></td><td><button className="button small" onClick={()=>setSelected(p)}>Review & accept</button></td></tr>;
+        const target=requestedCourse(p,data);
+        return <tr key={p.id}><td><strong>{p.displayName}</strong><small>{p.email}</small></td><td><a href={`tel:${p.phone}`}>{p.phone}</a></td><td>{p.age}</td><td>{p.city||'—'}<small>{p.candidateType==='private'?'Private candidate':p.school||'School not supplied'}</small></td><td>{target?.title || p.preferredBatch}</td><td>{readable(String(p.registeredAt).slice(0,10))}</td><td><Badge tone="amber">Pending</Badge></td><td><button className="button small" onClick={()=>setSelected(p)}>Review & accept</button></td></tr>;
       })}</tbody>
     </table></div>
   </Panel>{selected&&<Modal title="Accept student registration" onClose={()=>setSelected(null)}>
-    <div className="pad"><h3>{selected.displayName}</h3><p>{selected.phone} · Age {selected.age}<br/>{selected.city} · {selected.candidateType==='private'?'Private candidate':selected.school}<br/>Requested batch · {suggested?.name || selected.preferredBatch}</p><p>Match an existing record to keep its attendance and payment history connected, or create a new student.</p></div>
+    <div className="pad"><h3>{selected.displayName}</h3><p>{selected.phone} · Age {selected.age}<br/>{selected.city} · {selected.candidateType==='private'?'Private candidate':selected.school}<br/>Requested course · {suggested?.title || selected.preferredBatch}</p><p>Match an existing record to keep its attendance and payment history connected, or create a new student.</p></div>
     <Form key={selected.id} fields={[
       {name:'studentId',label:'Student record',type:'select',required:true,options:link?[{value:link.studentId,label:data.students.find(s=>s.id===link.studentId)?.fullName || link.studentId}]:[{value:'',label:'Choose a student record'},{value:'__new__',label:'Create a new student from these details'},...data.students.filter(s=>s.active&&!s.deleted&&!data.studentLinks.some(l=>l.studentId===s.id&&l.id!==selected.id)).map(s=>({value:s.id,label:`${s.fullName} · ${s.phone} · ${s.id}`}))]},
-      {name:'batchId',label:'Accept into batch',type:'select',required:true,options:[{value:'',label:'Choose an active batch'},...registrationBatches(data.batches).map(b=>({value:b.id,label:b.name}))]},
-    ]} initial={{studentId:link?.studentId || '',batchId:suggested?.active?suggested.id:''}} onCancel={()=>setSelected(null)} submit="Accept student" onSave={async values=>{
+      {name:'batchId',label:'Accept into course',type:'select',required:true,options:[{value:'',label:'Choose an active course'},...data.courses.filter(c=>c.active!==false).map(b=>({value:b.id,label:b.title}))]},
+    ]} initial={{studentId:link?.studentId || '',batchId:suggested&&suggested.active!==false?suggested.id:''}} onCancel={()=>setSelected(null)} submit="Accept student" onSave={async values=>{
       await acceptRegistration(selected.id,values.studentId,values.batchId);
-      setSelected(null);notify('Student accepted and enrolled.');
+      setSelected(null);notify('Student accepted. All active modules in this course are available.');
     }}/>
   </Modal>}</>;
 }

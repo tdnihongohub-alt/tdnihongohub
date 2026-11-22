@@ -1,6 +1,6 @@
 import type { Data, Row } from './domain';
 
-export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch: string; preferredBatchId?: string; city?:string; school?:string; candidateType?:string };
+export type RegistrationDetails = { displayName: string; phone: string; age: number; preferredBatch?: string; preferredCourseId?: string; preferredBatchId?: string; city?:string; school?:string; candidateType?:string };
 
 export function registrationBatches(batches: Row[]) {
   return batches.filter(b => b.active && b.name).sort((a,b) => a.name.localeCompare(b.name));
@@ -15,7 +15,7 @@ export function registrationNeedsReview(data:Data,profile:Row){
  const student=registrationStudent(data,profile.id);
  // Enrolment history means onboarding has been handled, even if access is later suspended.
  return profile.registrationCompleted===true&&!student?.deleted&&
-  (!student||!data.enrollments.some(e=>e.studentId===student.id));
+  (!student||!data.enrollments.some(e=>e.studentId===student.id)&&!data.courseAccess.some(a=>a.studentId===student.id));
 }
 
 export function validateRegistration(values: RegistrationDetails): RegistrationDetails {
@@ -24,11 +24,11 @@ export function validateRegistration(values: RegistrationDetails): RegistrationD
   if (!displayName || displayName.length > 200) throw Error('Enter your full name.');
   if (!/^\+?[0-9]{9,15}$/.test(phone)) throw Error('Enter a valid phone number, for example 0771234567.');
   if (!Number.isInteger(Number(values.age)) || Number(values.age) < 5 || Number(values.age) > 120) throw Error('Enter your age in years (5–120).');
-  if (!values.preferredBatch?.trim() || values.preferredBatch.length > 200) throw Error('Choose your batch.');
+  if (!values.preferredCourseId&&(!values.preferredBatch?.trim()||values.preferredBatch.length>200)) throw Error('Choose your course.');
   const demographics=values.city!==undefined||values.candidateType!==undefined;
   const city=values.city?.trim()||'',school=values.school?.trim()||'';
   if(demographics){if(!city||city.length>120)throw Error('Enter your city or town.');if(!['school','private'].includes(values.candidateType||''))throw Error('Choose school student or private candidate.');if(values.candidateType==='school'&&(!school||school.length>200))throw Error('Enter your school name.');}
-  return { ...(demographics?{city,candidateType:values.candidateType,school:values.candidateType==='school'?school:''}:{}), displayName, phone, age: Number(values.age), preferredBatch: values.preferredBatch.trim(), ...(values.preferredBatchId ? {preferredBatchId: values.preferredBatchId} : {}) };
+  return { ...(demographics?{city,candidateType:values.candidateType,school:values.candidateType==='school'?school:''}:{}), displayName, phone, age: Number(values.age), ...(values.preferredCourseId?{preferredCourseId:values.preferredCourseId}:{preferredBatch:values.preferredBatch?.trim()}), ...(values.preferredBatchId ? {preferredBatchId: values.preferredBatchId} : {}) };
 }
 
 export function requestedBatch(profile: Row, batches: Row[]) {
@@ -41,7 +41,15 @@ export function registrationComplete(profile?: Row) {
   if (!profile?.registrationCompleted) return false;
   try {
     if(!profile.city||!profile.candidateType)return false;
-    validateRegistration({displayName: profile.displayName, phone: profile.phone, age: profile.age, preferredBatch: profile.preferredBatch,city:profile.city,school:profile.school,candidateType:profile.candidateType});
+    validateRegistration({displayName: profile.displayName, phone: profile.phone, age: profile.age, preferredBatch: profile.preferredBatch,preferredCourseId:profile.preferredCourseId,city:profile.city,school:profile.school,candidateType:profile.candidateType});
     return true;
   } catch { return false; }
+}
+
+export function registrationCourses(courses:Row[]){return courses.filter(c=>c.active!==false&&c.published&&c.title).sort((a,b)=>a.title.localeCompare(b.title));}
+export function requestedCourse(profile:Row,data:Data){const id=profile.preferredCourseId||requestedBatch(profile,data.batches)?.courseId;return data.courses.find(c=>c.id===id);}
+
+export function studentOnboarded(data:Data,accountId:string){
+ const link=data.studentLinks.find(l=>l.id===accountId);
+ return registrationComplete(data.users.find(u=>u.id===accountId))||!!link&&data.courseAccess.some(a=>a.studentId===link.studentId);
 }
