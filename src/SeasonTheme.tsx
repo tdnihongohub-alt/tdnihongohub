@@ -9,6 +9,8 @@ import type { Row } from './domain';
 import { Panel } from './ui';
 
 const SeasonContext=createContext<Season>('general');
+const AppearanceContext=createContext<Row|null|undefined>(undefined);
+export const useAppearance=()=>useContext(AppearanceContext);
 export const useSeason=()=>useContext(SeasonContext);
 export function SeasonTheme({children}:{children:ReactNode}){
  const {data,demo}=useApp();const [live,setLive]=useState<Row|null|undefined>();
@@ -16,7 +18,7 @@ export function SeasonTheme({children}:{children:ReactNode}){
  const row=demo||live===undefined?data.settings.find(s=>s.id==='appearance'):live;
  const season=appearanceSeason(row);
  useEffect(()=>{document.documentElement.dataset.season=season;return()=>{delete document.documentElement.dataset.season;};},[season]);
- return <SeasonContext.Provider value={season}>{children}</SeasonContext.Provider>;
+ return <SeasonContext.Provider value={season}><AppearanceContext.Provider value={row}>{children}</AppearanceContext.Provider></SeasonContext.Provider>;
 }
 export function SeasonThemeEditor(){
  const {data,identity,save,notify}=useApp();const row=data.settings.find(s=>s.id==='appearance');

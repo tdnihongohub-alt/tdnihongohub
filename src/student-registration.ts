@@ -51,5 +51,5 @@ export function requestedCourse(profile:Row,data:Data){const id=profile.preferre
 
 export function studentOnboarded(data:Data,accountId:string){
  const link=data.studentLinks.find(l=>l.id===accountId);
- return registrationComplete(data.users.find(u=>u.id===accountId))||!!link&&data.courseAccess.some(a=>a.studentId===link.studentId);
+ return data.users.some(u=>u.id===accountId&&u.registrationCompleted===true)||!!link&&data.courseAccess.some(a=>a.studentId===link.studentId);
 }

@@ -1,0 +1,7 @@
+.workspace-update-button{position:relative;display:inline-flex;gap:4px;align-items:center}
+.workspace-update-button .module-count{min-width:1.35rem;text-align:center}
+.workspace-updates section{margin-top:1.4rem}
+.workspace-updates .list-row{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.workspace-updates .list-row small{display:block}
+.student-account-status{display:flex;flex-wrap:wrap;gap:.6rem 1.1rem;margin-bottom:1rem}
+.student-account-status code{font-size:inherit;overflow-wrap:anywhere}
