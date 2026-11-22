@@ -1,0 +1,32 @@
+import { describe,it,expect } from 'vitest';
+import { decode,encode,runWorker } from '../scripts/student-access-worker';
+const base='projects/td-nihongo-hub/databases/(default)/documents',now=Date.parse('2026-11-09T12:00:00+05:30');
+function database(){
+ const docs=new Map<string,any>(),commits:any[]=[],queries:string[]=[];
+ function put(table:string,id:string,values:Record<string,any>){const name=base+'/'+table+'/'+id;docs.set(name,{name,fields:Object.fromEntries(Object.entries(values).map(([k,v])=>[k,encode(v)])),updateTime:'2026-11-09T00:00:00.000001Z'});}
+ put('settings','learningRevision',{revision:'before'});put('settings','studentAccessPolicy',{enabled:true,paymentEnabled:true,attendanceEnabled:true,graceDays:7,absenceWeeks:2});
+ put('students','s',{active:true});put('courses','al',{access:'paid',active:true});put('batches','b',{courseId:'al',active:true});
+ put('enrollments','s_b',{studentId:'s',batchId:'b',courseId:'al',status:'active',custom:'preserve'});put('courseAccess','s_al',{studentId:'s',courseId:'al',active:true});put('studentLinks','u',{studentId:'s',activeBatchIds:['b'],custom:'preserve'});
+ put('feeMonths','s_b_2026-11',{studentId:'s',batchId:'b',month:'2026-11',dueDate:'2026-11-01',amount:4000});
+ put('studentAlerts','fee-s_b_2026-11',{kind:'payment',audience:'student',studentId:'s',batchId:'b',courseId:'al',feeId:'s_b_2026-11',month:'2026-11',state:'warning',remaining:4000,warnedOn:'2026-11-02',suspendOn:'2026-11-09',createdAt:'2026-11-02T00:00:00Z',teacherHidden:false,history:[{state:'warning',at:'2026-11-02T00:00:00Z'}]});
+ const respond=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
+ const fetcher=(async(url:any,options:any)=>{const path=String(url).split('/v1/')[1],body=options.body?JSON.parse(options.body):null;
+  if(path.endsWith(':runQuery')){const table=body.structuredQuery.from[0].collectionId;queries.push(table);return respond([...docs.values()].filter(d=>d.name.startsWith(base+'/'+table+'/')).map(document=>({document})));}
+  if(path.endsWith(':commit')){commits.push(body.writes);for(const w of body.writes){const current=docs.get(w.update.name);if(w.currentDocument?.exists===false&&current||w.currentDocument?.updateTime&&current?.updateTime!==w.currentDocument.updateTime)return respond({error:{message:'Concurrent change'}},409);}
+   for(const w of body.writes){const old=docs.get(w.update.name);docs.set(w.update.name,{name:w.update.name,fields:w.updateMask?{...old?.fields,...w.update.fields}:w.update.fields,updateTime:'2026-11-09T00:00:00.'+String(commits.length+1).padStart(6,'0')+'Z'});}return respond({writeResults:[]});}
+  return docs.has(path)?respond(docs.get(path)):respond({error:{message:'Not found'}},404);
+ }) as typeof fetch;
+ return {docs,commits,queries,put,fetcher,respond};
+}
+describe('trusted background student checker',()=>{
+ it('previews without writes and fails closed for a missing policy or wrong project',async()=>{const d=database();const result=await runWorker({projectId:'td-nihongo-hub',token:'test-token',now,fetcher:d.fetcher});expect(result).toMatchObject({preview:true});expect(d.commits).toHaveLength(0);d.docs.delete(base+'/settings/studentAccessPolicy');expect(await runWorker({projectId:'td-nihongo-hub',token:'test-token',apply:true,now,fetcher:d.fetcher})).toMatchObject({enabled:false,applied:0});await expect(runWorker({projectId:'other',token:'t',fetcher:d.fetcher})).rejects.toThrow('Unexpected');});
+ it('atomically writes alerts and access with a revision barrier, without rewriting payments or legacy enrollment metadata',async()=>{const d=database(),fee=structuredClone(d.docs.get(base+'/feeMonths/s_b_2026-11'));d.docs.get(base+'/enrollments/s_b').fields.legacyTimestamp={timestampValue:'2026-10-01T00:00:00Z'};
+  const result=await runWorker({projectId:'td-nihongo-hub',token:'test-token',apply:true,now,fetcher:d.fetcher});expect(result).toMatchObject({enabled:true,remaining:0});const writes=d.commits[0];expect(writes.find((w:any)=>w.update.name===base+'/enrollments/s_b').updateMask.fieldPaths).toEqual(expect.arrayContaining(['status','autoPaymentSuspended']));expect(writes.find((w:any)=>w.update.name===base+'/enrollments/s_b').updateMask.fieldPaths).not.toContain('legacyTimestamp');expect(writes.some((w:any)=>/\/(payments|feeMonths|attendance|students|sessions)\//.test(w.update.name))).toBe(false);expect(writes.find((w:any)=>w.update.name===base+'/settings/learningRevision').currentDocument.updateTime).toBeTruthy();expect(d.docs.get(base+'/feeMonths/s_b_2026-11')).toEqual(fee);expect(decode(d.docs.get(base+'/enrollments/s_b').fields.status)).toBe('suspended');expect(decode(d.docs.get(base+'/studentLinks/u').fields.activeBatchIds)).toEqual([]);
+  const auditBefore=[...d.docs.keys()].filter(k=>k.includes('/audit/')).length;await runWorker({projectId:'td-nihongo-hub',token:'test-token',apply:true,now:now+1000,fetcher:d.fetcher});expect([...d.docs.keys()].filter(k=>k.includes('/audit/'))).toHaveLength(auditBefore);
+ });
+ it('re-reads after a concurrent payment and does not apply a stale suspension',async()=>{const d=database();let first=true;const fetcher=(async(url:any,options:any)=>{if(String(url).endsWith(':commit')&&first){first=false;d.put('payments','confirmed',{studentId:'s',batchId:'b',month:'2026-11',amount:4000,status:'confirmed'});d.docs.get(base+'/settings/learningRevision').updateTime='2026-11-09T00:00:01Z';return d.respond({error:{message:'Changed'}},409);}return d.fetcher(url,options);}) as typeof fetch;
+  await runWorker({projectId:'td-nihongo-hub',token:'test-token',apply:true,now,fetcher});expect(decode(d.docs.get(base+'/enrollments/s_b').fields.status)).toBe('active');expect(d.commits.flat().some(w=>w.update.fields.status?.stringValue==='suspended')).toBe(false);expect(decode(d.docs.get(base+'/studentAlerts/fee-s_b_2026-11').fields.state)).toBe('resolved');
+ });
+ it('stops without writes on quota failure',async()=>{const d=database(),fetcher=(async()=>d.respond({error:{message:'Quota exceeded'}},429)) as typeof fetch;await expect(runWorker({projectId:'td-nihongo-hub',token:'t',apply:true,now,fetcher})).rejects.toThrow('429');expect(d.commits).toHaveLength(0);});
+ it('preserves nested and numeric Firestore policy fields',()=>{const value={history:[{state:'warning',count:3}],amount:12.5,enabled:true,nullable:null};expect(decode(encode(value))).toEqual(value);});
+});

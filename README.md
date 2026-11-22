@@ -110,3 +110,16 @@ Firestore rules enforce record ownership and teacher permissions. Practice answe
 - [Privacy Policy](https://td-nihongo-hub.web.app/privacy)
 
 Brand assets and original teaching material belong to their respective rights holders. No open-source licence is granted by this upload.
+
+
+## Automatic student access policy
+
+Teacher → Brand & settings → Automatic student access checks controls the agreed policy: warn after an overdue saved fee, allow seven full days, then suspend only the affected paid batch. Older overdue fees get a fresh warning period on their first check. Saved discounted monthly amounts and part payments are used; payment claims do not count until confirmed. No historic fees are invented. Fee and payment edits/deletions trigger a recheck. Only holds created by this policy can restore automatically after overdue balances clear; manual suspensions and manual course holds remain in force. Restoring an automatic suspension manually gives a seven-day exemption. Financial and attendance records are retained.
+
+Attendance produces teacher-only warnings for the two most recently completed Monday–Sunday weeks in Asia/Colombo, with at least one scheduled class in each week and every scheduled date explicitly marked Absent. Present, Late, blank registers, cancelled sessions, pre-enrollment classes and weeks with no class do not qualify. Attendance never suspends access. Teacher alerts can be marked reviewed. Students see their own payment warnings and can still use the payment portal while a batch is paused.
+
+The workspace checker runs when an enabled teacher workspace loads, after relevant record changes, and every 15 minutes while open. Checks use a shared revision barrier and bounded atomic updates per student, including course access and the trusted batch index. The background worker uses the same decision function and conditional REST commits, with retries on concurrent changes. Its explicit write allow-list excludes financial-record mutations. The proposed IAM role allows Firestore reads, creation and updates across the project database, with no deletion, billing or IAM permissions; that persistent trust requires owner approval.
+
+The daily GitHub workflow is prepared for 06:17 Asia/Colombo (GitHub can delay scheduled runs). It requires the non-secret repository variables STUDENT_ACCESS_WIF_PROVIDER and STUDENT_ACCESS_SERVICE_ACCOUNT and a separately approved Google workload identity setup. Until connected, the interface explicitly says Workspace checks only; it does not claim to run while closed. No service-account keys or billing changes are required by the proposed setup. Automatic approval review rejected creating the IAM/workflow trust without explicit owner approval, so that setup has not run.
+
+Before enabling, deploy the new alert rules/index and initialize any missing studentLinks.activeBatchIds. Payment/fee/attendance writes now signal the shared revision. Production records are not seeded by a source deployment. The policy is disabled if its settings document is missing.

@@ -130,3 +130,12 @@ Validation: all 286 tests across 43 files passed. Coverage includes counts and a
 The export script generated a standalone searchable teacher-review HTML booklet with local practice checking and expanded JSON. Structural checks verified 28 sections, 56 forms, 1,120 questions, 4,480 choices and 1,120 correct-answer flags; its JavaScript parsed successfully.
 
 Release status: not deployed. A separate read-only Firebase access check still returned 429 RESOURCE_EXHAUSTED / Quota exceeded. The pending multi-batch access-metadata prerequisite has not run, so the live interface and production data were left unchanged. No student, enrollment, payment, lesson or existing assignment record was modified.
+
+
+## Payment suspension and attendance warnings — 22 November 2026
+
+Implemented seven-day payment warnings and automatic batch-specific suspension, plus teacher-only two-week absence alerts. Added private studentAlerts rules, student payment banners, teacher review controls, settings, automatic restoration for automatic holds only, manual restoration exemptions, bounded per-student atomic plans, a transactional workspace checker and a keyless-background-workflow template. The proposed IAM federation connection was rejected by automatic approval review and has not run. Until explicitly connected, the background workflow skips and the UI labels checks as workspace-only.
+
+All 313 tests across 45 files passed; TypeScript for the app and background worker passed; Vite production build passed with the existing bundle-size warning. Thirteen Firebase rules API checks passed, covering ownership, teacher-only attendance alerts, forbidden student writes, payment access during suspension and revoked batch access. Tests cover grace boundaries, old balances, discounts, part payments, manual holds, multiple classes, exemptions, attendance gaps, idempotency, minimal field patches, atomic groups, concurrent payments and quota failures. Browser visual testing and closed-browser scheduler execution were not performed.
+
+Firebase quota recovered. A concurrency-guarded, backed-up initialization populated derived activeBatchIds for 20 linked accounts, with no identity, enrollment, teaching or financial fields modified. Background IAM remains unconfigured pending explicit owner approval.

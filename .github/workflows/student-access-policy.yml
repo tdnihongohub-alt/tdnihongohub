@@ -1,0 +1,48 @@
+name: Student payment and attendance checks
+on:
+  schedule:
+    # Daily at 06:17 Asia/Colombo; GitHub may delay scheduled runs.
+    - cron: '47 0 * * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the enabled teacher policy (false is a read-only preview)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: student-access-policy
+  cancel-in-progress: false
+jobs:
+  check:
+    if: github.ref == 'refs/heads/main' && vars.STUDENT_ACCESS_WIF_PROVIDER != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Authenticate without stored service-account keys
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.STUDENT_ACCESS_WIF_PROVIDER }}
+          service_account: ${{ vars.STUDENT_ACCESS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+      - name: Check the enabled teacher policy
+        env:
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          FIREBASE_PROJECT_ID: td-nihongo-hub
+          APPLY_POLICY: ${{ github.event_name == 'schedule' || inputs.apply }}
+        run: |
+          if [ "$APPLY_POLICY" = "true" ]; then
+            node scripts/run-student-access.cjs --apply
+          else
+            node scripts/run-student-access.cjs
+          fi

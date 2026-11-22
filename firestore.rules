@@ -193,6 +193,7 @@ service cloud.firestore {
    allow delete: if teacher();
   }
   match /attendance/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }
+  match /studentAlerts/{id} { allow read: if teacher() || (ownStudent(resource.data.studentId) && resource.data.audience == 'student'); allow write: if teacher(); }
   match /feeMonths/{id} { allow read: if teacher() || ownStudent(resource.data.studentId); allow write: if teacher(); }
   match /paymentClaims/{id} {
    allow read: if teacher() || ownStudent(resource.data.studentId);

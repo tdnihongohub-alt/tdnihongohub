@@ -1,3 +1,4 @@
+import { limitedPolicyPlan,policyPatch,policySourceTables,studentPolicyPlan } from './student-access-policy';
 import { affectsBatchAccess,withBatchAccess } from './batch-access';
 import type { RecordChange } from './batch-access';
 import { openFreeCourse } from './free-squads';
@@ -38,6 +39,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   const student=await getDoc(doc(db,'students',studentId));if(student.exists())data.students=[{...student.data(),id:student.id}];
   await Promise.all((['enrollments','courseAccess','submissions','attendance','feeMonths','paymentClaims','payments'] as Table[]).map(async t=>{data[t]=await readRows(t,where('studentId','==',studentId));}));
  }
+ if(studentId)data.studentAlerts=await readRows('studentAlerts',where('studentId','==',studentId),where('audience','==','student'));
  const courseIds=[...new Set([...data.courseAccess.filter(a=>a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)])];
  for(const courseId of courseIds){for(const t of ['lessons','assignments','questions'] as Table[]){const rows=await readRows(t,where('courseId','==',courseId),where('published','==',true),...(t==='assignments'?[where('batchId','==',''),where('releaseAt','<=',Date.now())]:t==='lessons'?[where('batchId','==','')]:[]));data[t]=[...new Map([...data[t],...rows].map(r=>[r.id,r])).values()];}}
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active)){
@@ -53,7 +55,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
  }
  return data;
 }
-const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','announcements']);
+const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','announcements','payments','feeMonths','attendance','studentAlerts']);
 const learningRevision=()=>({updatedAt:Date.now(),revision:uid()});
 export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','learningRevision'),()=>onChange(),onError);}
 export function subscribeAppearance(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','appearance'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}
@@ -75,9 +77,9 @@ async function accessBatchSave(changes:RecordChange[]){
   tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
 }
-export async function save(table:Table,row:Row){if(affectsBatchAccess([{table,row}]))return accessBatchSave([{table,row}]);if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
-export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'||table==='feeMonths'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This financial record has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:table==='payments'?'payment_deleted':'monthly_fee_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
-export async function batchSave(changes:{table:Table;row:Row}[]){if(affectsBatchAccess(changes))return accessBatchSave(changes);if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
+export async function save(table:Table,row:Row){if(affectsBatchAccess([{table,row}]))return accessBatchSave([{table,row}]);if(!db)throw Error('Firebase is not configured.');const {id,...values}=row;if(learningTables.has(table)||table==='settings'&&row.id==='studentAccessPolicy'){const change=writeBatch(db);change.set(doc(db,table,id),clean(values));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await setDoc(doc(db,table,id),clean(values));}
+export async function remove(table:Table,id:string){if(!db)throw Error('Firebase is not configured.');if(table==='payments'||table==='feeMonths'){await runTransaction(db,async tx=>{const ref=doc(db!,table,id);const current=await tx.get(ref);if(!current.exists())throw Error('This financial record has already been deleted.');tx.set(doc(db!,'audit',uid()),{action:table==='payments'?'payment_deleted':'monthly_fee_deleted',recordId:id,before:current.data(),at:new Date().toISOString()});tx.delete(ref);tx.set(doc(db!,'settings','learningRevision'),learningRevision());});}else if(learningTables.has(table)){const change=writeBatch(db);change.delete(doc(db,table,id));change.set(doc(db,'settings','learningRevision'),learningRevision());await change.commit();}else await deleteDoc(doc(db,table,id));}
+export async function batchSave(changes:{table:Table;row:Row}[]){if(affectsBatchAccess(changes))return accessBatchSave(changes);if(!db)throw Error('Firebase is not configured.');for(let offset=0;offset<changes.length;offset+=200){const batch=writeBatch(db);for(const {table,row} of changes.slice(offset,offset+200)){const {id,...values}=row;batch.set(doc(db,table,id),clean(values));}if(changes.slice(offset,offset+200).some(c=>learningTables.has(c.table)||c.table==='settings'&&c.row.id==='studentAccessPolicy'))batch.set(doc(db,'settings','learningRevision'),learningRevision());await batch.commit();}}
 export async function removeRecording(original:Row,batchId:string,actor:string){
  if(!db)throw Error('Firebase is not configured.');
  await runTransaction(db,async tx=>{
@@ -140,7 +142,7 @@ export async function approveClaim(id:string,teacherUid:string){if(!db)throw Err
  const c=claim.data();if(c.status==='confirmed')throw Error('Claim already confirmed.');
  tx.set(paymentRef,{studentId:c.studentId,batchId:c.batchId,month:c.month,amount:Number(c.amount),paidOn:c.paidOn,reference:c.reference,method:'Bank Transfer',claimId:id,status:'confirmed'});
  const at=new Date().toISOString();tx.update(ref,{status:'confirmed',reviewedAt:at,reviewedBy:teacherUid});
- tx.set(doc(db!,'audit',uid()),{action:'payment_confirmed',recordId:id,actor:teacherUid,at});
+ tx.set(doc(db!,'audit',uid()),{action:'payment_confirmed',recordId:id,actor:teacherUid,at});tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });}
 export async function setEnrollment(row:Row,allEnrollments:Row[]){
  const otherActive=allEnrollments.some(e=>e.id!==row.id&&e.studentId===row.studentId&&e.courseId===row.courseId&&e.status==='active');
@@ -182,4 +184,24 @@ export async function deleteStudent(studentId:string) {
   }
   tx.set(doc(db!,'settings','learningRevision'),learningRevision());
  });
+}
+
+export async function runAccessPolicy(actor:string){
+ if(!db)throw Error('Firebase is not configured.');
+ let total=0;
+ for(let part=0;part<10;part++){
+  const result=await runTransaction(db,async tx=>{
+   await tx.get(doc(db!,'settings','learningRevision'));
+   const data=emptyData();await Promise.all(policySourceTables.map(async table=>{data[table]=await readRows(table);}));
+   const plan=limitedPolicyPlan(studentPolicyPlan(data));
+   for(const change of plan.changes){const {table,row}=change;const values=clean(policyPatch(data,change));if(table==='audit')values.actor=actor;
+    if(data[table].some(r=>r.id===row.id))tx.update(doc(db!,table,row.id),values);else tx.set(doc(db!,table,row.id),values);
+   }
+   tx.set(doc(db!,'settings','accessAutomationHealth'),{lastWorkspaceRunAt:new Date().toISOString(),changes:plan.changes.length,remaining:plan.remaining},{merge:true});
+   if(plan.changes.length)tx.set(doc(db!,'settings','learningRevision'),{...learningRevision(),source:'student-access-policy'});
+   return {count:plan.changes.length,remaining:plan.remaining};
+  });
+  total+=result.count;if(!result.remaining)break;
+ }
+ return total;
 }

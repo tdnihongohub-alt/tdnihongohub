@@ -1,3 +1,4 @@
+import { manualEnrollmentChange } from './student-access-policy';
 import { withBatchAccess } from './batch-access';
 import { key, monthNow, today } from './domain';
 import type { Data, Row, Table } from './domain';
@@ -23,9 +24,9 @@ export function registrationApproval(data: Data, accountId: string, selectedStud
   changes.push({table:'students',row:{...student,linkedAccountId:accountId}});
   const enrollmentId = key(studentId, batchId);
   const existing = data.enrollments.find(e => e.id === enrollmentId);
-  if (existing?.status !== 'active' && data.enrollments.filter(e => e.batchId === batchId && e.status === 'active').length >= Number(batch.capacity)) throw Error('This batch is full.');
+  if (existing?.status !== 'active' && data.enrollments.filter(e => e.batchId === batchId && e.id !== enrollmentId && (e.status === 'active' || e.autoPaymentSuspended)).length >= Number(batch.capacity)) throw Error('This batch is full.');
   changes.push({table:'studentLinks',row:{...link,id:accountId,studentId}});
-  changes.push({table:'enrollments',row:{...existing,id:enrollmentId,studentId,batchId,courseId:batch.courseId,status:'active',...(!existing?{joinedOn:today(),billingStartMonth:monthNow()}: {})}});
+  changes.push({table:'enrollments',row:manualEnrollmentChange({...existing,id:enrollmentId,studentId,batchId,courseId:batch.courseId,status:'active',...(!existing?{joinedOn:today(),billingStartMonth:monthNow()}: {})})});
   const access = data.courseAccess.find(a => a.id === key(studentId, batch.courseId));
   changes.push({table:'courseAccess',row:{...access,id:key(studentId,batch.courseId),studentId,courseId:batch.courseId,active:true}});
   for (const request of data.accessRequests.filter(r => r.uid === accountId && r.courseId === batch.courseId && r.status === 'pending')) changes.push({table:'accessRequests',row:{...request,studentId,status:'approved'}});
@@ -37,7 +38,7 @@ export function studentDeletion(data: Data, studentId: string): {table: Table; r
   if (!student) throw Error('Student record could not be found.');
   return withBatchAccess(data,[
     {table:'students',row:{...student,active:false,deleted:true}},
-    ...data.enrollments.filter(e => e.studentId === studentId).map(e => ({table:'enrollments' as const,row:{...e,status:'suspended'}})),
-    ...data.courseAccess.filter(a => a.studentId === studentId).map(a => ({table:'courseAccess' as const,row:{...a,active:false}})),
+    ...data.enrollments.filter(e => e.studentId === studentId).map(e => ({table:'enrollments' as const,row:{...e,status:'suspended',autoPaymentSuspended:false,suspensionReason:'teacher'}})),
+    ...data.courseAccess.filter(a => a.studentId === studentId).map(a => ({table:'courseAccess' as const,row:{...a,active:false,autoPaymentBlocked:false}})),
   ]);
 }
