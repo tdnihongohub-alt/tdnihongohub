@@ -66,7 +66,12 @@ export function StudentRegistrations() {
       {name:'studentId',label:'Student record',type:'select',required:true,options:link?[{value:link.studentId,label:data.students.find(s=>s.id===link.studentId)?.fullName || link.studentId}]:[{value:'',label:'Choose a student record'},{value:'__new__',label:'Create a new student from these details'},...data.students.filter(s=>s.active&&!s.deleted&&!data.studentLinks.some(l=>l.studentId===s.id&&l.id!==selected.id)).map(s=>({value:s.id,label:`${s.fullName} · ${s.phone} · ${s.id}`}))]},
       {name:'batchId',label:'Accept into course',type:'select',required:true,options:[{value:'',label:'Choose an active course'},...data.courses.filter(c=>c.active!==false).map(b=>({value:b.id,label:b.title}))]},
     ]} initial={{studentId:defaultStudent,batchId:suggested&&suggested.active!==false?suggested.id:''}} onCancel={()=>setSelected(null)} submit="Accept student" onSave={async values=>{
-      await acceptRegistration(selected.id,values.studentId,values.batchId);
+      try{await acceptRegistration(selected.id,values.studentId,values.batchId);}
+      catch(error){
+        const problem=error as Error & {code?:string};
+        if(problem.code==='resource-exhausted'||/quota exceeded/i.test(problem.message))throw Error('Firebase has reached its database usage limit. Check the registration again after the daily limit resets or billing is enabled.');
+        throw error;
+      }
       setSelected(null);notify('Student accepted. All active modules in this course are available.');
     }}/>
   </Modal>}</>;

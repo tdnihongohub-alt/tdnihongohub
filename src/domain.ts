@@ -1,3 +1,4 @@
+import { moduleColours } from './module-colour';
 import { validateSchedule } from './assignment-scheduling';
 import { z } from 'zod';
 
@@ -26,7 +27,7 @@ const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Choose a date.');
 const link=z.string().refine(v=>!v||!!safeLink(v),'Use a full http:// or https:// link.');
 const schemas:Partial<Record<Table,z.ZodTypeAny>>={
  courses:z.object({title:text,category:text,description:text,access:z.enum(['free','paid']),monthlyFee:z.coerce.number().min(0),published:z.boolean(),active:z.boolean()}),
- batches:z.object({name:text,courseId:text,capacity:z.coerce.number().int().min(1),monthlyFee:z.coerce.number().min(0),startDate:date,endDate:z.string(),active:z.boolean()}),
+ batches:z.object({name:text,courseId:text,capacity:z.coerce.number().int().min(1),monthlyFee:z.coerce.number().min(0),startDate:date,endDate:z.string(),active:z.boolean(),colour:z.enum(moduleColours).optional()}),
  lessons:z.object({title:text,courseId:text,module:text,notes:z.string(),recordingUrl:link,resourceUrl:link,published:z.boolean(),visibility:z.enum(['public','members'])}),
  sessions:z.object({batchId:text,courseId:text,lessonId:z.string(),date,time:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),duration:z.coerce.number().int().min(15).max(600),zoomUrl:link,status:z.enum(['scheduled','cancelled'])}),
  students:z.object({fullName:text,phone:text,email:z.union([z.literal(''),z.string().email()]),registeredOn:date,active:z.boolean()}),

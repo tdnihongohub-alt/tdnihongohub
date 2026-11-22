@@ -4,7 +4,7 @@ import { openFreeCourse } from './free-squads';
 import type { Data, Row } from './domain';
 import { assignmentForStudent } from './assignment-audience';
 import { assignmentReleased } from './assignment-scheduling';
-import { today } from './domain';
+import { key,today } from './domain';
 export type TeachingModule={id:string;courseId:string;batchId:string;title:string;category:string;active:boolean};
 export function teachingModules(data:Data,studentId:string,uid:string,teacher=false,courseId?:string):TeachingModule[]{
  const batches=teacher?data.batches:data.batches.filter(b=>canOpenModule(data,studentId,b));
@@ -25,3 +25,8 @@ export type NoticeKind='announcement'|'session';
 export function noticeVersion(row:Row,kind:NoticeKind){const fields=kind==='announcement'?['title','body','batchId','courseId']:['title','date','time','duration','status','zoomUrl','batchId','courseId'];const value=JSON.stringify(fields.map(k=>row[k]??''));let hash=2166136261;for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);return (hash>>>0).toString(16);}
 export function noticeRead(data:Data,uid:string,row:Row,kind:NoticeKind){return data.contentReads.some(r=>r.uid===uid&&r.recordId===row.id&&r.kind===kind&&r.version===noticeVersion(row,kind));}
 export function studentNotices(data:Data,studentId:string){const active=new Set(data.batches.filter(b=>canOpenModule(data,studentId,b)).map(b=>b.id));return [...data.announcements.filter(a=>active.has(a.batchId)).map(row=>({row,kind:'announcement' as const})),...data.sessions.filter(s=>active.has(s.batchId)&&s.date>=today()).map(row=>({row,kind:'session' as const}))];}
+
+export type NoticeReceipt={id:string;uid:string;kind:NoticeKind|'theme';recordId:string;version:string;courseId:string;batchId:string};
+export function noticeReceipt(uid:string,kind:NoticeKind,row:Row,courseId=row.courseId):NoticeReceipt{
+ return {id:key(uid,kind,row.id),uid,kind,recordId:row.id,version:noticeVersion(row,kind),courseId,batchId:row.batchId};
+}

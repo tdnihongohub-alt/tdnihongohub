@@ -1,3 +1,4 @@
+import { moduleColour } from './module-colour';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
@@ -11,14 +12,15 @@ import type { PracticeSlot } from './practice-schedule';
 
 export function PracticeEntry({slot,student,compact,onEdit}:{slot:PracticeSlot;student:boolean;compact?:boolean;onEdit:()=>void}){
  const {data}=useApp();
+ const colour=moduleColour(data.batches.find(batch=>batch.id===slot.series.batchId));
  const available=practiceStatus(slot)==='Available';
  const time=slot.assignment?.releaseAt?sriLankaInput(slot.assignment.releaseAt).slice(11):slot.series.time;
  const status=student?(available?'Available':Date.now()<parseSriLanka(slot.date+'T'+slot.series.time)?'Upcoming':'Questions pending'):practiceStatus(slot);
  const title=slot.assignment?.title||slot.series.title;
  const url='/student/assignments?assignment='+encodeURIComponent(slot.id);
  const label=<>{time} · {title}</>;
- if(compact)return student?available?<Link className="calendar-event practice-event" to={url}>{label}</Link>:<span className="calendar-event practice-event">{label}</span>:<button type="button" className="calendar-event practice-event" onClick={onEdit}>{label}</button>;
- return <div className="list-row timetable-session-row practice-entry"><span className="time-chip">{time}</span><div><strong><ClipboardList size={15}/> {title}</strong><small>{batchName(data,slot.series.batchId)} · {slot.series.questionCount} {slot.series.questionCount===1?'question':'questions'} · {status}</small></div>
+ if(compact)return student?available?<Link className="calendar-event practice-event" data-module-colour={colour} to={url}>{label}</Link>:<span className="calendar-event practice-event" data-module-colour={colour}>{label}</span>:<button type="button" className="calendar-event practice-event" data-module-colour={colour} onClick={onEdit}>{label}</button>;
+ return <div className="list-row timetable-session-row practice-entry" data-module-colour={colour}><span className="time-chip">{time}</span><div><strong><ClipboardList size={15}/> {title}</strong><small>{batchName(data,slot.series.batchId)} · {slot.series.questionCount} {slot.series.questionCount===1?'question':'questions'} · {status}</small></div>
   {student?available&&<Link className="button small" to={url}>Open practice</Link>:<button className="button small" onClick={onEdit}>{slot.assignment?'Edit questions':'Add questions'}</button>}
  </div>;
 }

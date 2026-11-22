@@ -1,3 +1,4 @@
+import type { NoticeReceipt } from './weekly-learning';
 import { loginEmail } from './student-number';
 import { accessPolicy,applyPolicyPlan,manualEnrollmentChange,studentPolicyPlan } from './student-access-policy';
 import { registrationApproval, studentDeletion } from './registration-approval';
@@ -10,7 +11,7 @@ import { validateRegistration } from './student-registration';
 import { assignmentForStudent, validateAssignmentBatch } from './assignment-audience';
 import { assignmentReleased, assignmentClosed, usesQuestionResponses, validateFormAnswers } from './assignment-scheduling';
 import { brandDefaults, publicLessons } from './brand';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from '@firebase/auth';
 import { getDoc, doc } from '@firebase/firestore';
@@ -21,14 +22,37 @@ import { initialData } from './seed';
 import { key, uid, validate } from './domain';
 import type { Data, Row, Table } from './domain';
 
-type Context={data:Data;identity:Identity|null;loading:boolean;error:string;demo:boolean;studentId:string;notify:(message:string)=>void;refresh:()=>Promise<void>;save:(table:Table,row:Row)=>Promise<void>;remove:(table:Table,id:string)=>Promise<void>;batch:(changes:{table:Table;row:Row}[])=>Promise<void>;changeTimetable:(changes:TimetableChange[])=>Promise<void>;approve:(id:string)=>Promise<void>;enroll:(row:Row)=>Promise<void>;login:(email:string,password:string,register?:boolean,name?:string,details?:RegistrationDetails)=>Promise<void>;acceptRegistration:(accountId:string,studentId:string,batchId:string)=>Promise<void>;deleteStudent:(studentId:string)=>Promise<void>;deleteLesson:(lesson:Row)=>Promise<void>;removeRecording:(lesson:Row,batchId:string)=>Promise<void>;google:()=>Promise<void>;reset:(email:string)=>Promise<void>;verify:()=>Promise<void>;logout:()=>Promise<void>;startDemo:(role:'teacher'|'student')=>void;exitDemo:()=>void};
+type Context={data:Data;identity:Identity|null;loading:boolean;error:string;demo:boolean;studentId:string;notify:(message:string)=>void;readUpdates:(receipts:NoticeReceipt[])=>void;refresh:()=>Promise<void>;save:(table:Table,row:Row)=>Promise<void>;remove:(table:Table,id:string)=>Promise<void>;batch:(changes:{table:Table;row:Row}[])=>Promise<void>;changeTimetable:(changes:TimetableChange[])=>Promise<void>;approve:(id:string)=>Promise<void>;enroll:(row:Row)=>Promise<void>;login:(email:string,password:string,register?:boolean,name?:string,details?:RegistrationDetails)=>Promise<void>;acceptRegistration:(accountId:string,studentId:string,batchId:string)=>Promise<void>;deleteStudent:(studentId:string)=>Promise<void>;deleteLesson:(lesson:Row)=>Promise<void>;removeRecording:(lesson:Row,batchId:string)=>Promise<void>;google:()=>Promise<void>;reset:(email:string)=>Promise<void>;verify:()=>Promise<void>;logout:()=>Promise<void>;startDemo:(role:'teacher'|'student')=>void;exitDemo:()=>void};
 export const AppContext=createContext<Context>(null!);
 export const useApp=()=>useContext(AppContext);
 const cacheKey='td-nihongo-preview-v2';
 export function Provider({children}:{children:ReactNode}){
- const pendingRegistration=useRef<{email:string;ready:Promise<void>}|null>(null);const loadVersion=useRef(0);const initialAccessLoaded=useRef(false);const [data,setData]=useState<Data>(initialData());const [identity,setIdentity]=useState<Identity|null>(null);const [demo,setDemo]=useState(false);const [authReady,setAuthReady]=useState(!configured);const [loading,setLoading]=useState(configured);const [error,setError]=useState('');const [toast,setToast]=useState('');
+ const pendingRegistration=useRef<{email:string;ready:Promise<void>}|null>(null);const loadVersion=useRef(0);const initialAccessLoaded=useRef(false);const [records,setData]=useState<Data>(initialData());const [identity,setIdentity]=useState<Identity|null>(null);const [demo,setDemo]=useState(false);const [authReady,setAuthReady]=useState(!configured);const [loading,setLoading]=useState(configured);const [error,setError]=useState('');const [toast,setToast]=useState('');
+ const readOverlayRef=useRef<{uid:string;rows:NoticeReceipt[]}|null>(null);
+ const [readOverlay,setReadOverlay]=useState<{uid:string;rows:NoticeReceipt[]}|null>(null);
+ const reader=identity&&!identity.teacher?identity.uid:'';
+ const receiptKey='td-nihongo-read-updates:'+reader;
+ const storedReads=useMemo<NoticeReceipt[]>(()=>{
+  if(!reader)return [];
+  try{const rows=JSON.parse(localStorage.getItem(receiptKey)||'[]');return Array.isArray(rows)?rows.filter(row=>row?.uid===reader):[];}catch{return [];}
+ },[reader,receiptKey]);
+ const localReads=readOverlay?.uid===reader?readOverlay.rows:storedReads;
+ const data=useMemo(()=>localReads.length?{...records,contentReads:[...records.contentReads,...localReads]}:records,[records,localReads]);
  const notify=useCallback((message:string)=>{setToast(message);},[]);
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(timer);},[toast]);
+ const readUpdates=useCallback((receipts:NoticeReceipt[])=>{
+  const current=readOverlayRef.current?.uid===reader?readOverlayRef.current.rows:storedReads;
+  const changes=receipts.filter(receipt=>receipt.uid===reader&&!current.some(row=>row.id===receipt.id&&row.version===receipt.version));
+  if(!changes.length)return;
+  const next=[...current.filter(row=>!changes.some(change=>change.id===row.id)),...changes].slice(-300);
+  const overlay={uid:reader,rows:next};
+  readOverlayRef.current=overlay;
+  setReadOverlay(overlay);
+  try{localStorage.setItem(receiptKey,JSON.stringify(next));}catch{/* The badge still clears for this visit. */}
+  if(!demo&&identity?.verified)void (async()=>{
+   for(let offset=0;offset<changes.length;offset+=4)await repo.batchSave(changes.slice(offset,offset+4).map(row=>({table:'contentReads',row})));
+  })().catch(()=>notify('Updates marked as read on this browser. Sync is unavailable right now.'));
+ },[reader,storedReads,receiptKey,demo,identity?.verified,notify]);
  const refresh=useCallback(async()=>{
   if(demo||!configured||!authReady)return;
   const version=++loadVersion.current;
@@ -155,5 +179,5 @@ export function Provider({children}:{children:ReactNode}){
   }finally{pendingRegistration.current=null;resolveSave();}
  }else await signInWithEmailAndPassword(auth,loginEmail(email),password);};
  const startDemo=(role:'teacher'|'student')=>{loadVersion.current++;setLoading(false);let saved:Data;try{saved=JSON.parse(localStorage.getItem(cacheKey)||'null')||initialData(true);}catch{saved=initialData(true);}saved.practiceSeries ||= [];saved.studentAlerts ||= [];saved.contentReads ||= [];saved.quizAttempts ||= [];saved.levelAttempts ||= [];saved.communityLinks ||= [];const previousBrand=saved.settings.find(b=>b.id==='brand');const updatedBrand={...brandDefaults,...previousBrand};if(!previousBrand?.logoUrl)updatedBrand.logoUrl=brandDefaults.logoUrl;if(previousBrand?.tagline==='A little Japanese. A world of possibilities.')updatedBrand.tagline=brandDefaults.tagline;if(previousBrand?.bio==='Online Japanese classes for N5, N4, A/L students and other learners. Learn through live classes, recordings and guided practice.')updatedBrand.bio=brandDefaults.bio;saved.settings=[updatedBrand,...saved.settings.filter(b=>b.id!=='brand')];for(const lesson of publicLessons)if(!saved.lessons.some(l=>l.id===lesson.id))saved.lessons.push({...lesson});setData(saved);setDemo(true);setIdentity({uid:role==='teacher'?'demo-teacher':'demo-student',email:`${role}@example.test`,displayName:role==='teacher'?'Teacher preview':'Demo Student',verified:true,teacher:role==='teacher'});setError('');};
- return <AppContext.Provider value={{data,identity,loading,error,demo,studentId,notify,refresh,save,remove,batch,changeTimetable,approve,enroll,login,acceptRegistration,deleteStudent,deleteLesson,removeRecording,startDemo,exitDemo:()=>{setDemo(false);setIdentity(null);setData(initialData());},google:async()=>{if(!auth)throw Error('Firebase setup is required.');await signInWithPopup(auth,new GoogleAuthProvider());},reset:async(email)=>{if(!auth)throw Error('Firebase setup is required.');await sendPasswordResetEmail(auth,email);notify('If this account exists, a recovery email will arrive.');},verify:async()=>{if(!auth?.currentUser)throw Error('Sign in first.');await sendEmailVerification(auth.currentUser);notify('Verification email sent.');},logout:async()=>{if(demo){setDemo(false);setData(initialData());}else if(auth)await signOut(auth);setIdentity(null);}}}>{children}{toast&&<div role="status" className="toast" onClick={()=>setToast('')}>{toast}</div>}</AppContext.Provider>;
+ return <AppContext.Provider value={{data,identity,loading,error,demo,studentId,notify,readUpdates,refresh,save,remove,batch,changeTimetable,approve,enroll,login,acceptRegistration,deleteStudent,deleteLesson,removeRecording,startDemo,exitDemo:()=>{setDemo(false);setIdentity(null);setData(initialData());},google:async()=>{if(!auth)throw Error('Firebase setup is required.');await signInWithPopup(auth,new GoogleAuthProvider());},reset:async(email)=>{if(!auth)throw Error('Firebase setup is required.');await sendPasswordResetEmail(auth,email);notify('If this account exists, a recovery email will arrive.');},verify:async()=>{if(!auth?.currentUser)throw Error('Sign in first.');await sendEmailVerification(auth.currentUser);notify('Verification email sent.');},logout:async()=>{if(demo){setDemo(false);setData(initialData());}else if(auth)await signOut(auth);setIdentity(null);}}}>{children}{toast&&<div role="status" className="toast" onClick={()=>setToast('')}>{toast}</div>}</AppContext.Provider>;
 }

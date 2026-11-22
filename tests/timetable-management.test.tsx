@@ -9,7 +9,7 @@ import { daysBetween, sameSession, sessionsInWeek, timetableChanges, validateTim
 const first={id:'one',batchId:'a',courseId:'al',lessonId:'lesson',date:'2026-11-23',time:'18:00',duration:90,zoomUrl:'https://example.com/zoom',status:'scheduled',title:'Grammar',seriesId:'series',description:'Teacher-entered notes'};
 const second={...first,id:'two',date:'2026-11-26',time:'20:00',title:'Reading'};
 function render(node:React.ReactNode,student=false,path='/teacher/schedule?date=2026-11-23'){
- const data=emptyData();data.batches=[{id:'a',name:'2027 A/L Theory',courseId:'al',active:true}];data.courses=[{id:'al',title:'A/L Japanese'}];data.sessions=[first,second];
+ const data=emptyData();data.batches=[{id:'a',name:'2027 A/L Theory',courseId:'al',active:true,colour:'Teal'}];data.courses=[{id:'al',title:'A/L Japanese'}];data.sessions=[first,second];
  data.courses.push({id:'n4',title:'Japanese N4'});
  data.batches.push({id:'b',name:'December N4',courseId:'n4',active:true});
  data.sessions.push({...first,id:'n4-class',title:'N4 class',batchId:'b',courseId:'n4'});
@@ -65,6 +65,11 @@ describe('weekly timetable management',()=>{
    expect(html).not.toContain('December N4');
   }
   expect(render(<Schedule student/>,true,'/student/schedule?course=n4')).toContain('This course timetable is unavailable');
+ });
+ it('uses the module colour for both a class and its practice slot',()=>{
+  const html=render(<Schedule student/>,true,'/student/schedule?course=al&date=2026-11-23');
+  expect(html).toContain('timetable-session-row" data-module-colour="Teal"');
+  expect(html).toContain('practice-entry" data-module-colour="Teal"');
  });
  it('keeps student timetables read-only and previews exactly which sessions will be deleted',()=>{
   const student=render(<Schedule student/>,true,'/student/schedule?date=2026-11-23');
