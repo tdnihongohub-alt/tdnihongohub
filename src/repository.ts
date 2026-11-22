@@ -51,7 +51,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
   data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==','')));
   for(const e of accessibleModules)data.communityLinks.push(...await readRows('communityLinks',where('active','==',true),where('visibility','==','students'),where('batchId','==',e.batchId)));
  }
- for(const e of accessibleModules){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
+ for(const e of accessibleModules){if(courseIds.includes(e.courseId)){data.lessons.push(...await readRows('lessons',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true)));const work=await readRows('assignments',where('courseId','==',e.courseId),where('batchId','==',e.batchId),where('published','==',true),where('releaseAt','<=',Date.now()));data.assignments=[...new Map([...data.assignments,...work].map(a=>[a.id,a])).values()];}data.sessions.push(...await readRows('sessions',where('batchId','==',e.batchId)));data.practiceSeries.push(...await readRows('practiceSeries',where('batchId','==',e.batchId)));data.announcements.push(...await readRows('announcements',where('batchId','==',e.batchId)));}
  const seen=new Set(data.assignments.map(a=>a.id));
  if(studentId&&data.students.some(s=>s.id===studentId&&s.active))for(const e of accessibleModules){
   if(!courseIds.includes(e.courseId))continue;
@@ -60,7 +60,7 @@ export async function loadData(identity:Identity|null):Promise<Data> {
  }
  return data;
 }
-const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','announcements','payments','feeMonths','attendance','studentAlerts']);
+const learningTables=new Set<Table>(['lessons','assignments','questions','courses','batches','enrollments','courseAccess','studentLinks','students','sessions','practiceSeries','announcements','payments','feeMonths','attendance','studentAlerts']);
 const learningRevision=()=>({updatedAt:Date.now(),revision:uid()});
 export function subscribeLearningUpdates(onChange:()=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','learningRevision'),()=>onChange(),onError);}
 export function subscribeAppearance(onChange:(row:Row|null)=>void,onError:(error:Error)=>void){if(!db)return ()=>{};return onSnapshot(doc(db,'settings','appearance'),snapshot=>onChange(snapshot.exists()?{...snapshot.data(),id:snapshot.id}:null),onError);}

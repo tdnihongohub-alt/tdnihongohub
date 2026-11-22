@@ -141,6 +141,7 @@ service cloud.firestore {
    allow read: if teacher() || (resource.data.published == true && ((resource.data.visibility == 'public' && resource.data.get('batchId','') == '') || (courseAllowed(resource.data.courseId) && assignmentAudience(resource.data))));
    allow write: if teacher();
   }
+  match /practiceSeries/{id} { allow read: if teacher() || batchAllowed(resource.data.batchId); allow write: if teacher(); }
   match /sessions/{id} { allow read: if teacher() || batchAllowed(resource.data.batchId); allow write: if teacher(); }
   match /assignments/{id} { allow read: if teacher() || (assignmentOpen(resource.data) && assignmentAudience(resource.data) && courseAllowed(resource.data.courseId)); allow write: if teacher(); }
   match /questions/{id} { allow read: if teacher() || (resource.data.published == true && courseAllowed(resource.data.courseId)); allow write: if teacher(); }

@@ -1,3 +1,4 @@
+import { StudentAccountStatus } from './StudentAccountStatus';
 import { StudentDetailsFields } from './StudentDetailsFields';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,8 +15,8 @@ export function StudentRegistration() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return <section className="registration-card panel">
-    <div className="pad"><div className="eyebrow">WELCOME TO TD NIHONGO HUB</div><h1>Tell us a little about you.</h1>
-      <p>Complete your student details to continue. Your teacher will receive them and confirm your class enrolment.</p>
+    <div className="pad"><h1>Your profile</h1>
+      <StudentAccountStatus/><p>Save your details when you’re ready to request a course. Your teacher will review your request.</p>
       <form className="registration-form" onSubmit={async event => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -35,7 +36,7 @@ export function StudentRegistration() {
         <label>Course<select name="preferredCourseId" required defaultValue={profile ? requestedCourse(profile,data)?.id || '' : ''}><option value="" disabled>Choose your course</option>{batches.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}</select></label>
         {!batches.length && <p>No courses are currently open. Please contact your teacher.</p>}
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="button primary" disabled={busy || !batches.length}>{busy ? 'Saving your details…' : 'Complete registration'}</button>
+        <button className="button primary" disabled={busy || !batches.length}>{busy ? 'Saving your details…' : 'Save profile'}</button>
       </form>
     </div>
   </section>;
