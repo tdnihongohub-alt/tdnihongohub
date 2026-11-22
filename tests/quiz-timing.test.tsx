@@ -1,0 +1,20 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe,it,expect } from 'vitest';
+import { clockLabel,quizEndsAt,quizLimit,quizTimerId } from '../src/quiz-timing';
+import { validateSchedule } from '../src/assignment-scheduling';
+import { autoQuizResult } from '../src/auto-quiz';
+import { AssignmentEditor } from '../src/AssignmentEditor';
+import { AutoQuizResult } from '../src/AutoQuizResult';
+import { AppContext } from '../src/store';
+import { emptyData } from '../src/domain';
+const q={id:'q',type:'choice',label:'Capital?',options:['Tokyo','Osaka'],required:true,correctOption:0};
+const a={id:'a',title:'Quiz',kind:'form',formQuestions:[q],autoGrade:true,releaseAt:0,deadlineAt:1000000000000,allowLate:true,timeLimitMinutes:10};
+describe('teacher controlled quiz timing',()=>{
+ it('keeps old quizzes untimed and validates whole minute limits',()=>{expect(quizLimit({id:'old'})).toBe(0);for(const n of [0,1,30,240])expect(()=>validateSchedule({...a,timeLimitMinutes:n})).not.toThrow();for(const n of [-1,0.5,241,NaN])expect(()=>validateSchedule({...a,timeLimitMinutes:n})).toThrow('time limit');});
+ it('uses the captured start and duration, even if the teacher later changes the limit',()=>{const t={id:'t',startedAtMs:1000,durationMinutes:10};expect(quizEndsAt(a,t)).toBe(601000);expect(quizEndsAt({...a,timeLimitMinutes:30},t)).toBe(601000);expect(quizEndsAt({...a,allowLate:false,deadlineAt:2000},t)).toBe(2000);});
+ it('uses one timer per student, assignment and teacher-authorized attempt',()=>{expect(quizTimerId('s',a)).toBe('s_a_0');expect(quizTimerId('s',a,{id:'submission',history:[{status:'returned'}]})).toBe('s_a_1');expect(quizTimerId('other',a)).not.toBe(quizTimerId('s',a));});
+ it('never displays negative countdown time and rounds remaining seconds up',()=>{expect(clockLabel(60001)).toBe('1:01');expect(clockLabel(60000)).toBe('1:00');expect(clockLabel(-50)).toBe('0:00');});
+ it('counts unanswered timeout questions as zero but still rejects invalid answers',()=>{expect(autoQuizResult(a,{},true)).toMatchObject({score:0,total:1});expect(()=>autoQuizResult(a,{})).toThrow('Please answer');expect(()=>autoQuizResult(a,{q:'forged'},true)).toThrow('valid option');const html=renderToStaticMarkup(<AutoQuizResult assignment={a} submission={{id:'s_a',status:'submitted',formAnswers:{},timedOut:true}}/>);expect(html).toContain('0 / 1 marks');expect(html).toContain('Not answered');expect(html).toContain('Correct answer: Tokyo');});
+ it('exposes the teacher time limit without changing existing drafts',()=>{const data=emptyData();data.courses=[{id:'c',title:'Culture'}];const html=renderToStaticMarkup(<AppContext.Provider value={{data} as any}><AssignmentEditor row={{...a,courseId:'c'}} onClose={()=>{}}/></AppContext.Provider>);expect(html).toContain('Time limit (minutes)');expect(html).toContain('value="10"');});
+});

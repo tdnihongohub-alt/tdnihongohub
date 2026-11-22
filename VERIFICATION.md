@@ -141,3 +141,10 @@ All 313 tests across 45 files passed; TypeScript for the app and background work
 Firebase quota recovered. A concurrency-guarded, backed-up initialization populated derived activeBatchIds for 20 linked accounts, with no identity, enrollment, teaching or financial fields modified. Background IAM remains unconfigured pending explicit owner approval.
 
 Release completed: Firebase Hosting, Firestore rules and indexes deployed successfully. Both tdnihongohub.com and td-nihongo-hub.web.app returned HTTP 200 with index-cfr8uAMs.js. The missing policy settings document was created with enabled=true, seven-day payment grace, and attendance warnings only; existing settings would not have been overwritten. This activation wrote only policy settings and the refresh signal. Background IAM setup remains unconfigured after automatic approval review rejected the trust change. Workspace checks are enabled; closed-browser checks require explicit approval and connection.
+
+
+## Quiz timer — 22 November 2026
+
+Added per-quiz optional 1–240 minute limits, explicit Start quiz, persistent Firebase server start timestamps, captured durations, countdown, draft syncing/local backup, timeout lock and partial auto-submission. Existing quizzes remain untimed; existing teaching data was not edited. Teacher return history distinguishes fresh attempts. Unanswered timeout questions score zero; ordinary forms still require required answers.
+
+All 319 tests across 46 files passed, with new coverage for timing boundaries, captured durations, deadlines, attempt identities, validation, countdown formatting, teacher fields and partial scoring. App TypeScript passed. Ten new Firebase Rules API tests passed for valid start, forged duration/start denial, reset/delete denial, ownership, premature timeout denial, late ordinary submission denial and timeout partial submission. Thirteen previous access-policy rules tests also passed. No visual browser or real-account timer end-to-end test was performed.

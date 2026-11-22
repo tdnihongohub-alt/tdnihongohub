@@ -10,6 +10,7 @@ export const scheduleLabel=(ms:number)=>ms?new Intl.DateTimeFormat('en-GB',{time
 export function validateSchedule(a:Row){
  if(!Number.isFinite(a.releaseAt)||a.releaseAt<0||!Number.isFinite(a.deadlineAt)||a.deadlineAt<=0)throw Error('Choose a valid deadline and release time.');
  if(a.releaseAt&&a.deadlineAt<=a.releaseAt)throw Error('The deadline must be after the scheduled release.');
+ if(a.timeLimitMinutes!==undefined&&(!Number.isInteger(a.timeLimitMinutes)||a.timeLimitMinutes<0||a.timeLimitMinutes>240))throw Error('Choose a whole-minute time limit from 0 to 240.');
  if(usesQuestionResponses(a)){
   const qs=a.formQuestions as FormQuestion[];
   if(!Array.isArray(qs)||!qs.length||qs.length>20)throw Error('Add 1 to 20 questions for students to answer.');

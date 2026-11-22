@@ -123,3 +123,10 @@ The workspace checker runs when an enabled teacher workspace loads, after releva
 The daily GitHub workflow is prepared for 06:17 Asia/Colombo (GitHub can delay scheduled runs). It requires the non-secret repository variables STUDENT_ACCESS_WIF_PROVIDER and STUDENT_ACCESS_SERVICE_ACCOUNT and a separately approved Google workload identity setup. Until connected, the interface explicitly says Workspace checks only; it does not claim to run while closed. No service-account keys or billing changes are required by the proposed setup. Automatic approval review rejected creating the IAM/workflow trust without explicit owner approval, so that setup has not run.
 
 Before enabling, deploy the new alert rules/index and initialize any missing studentLinks.activeBatchIds. Payment/fee/attendance writes now signal the shared revision. Production records are not seeded by a source deployment. The policy is disabled if its settings document is missing.
+
+
+## Teacher-set quiz timers
+
+Edit an assignment / interactive quiz and set Time limit (minutes): 0 is untimed; 1–240 is timed. Existing quizzes stay untimed. Students press Start quiz before questions appear. Firebase stores one immutable server-timestamped timer per student, assignment and teacher-authorized attempt. Refreshes, closing the modal and other devices reuse that timer. A hard submission deadline caps the remaining time. Started drafts keep their captured duration; the editor locks limit changes while a timed draft exists.
+
+The countdown submits completed answers at zero while the page is open, and locks further editing. Empty/partial timeout responses are valid, and unanswered auto-graded questions receive zero. If the page is closed or connectivity is lost, the clock continues and expiry is handled on reopening; failed submission offers a retry without restarting. Answers are backed up locally and draft-synced after edits. Returning work through teacher review creates the next attempt's timer. These remain advisory practice quizzes with client-accessible keys, not secure examination grading.
