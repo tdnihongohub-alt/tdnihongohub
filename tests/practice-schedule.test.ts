@@ -20,6 +20,19 @@ describe('recurring timetable practice',()=>{
   expect(year).toHaveLength(58);
   expect(practiceSlots([series],[],'2027-12-31','2027-12-31')[0].id).toBe(year.at(-1)?.id);
  });
+ it('supports one-time, daily, selected weekdays, and monthly schedules',()=>{
+  const dates=(settings:Record<string,unknown>)=>practiceSlots([practiceSeriesRecord(data,{...series,startDate:'2028-01-31',endDate:'2028-03-31',...settings},'repeat')],[],'2028-01-01','2028-03-31').map(slot=>slot.date);
+  expect(dates({frequency:'once',endDate:''})).toEqual(['2028-01-31']);
+  expect(dates({frequency:'daily',endDate:'2028-02-02'})).toEqual(['2028-01-31','2028-02-01','2028-02-02']);
+  expect(dates({frequency:'weekly',weekdays:[2,4],endDate:'2028-02-04'})).toEqual(['2028-02-01','2028-02-03']);
+  expect(dates({frequency:'monthly'})).toEqual(['2028-01-31','2028-03-31']);
+ });
+ it('keeps a saved assignment on its date after the repeat pattern changes',()=>{
+  const [slot]=practiceSlots([series],[],'2026-11-27','2026-11-27');
+  const assignment=practiceTemplate(slot);
+  const updated={...series,frequency:'weekly',weekdays:[1]};
+  expect(practiceSlots([updated],[assignment],'2026-11-27','2026-11-27')[0].assignment).toBe(assignment);
+ });
  it('sets a stable slot ID and only opens a published activity at its Sri Lanka release time',()=>{
   const [slot]=practiceSlots([series],[],'2026-11-23','2026-11-29');
   expect(practiceStatus(slot)).toBe('Questions needed');

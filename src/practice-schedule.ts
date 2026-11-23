@@ -4,17 +4,26 @@ import { assignmentAudienceFields } from './assignment-audience';
 import { assignmentReleased,parseSriLanka } from './assignment-scheduling';
 import { validDate } from './timetable-management';
 
+export const practiceFrequencies=[{value:'once',label:'One time'},{value:'daily',label:'Daily'},{value:'weekly',label:'Weekly'},{value:'monthly',label:'Monthly'}];
+export const practiceWeekdays=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const weekday=(date:string)=>new Date(date+'T12:00:00Z').getUTCDay();
+
 export type PracticeSlot={id:string;series:Row;date:string;assignment?:Row};
 
 export function practiceSeriesRecord(data:Data,values:Record<string,any>,id:string):Row{
  const module=data.batches.find(b=>b.id===values.batchId&&b.active);
  if(!module)throw Error('Choose an active module.');
- if(!validDate(values.startDate)||!validDate(values.endDate)||values.startDate>values.endDate)throw Error('Choose a valid first date and repeat-until date.');
+ const frequency=values.frequency??'weekly';
+ if(!practiceFrequencies.some(option=>option.value===frequency))throw Error('Choose a repeat option.');
+ const endDate=frequency==='once'?values.startDate:values.endDate;
+ if(!validDate(values.startDate)||!validDate(endDate)||values.startDate>endDate)throw Error('Choose a valid first date and repeat-until date.');
  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time))throw Error('Choose a valid release time.');
+ const weekdays:unknown[]=frequency==='weekly'&&Array.isArray(values.weekdays)?[...new Set<unknown>(values.weekdays)]:[];
+ if(weekdays.some(day=>typeof day!=='number'||!Number.isInteger(day)||day<0||day>6))throw Error('Choose valid weekdays.');
  const count=Number(values.questionCount);
  if(!Number.isInteger(count)||count<1||count>20)throw Error('Choose 1 to 20 questions.');
  if(!String(values.title||'').trim())throw Error('Enter a practice title.');
- return {id,batchId:module.id,courseId:module.courseId,startDate:values.startDate,endDate:values.endDate,time:values.time,title:values.title.trim(),questionCount:count,kind:values.kind==='assignment'?'assignment':'form',active:values.active!==false};
+ return {id,batchId:module.id,courseId:module.courseId,startDate:values.startDate,endDate,frequency,weekdays,time:values.time,title:values.title.trim(),questionCount:count,kind:values.kind==='assignment'?'assignment':'form',active:values.active!==false};
 }
 
 export function practiceSlots(series:Row[],assignments:Row[],from:string,to:string):PracticeSlot[]{
@@ -24,9 +33,19 @@ export function practiceSlots(series:Row[],assignments:Row[],from:string,to:stri
   if(!repeat.active||!validDate(repeat.startDate)||!validDate(repeat.endDate))return [];
   const first=from>repeat.startDate?from:repeat.startDate;
   const last=to<repeat.endDate?to:repeat.endDate;
-  const weekday=(day:string)=>new Date(day+'T12:00:00Z').getUTCDay();
+  const dates=new Set<string>();
+  const frequency=repeat.frequency||'weekly';
+  const weekdays=repeat.weekdays?.length?repeat.weekdays:[weekday(repeat.startDate)];
+  for(let date=first;date<=last;date=addDays(date,1)){
+   if(frequency==='once'?date===repeat.startDate:frequency==='daily'||(frequency==='monthly'?date.slice(-2)===repeat.startDate.slice(-2):weekdays.includes(weekday(date))))dates.add(date);
+  }
+  // Keep already prepared work on its original date when the repeat pattern changes.
+  for(const assignment of assignments){
+   const date=assignment.practiceDate;
+   if(assignment.practiceSeriesId===repeat.id&&assignment.id===`PRACTICE-${repeat.id}-${date}`&&validDate(date||'')&&date>=from&&date<=to)dates.add(date);
+  }
   const slots:PracticeSlot[]=[];
-  for(let date=addDays(first,(weekday(repeat.startDate)-weekday(first)+7)%7);date<=last;date=addDays(date,7)){
+  for(const date of dates){
    const id=`PRACTICE-${repeat.id}-${date}`;
    slots.push({id,series:repeat,date,assignment:byId.get(id)});
   }

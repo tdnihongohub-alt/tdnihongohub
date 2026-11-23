@@ -11,7 +11,7 @@ export function homeworkDeadline(date:string,time:string){
 export function timetableHomework(data:Data,id:string,values:Record<string,any>){
  const question=String(values.question||'').trim();
  if(!question)throw Error('Enter a homework question.');
- const series=practiceSeriesRecord(data,{...values,startDate:values.date,endDate:values.date,kind:'assignment',questionCount:1,active:true},id);
+ const series=practiceSeriesRecord(data,{...values,startDate:values.date,endDate:values.date,frequency:'once',kind:'assignment',questionCount:1,active:true},id);
  const deadlineAt=parseSriLanka(values.deadline);
  if(sriLankaInput(deadlineAt)!==values.deadline)throw Error('Choose a valid homework deadline.');
  const assignment=validate('assignments',{

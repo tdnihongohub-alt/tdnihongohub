@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { useApp } from './store';
 import { batchName,courseName,uid } from './domain';
-import type { Row } from './domain';
 import { Form,Modal } from './ui';
 import { parseSriLanka,sriLankaInput } from './assignment-scheduling';
-import { practiceSeriesRecord,practiceStatus } from './practice-schedule';
+import { practiceFrequencies,practiceSeriesRecord,practiceStatus,practiceWeekdays } from './practice-schedule';
 import type { PracticeSlot } from './practice-schedule';
 
 export function PracticeEntry({slot,student,compact,onEdit}:{slot:PracticeSlot;student:boolean;compact?:boolean;onEdit:()=>void}){
@@ -34,18 +33,22 @@ export function PracticeSeriesEditor({date,batchId,courseId='',onClose}:{date:st
  const modules=data.batches.filter(b=>b.active&&(copy||!courseId||b.courseId===courseId));
  const editing=copy?undefined:existing;
  const series=data.practiceSeries.filter(row=>!courseId||row.courseId===courseId);
+ const initial={batchId:copy?'':batchId,startDate:date,endDate:Math.max(2027,Number(date.slice(0,4)))+'-12-31',time:existing?.time||'08:00',title:existing?.title||'',questionCount:existing?.questionCount||10,kind:existing?.kind||'form',active:true,frequency:existing?.frequency||'weekly',...editing,...Object.fromEntries((existing?.weekdays||[]).map((day:number)=>['weekday'+day,true]))};
  const fields=[
-  ...(!editing?[{name:'batchId',label:'Course module',type:'select',required:true,options:[{value:'',label:'Choose a module'},...modules.map(b=>({value:b.id,label:`${courseName(data,b.courseId)} · ${b.name}`}))]},{name:'startDate',label:'First date',type:'date',required:true}]:[]),
+  ...(!editing?[{name:'batchId',label:'Course module',type:'select',required:true,options:[{value:'',label:'Choose a module'},...modules.map(b=>({value:b.id,label:`${courseName(data,b.courseId)} · ${b.name}`}))]}]:[]),
+  {name:'startDate',label:'First date',type:'date',required:true},
   {name:'title',label:'Practice title',required:true},
-  {name:'endDate',label:'Repeat weekly through',type:'date',required:true},
+  {name:'frequency',label:'Repeat',type:'select',required:true,options:practiceFrequencies},
+  {name:'endDate',label:'Repeat through',type:'date',required:true,visible:(values:Record<string,any>)=>values.frequency!=='once'},
+  ...[1,2,3,4,5,6,0].map(day=>({name:'weekday'+day,label:practiceWeekdays[day],type:'checkbox',visible:(values:Record<string,any>)=>values.frequency==='weekly'})),
   {name:'time',label:'Release time (Sri Lanka)',type:'time',required:true},
   {name:'questionCount',label:'Questions per slot',type:'number',required:true,min:1,max:20},
   {name:'kind',label:'Question format',type:'select',options:[{value:'form',label:'Multiple choice with automatic marks'},{value:'assignment',label:'Written answers for teacher review'}]},
   {name:'active',label:'Show recurring slots',type:'checkbox'}
  ];
  return <Modal title="Recurring practice" onClose={onClose}><div className="pad"><label className="form-field">Practice series<select value={selected} onChange={e=>{setSelected(e.target.value);setCopy(false);}}><option value="">Create a series</option>{series.map(row=><option key={row.id} value={row.id}>{row.title} · {batchName(data,row.batchId)} · {row.startDate}</option>)}</select></label>{existing&&!copy&&<button className="button small section-gap" onClick={()=>setCopy(true)}>Reuse schedule in another module</button>}</div>
-  <Form key={selected+String(copy)} initial={editing||{batchId:copy?'':batchId,startDate:date,endDate:Math.max(2027,Number(date.slice(0,4)))+'-12-31',time:existing?.time||'08:00',title:existing?.title||'',questionCount:existing?.questionCount||10,kind:existing?.kind||'form',active:true}} fields={fields} extra={<p className="form-note">The first date sets the weekday. Reusing a schedule copies the timing and answer format. Add questions to individual slots from the timetable. Saved assignments keep their own release dates.</p>} onCancel={onClose} submit="Save practice series" onSave={async values=>{
-   const record=practiceSeriesRecord(data,{...editing,...values},editing?.id||uid('SER-'));
+  <Form key={selected+String(copy)} initial={initial} fields={fields} extra={<p className="form-note">For weekly repeats, select the days you want or leave all unchecked to use the first date’s weekday. Monthly slots use the same day of the month and skip months without that date. Add questions from the timetable. Saved assignments keep their release dates.</p>} onCancel={onClose} submit="Save practice series" onSave={async values=>{
+   const record=practiceSeriesRecord(data,{...editing,...values,weekdays:practiceWeekdays.flatMap((_,day)=>values['weekday'+day]?[day]:[])},editing?.id||uid('SER-'));
    await save('practiceSeries',record);
    notify('Practice series saved.');
    onClose();
