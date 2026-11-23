@@ -3,7 +3,7 @@ import { limitedPolicyPlan,policyPatch,policySourceTables,studentPolicyPlan } fr
 import { affectsBatchAccess,withBatchAccess } from './batch-access';
 import type { RecordChange } from './batch-access';
 import { openFreeCourse } from './free-squads';
-import { collection, doc, getDoc, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch, onSnapshot } from '@firebase/firestore';
+import { collection, doc, getDoc, getDocFromServer, getDocs, query, where, setDoc, deleteDoc, runTransaction, writeBatch, onSnapshot } from '@firebase/firestore';
 import type { QueryConstraint } from '@firebase/firestore';
 import { db, publicDb } from './firebase';
 import { collection as publicCollection, query as publicQuery, where as publicWhere, getDocs as publicGetDocs } from '@firebase/firestore/lite';
@@ -22,9 +22,14 @@ async function readPublicRows(table:'courses'|'lessons'|'settings'|'batches'|'co
  const result=await publicGetDocs(publicQuery(publicCollection(publicDb,table),...filters.map(([field,value])=>publicWhere(field,'==',value))));
  return result.docs.map(d=>({...d.data(),id:d.id}));
 }
+export async function readLessonNote(id:string):Promise<Row|null>{
+ if(!db)return null;
+ const note=await getDocFromServer(doc(db,'lessonNotes',id));
+ return note.exists()?{...note.data(),id:note.id}:null;
+}
 export async function loadData(identity:Identity|null,onAccess?:(data:Data)=>void,onIncomplete?:()=>void):Promise<Data> {
  const data=emptyData();if(!db)return data;
- if(identity?.teacher){await Promise.all(tables.map(async t=>{data[t]=await readRows(t);}));return data;}
+ if(identity?.teacher){await Promise.all(tables.filter(t=>t!=='lessonNotes').map(async t=>{data[t]=await readRows(t);}));return data;}
 
  // Resolve access before fetching class materials and other workspace records.
  if(identity){

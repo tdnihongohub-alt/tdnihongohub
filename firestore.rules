@@ -141,6 +141,21 @@ service cloud.firestore {
    allow read: if teacher() || (resource.data.published == true && ((resource.data.visibility == 'public' && resource.data.get('batchId','') == '') || (courseAllowed(resource.data.courseId) && assignmentAudience(resource.data))));
    allow write: if teacher();
   }
+  match /lessonNotes/{id} {
+   function lessonVisible() {
+    let lesson = get(/databases/$(database)/documents/lessons/$(id)).data;
+    return lesson.published == true && lesson.get('hasManagedNotes',false) == true
+     && ((lesson.visibility == 'public' && lesson.get('batchId','') == '')
+      || (courseAllowed(lesson.courseId) && assignmentAudience(lesson)));
+   }
+   allow get: if teacher() || (resource.data.published == true && resource.data.releaseAt <= request.time.toMillis() && lessonVisible());
+   allow list: if false;
+   allow create, update: if teacher()
+    && request.resource.data.keys().hasOnly(['body','published','releaseAt'])
+    && shortString(request.resource.data.body,20000) && request.resource.data.published is bool
+    && request.resource.data.releaseAt is int && request.resource.data.releaseAt >= 0;
+   allow delete: if teacher();
+  }
   match /practiceSeries/{id} { allow read: if teacher() || batchAllowed(resource.data.batchId); allow write: if teacher(); }
   match /sessions/{id} { allow read: if teacher() || batchAllowed(resource.data.batchId); allow write: if teacher(); }
   match /assignments/{id} { allow read: if teacher() || (assignmentOpen(resource.data) && assignmentAudience(resource.data) && courseAllowed(resource.data.courseId)); allow write: if teacher(); }

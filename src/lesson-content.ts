@@ -10,8 +10,8 @@ export function lessonQuiz(data:Data,lesson:Row,studentId:string,now=Date.now())
  if(lesson.quizState==='coming_soon')return undefined;
  return data.assignments.find(a=>(lesson.quizId?a.id===lesson.quizId:a.lessonId===lesson.id)&&a.kind==='form'&&a.courseId===lesson.courseId&&a.formQuestions?.length>0&&assignmentReleased(a,now)&&assignmentForStudent(a,data,studentId));
 }
-export function lessonContentPlan(data:Data,lesson:Row,newQuiz?:Row):{table:Table;row:Row}[]{
- const row=validate('lessons',lesson) as Row;validateAssignmentBatch(row,data);
+export function lessonContentPlan(data:Data,lesson:Row,newQuiz?:Row,note?:Row):{table:Table;row:Row}[]{
+ const row=validate('lessons',note?{...lesson,notes:'',hasManagedNotes:!!note.body.trim()}:lesson) as Row;validateAssignmentBatch(row,data);
  if(row.weekNumber!==undefined&&(!Number.isInteger(Number(row.weekNumber))||Number(row.weekNumber)<1||Number(row.weekNumber)>520))throw Error('Choose a week number from 1 to 520.');
  if(row.tutes&&(!Array.isArray(row.tutes)||row.tutes.length>20||row.tutes.some((t:any)=>!t.id||!String(t.title||'').trim()||!safeLink(t.url||''))))throw Error('Each tute needs a title and a valid worksheet link (up to 20 tutes).');
  if(row.batchId&&row.visibility==='public')throw Error('Batch-specific lessons must use the Enrolled students audience.');
@@ -23,5 +23,8 @@ export function lessonContentPlan(data:Data,lesson:Row,newQuiz?:Row):{table:Tabl
   if(!quiz||quiz.id!==row.quizId||quiz.kind!=='form'||quiz.courseId!==row.courseId||row.batchId&&!assignmentAppliesToBatch(quiz,row.batchId))throw Error('Choose an interactive quiz for the same course and batch, or a shared course quiz.');
   if(newQuiz){validateAssignmentBatch(quiz,data);changes.push({table:'assignments',row:quiz});}
  }else if(row.quizState==='coming_soon')row.quizId='';
- changes.push({table:'lessons',row});return changes;
+ changes.push({table:'lessons',row});
+ if(note&&note.id!==lesson.id)throw Error('Notes must belong to this lesson.');
+ if(note)changes.push({table:'lessonNotes',row:note});
+ return changes;
 }
