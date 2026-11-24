@@ -1,3 +1,4 @@
+import { learningTasks,taskDone } from './learning-tasks';
 import { canOpenModule } from './course-enrollment';
 import { assignmentReleased } from './assignment-scheduling';
 import { assignmentForStudent } from './assignment-audience';
@@ -17,5 +18,7 @@ export function studentDashboard(data:Data,uid:string,studentId:string,now=Date.
  const feedback=submissions.filter(s=>s.feedback&&['returned','reviewed'].includes(s.status)).sort((a,b)=>String(b.reviewedAt||b.submittedAt||'').localeCompare(String(a.reviewedAt||a.submittedAt||'')));
  const fees=data.feeMonths.filter(f=>f.studentId===studentId);
  const payments=data.payments.filter(p=>p.studentId===studentId);
- return {courses,lessons,completed,completedCount:lessons.filter(l=>completed.has(l.id)).length,next:sessions[0] as Row|undefined,continueLesson:lessons.find(l=>!completed.has(l.id))||lessons[0],homework,feedback,announcements:data.announcements.filter(a=>activeBatches.has(a.batchId)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))),owed:fees.reduce((n,f)=>n+feeBalance(f,payments).pending,0),feeCount:fees.length,pendingClaims:data.paymentClaims.filter(p=>p.studentId===studentId&&!['confirmed','rejected'].includes(p.status)).length};
+ const activityTasks=[...activeBatches].flatMap(batchId=>{const module=data.batches.find(b=>b.id===batchId)!;return learningTasks(data,module.courseId,batchId,studentId);});
+ const activityComplete=activityTasks.filter(t=>taskDone(data,uid,studentId,t)).length;
+ return {activityTotal:activityTasks.length,activityComplete,courses,lessons,completed,completedCount:lessons.filter(l=>completed.has(l.id)).length,next:sessions[0] as Row|undefined,continueLesson:lessons.find(l=>!completed.has(l.id))||lessons[0],homework,feedback,announcements:data.announcements.filter(a=>activeBatches.has(a.batchId)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))),owed:fees.reduce((n,f)=>n+feeBalance(f,payments).pending,0),feeCount:fees.length,pendingClaims:data.paymentClaims.filter(p=>p.studentId===studentId&&!['confirmed','rejected'].includes(p.status)).length};
 }

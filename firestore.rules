@@ -34,7 +34,7 @@ service cloud.firestore {
     ? (activeStudent() && (allModules(a.courseId) ? wholeCourseAllowed(a.courseId) : a.get('batchIds',[]).hasAny(get(/databases/$(database)/documents/studentLinks/$(request.auth.uid)).data.get('activeBatchIds',[]))))
     : (a.get('audience','') == 'batches' && a.get('batchIds',[]).size() == 0 ? false : (a.get('batchId','') == '' || batchAllowed(a.batchId)));
   }
-  function acceptsWork(a) { return assignmentOpen(a) && (a.get('allowLate',true) == true || a.get('deadlineAt',0) >= request.time.toMillis()); }
+  function acceptsWork(a) { return assignmentOpen(a) && (a.get('deadlineAt',0) == 0 || a.get('allowLate',true) == true || a.get('deadlineAt',0) >= request.time.toMillis()); }
   function quizTimer(d) { return get(/databases/$(database)/documents/quizTimers/$(d.timerId)).data; }
   function timerEnd(d,a) { let end = quizTimer(d).startedAt.toMillis() + quizTimer(d).durationMinutes * 60000; return a.get('allowLate',true) == false && a.get('deadlineAt',0) > 0 && a.deadlineAt < end ? a.deadlineAt : end; }
   function timedResponse(d,a) {
@@ -233,12 +233,45 @@ service cloud.firestore {
    allow update: if validRead() && resource.data.uid == request.auth.uid;
    allow delete: if teacher();
   }
+  match /taskProgress/{id} {
+   allow read: if teacher() || (verified() && resource.data.uid == request.auth.uid);
+   function validTask(){
+    let d=request.resource.data;
+    let source=d.kind == 'assignment' ? get(/databases/$(database)/documents/assignments/$(d.recordId)).data : get(/databases/$(database)/documents/lessons/$(d.recordId)).data;
+    return verified() && d.uid == request.auth.uid && id == d.uid + '_' + d.batchId + '_' + d.taskId
+     && d.keys().hasOnly(['uid','taskId','kind','recordId','courseId','batchId','complete'])
+     && shortString(d.taskId,2000) && d.kind in ['assignment','recording','material','notes'] && d.complete is bool
+     && source.courseId == d.courseId && source.published == true && courseAllowed(d.courseId)
+     && (d.batchId == '' || batchAllowed(d.batchId)) && assignmentAudience(source)
+     && (d.kind != 'assignment' || assignmentOpen(source));
+   }
+   allow create,update: if validTask();
+   allow delete: if teacher();
+  }
+  match /submissionVersions/{id} {
+   allow get: if teacher() || (verified() && id.matches(studentId() + '_.*'));
+   allow list: if teacher() || ownStudent(resource.data.studentId);
+   allow create: if ownStudent(request.resource.data.studentId)
+    && id == request.resource.data.studentId + '_' + request.resource.data.assignmentId + '_' + string(request.resource.data.history.size())
+    && request.resource.data == get(/databases/$(database)/documents/submissions/$(request.resource.data.studentId + '_' + request.resource.data.assignmentId)).data;
+   allow update,delete: if false;
+  }
   match /submissions/{id} {
+   function restarting(){
+    let d=request.resource.data;
+    let a=get(/databases/$(database)/documents/assignments/$(resource.data.assignmentId)).data;
+    return ownStudent(resource.data.studentId) && a.get('allowRedo',false) == true && acceptsWork(a) && assignmentAudience(a) && courseAllowed(a.courseId)
+     && resource.data.status in ['submitted','reviewed'] && d.status == 'draft'
+     && d.answer == '' && d.fileUrl == '' && d.formAnswers == {} && d.timerId == '' && d.timedOut == false && d.feedback == '' && d.mark == ''
+     && d.history == resource.data.history.concat([{'status':'redo'}])
+     && d.diff(resource.data).affectedKeys().hasOnly(['status','answer','fileUrl','formAnswers','timerId','timedOut','feedback','mark','history'])
+     && getAfter(/databases/$(database)/documents/submissionVersions/$(id + '_' + string(resource.data.history.size()))).data == resource.data;
+   }
    allow read: if teacher() || ownStudent(resource.data.studentId);
    allow create: if validSubmission(request.resource.data) && id == request.resource.data.studentId + '_' + request.resource.data.assignmentId
     && request.resource.data.keys().hasOnly(['studentId','assignmentId','courseId','answer','fileUrl','status','submittedAt','history','feedback','mark','formAnswers','late','timerId','timedOut'])
     && request.resource.data.feedback == '' && request.resource.data.mark == '' && request.resource.data.history == [];
-   allow update: if teacher() || (validSubmission(request.resource.data) && ownStudent(resource.data.studentId)
+   allow update: if teacher() || restarting() || (validSubmission(request.resource.data) && ownStudent(resource.data.studentId)
     && resource.data.status in ['draft','returned'] && request.resource.data.history == resource.data.history
     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer','fileUrl','status','submittedAt','formAnswers','late','timerId','timedOut']));
    allow delete: if teacher();

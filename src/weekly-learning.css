@@ -29,3 +29,19 @@
 .workspace[data-theme='dark'] .weekly-section.week-tone-3{--week-tint:#243b34;--week-border:#46735f;--week-accent:#9cd1b7}
 .workspace[data-theme='dark'] .weekly-section.week-tone-4{--week-tint:#422f29;--week-border:#7c5946;--week-accent:#efbc95}
 .workspace[data-theme='dark'] .weekly-section.week-tone-5{--week-tint:#3c3525;--week-border:#776640;--week-accent:#e4cf89}
+.comprehension-work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start;padding:0 22px 22px}
+.modal:has(.comprehension-work){width:1100px;max-width:calc(100vw - 32px)}
+.reading-reference{position:sticky;top:0;max-height:65vh;overflow:auto;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--paper,#fff);color:var(--ink);line-height:1.95}
+.reading-reference p{white-space:pre-wrap;font-size:16px;line-height:2}
+.reading-reference-mobile{display:none}
+.comprehension-work form{min-width:0}.comprehension-work .form-grid{grid-template-columns:1fr}
+.comprehension-work .interactive-work{grid-column:1/-1}
+.weekly-resource>input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--accent,#ae3d77)}
+.activity-tone-0{--activity-colour:#b44579}.activity-tone-1{--activity-colour:#7955b1}.activity-tone-2{--activity-colour:#427cba}.activity-tone-3{--activity-colour:#338879}.activity-tone-4{--activity-colour:#a67824}.activity-tone-5{--activity-colour:#ba5c4c}
+.weekly-resource[class*=activity-tone]{border-inline-start:3px solid var(--activity-colour);padding-inline:14px;margin-block:9px;border-radius:8px}
+.weekly-resource[class*=activity-tone]>svg{color:var(--activity-colour)}
+.weekly-tabs button:nth-child(2){--tab-colour:#427cba}.weekly-tabs button:nth-child(3){--tab-colour:#338879}.weekly-tabs button:nth-child(4){--tab-colour:#7955b1}.weekly-tabs button:nth-child(5){--tab-colour:#a67824}
+.weekly-tabs button.active{border-bottom-color:var(--tab-colour,var(--accent));color:var(--tab-colour,var(--accent))}
+:root .workspace .teaching-module-card[data-module-colour] .module-cover{background:var(--module-soft);color:var(--module-ink)}
+:root .workspace[data-theme=dark] .teaching-module-card[data-module-colour] .module-cover{background:var(--module-dark);color:var(--module-light)}
+@media(max-width:750px){.comprehension-work{grid-template-columns:1fr;padding-inline:12px}.reading-reference{position:sticky;top:0;max-height:35vh;z-index:3;font-size:14px}.reading-reference p{font-size:14px}.comprehension-work .form-body{padding:16px 4px}}

@@ -1,3 +1,4 @@
+import { redoDraft } from './redo-submission';
 import { canOpenModule } from './course-enrollment';
 import { limitedPolicyPlan,policyPatch,policySourceTables,studentPolicyPlan } from './student-access-policy';
 import { affectsBatchAccess,withBatchAccess } from './batch-access';
@@ -64,9 +65,9 @@ export async function loadData(identity:Identity|null,onAccess?:(data:Data)=>voi
  }
  const tasks=(['lessons','communityLinks','settings'] as const).map(table=>load(table,()=>readPublicRows(table)));
  if(identity?.verified){
-  for(const table of ['savedCourses','accessRequests','progress','contentReads','levelAttempts','quizAttempts'] as const)tasks.push(load(table,()=>readRows(table,where('uid','==',identity.uid))));
+  for(const table of ['taskProgress','savedCourses','accessRequests','progress','contentReads','levelAttempts','quizAttempts'] as const)tasks.push(load(table,()=>readRows(table,where('uid','==',identity.uid))));
   if(studentId){
-   for(const table of ['submissions','attendance','feeMonths','paymentClaims','payments'] as const)tasks.push(load(table,()=>readRows(table,where('studentId','==',studentId))));
+   for(const table of ['submissionVersions','submissions','attendance','feeMonths','paymentClaims','payments'] as const)tasks.push(load(table,()=>readRows(table,where('studentId','==',studentId))));
    tasks.push(load('studentAlerts',()=>readRows('studentAlerts',where('studentId','==',studentId),where('audience','==','student'))));
   }
   const courseIds=new Set([...data.courseAccess.filter(a=>activeStudent&&a.active).map(a=>a.courseId),...data.courses.filter(c=>openFreeCourse(c)).map(c=>c.id)]);
@@ -90,6 +91,9 @@ export async function loadData(identity:Identity|null,onAccess?:(data:Data)=>voi
   }
  }
  await Promise.all(tasks);
+ for(const lesson of data.lessons.filter(l=>l.hasManagedNotes&&l.notesPublished===undefined)){
+  try{const note=await readLessonNote(lesson.id);if(note){lesson.notesPublished=note.published;lesson.notesReleaseAt=note.releaseAt;}}catch{/* Draft or unreleased notes stay hidden. */}
+ }
  if(incomplete)onIncomplete?.();
  return data;
 }
@@ -197,6 +201,37 @@ export async function changeTimetable(changes:TimetableChange[],actor:string){
    tx.set(doc(db!,'audit',uid()),clean({action:change.after?'session_updated':'session_deleted',operationId,recordId:change.before.id,before:change.before,after:change.after,actor,at}));
   }
   tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
+export async function moveActivity(table:'lessons'|'assignments',original:Row,destination:Row,actor:string){
+ if(!db)throw Error('Firebase is not configured.');
+ await runTransaction(db,async tx=>{
+  const ref=doc(db!,table,original.id),current=await tx.get(ref);
+  if(!current.exists()||!sameSession({...current.data(),id:current.id},original))throw Error('This activity changed. Refresh and try again.');
+  if(current.data().published||current.data().practiceSeriesId)throw Error('Use a draft copy to transfer published or scheduled work.');
+  const course=await tx.get(doc(db!,'courses',destination.courseId));
+  if(!course.exists()||course.data().active===false)throw Error('Choose an active destination course.');
+  if(destination.batchId){const module=await tx.get(doc(db!,'batches',destination.batchId));if(!module.exists()||module.data().courseId!==destination.courseId||!module.data().active)throw Error('Choose a module in the destination course.');}
+  const linked=table==='assignments'?await readRows('submissions',where('assignmentId','==',original.id)):[...await readRows('assignments',where('lessonId','==',original.id)),...await readRows('sessions',where('lessonId','==',original.id))];
+  if(linked.length)throw Error('This activity has linked work or student attempts. Create a draft copy to keep them connected.');
+  const {id,...values}=destination;tx.set(ref,clean(values));
+  tx.set(doc(db!,'audit',uid()),clean({action:'activity_moved',table,recordId:id,before:original,after:destination,actor,at:new Date().toISOString()}));
+  tx.set(doc(db!,'settings','learningRevision'),learningRevision());
+ });
+}
+export async function redoSubmission(id:string){
+ if(!db)throw Error('Firebase is not configured.');
+ return runTransaction(db,async tx=>{
+  const ref=doc(db!,'submissions',id),snapshot=await tx.get(ref);
+  if(!snapshot.exists())throw Error('No submission found.');
+  const previous={...snapshot.data(),id:snapshot.id} as Row;
+  const assignment=await tx.get(doc(db!,'assignments',previous.assignmentId));
+  if(!assignment.exists())throw Error('Activity not found.');
+  const draft=redoDraft(previous,{...assignment.data(),id:assignment.id});
+  const archive=doc(db!,'submissionVersions',id+'_'+(previous.history||[]).length);
+  if((await tx.get(archive)).exists())throw Error('Another attempt has already started. Refresh your work.');
+  const {id:recordId,...values}=draft;
+  tx.set(archive,snapshot.data());tx.set(ref,clean(values));return draft;
  });
 }
 export async function approveClaim(id:string,teacherUid:string){if(!db)throw Error('Firebase is not configured.');await runTransaction(db,async tx=>{

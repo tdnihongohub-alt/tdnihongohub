@@ -53,6 +53,6 @@ describe('individual lesson deletion',()=>{
  });
  it('keeps retained homework discoverable when its old lesson no longer exists',()=>{
   const html=render(<WeeklyClass/>,false,'/student/course/al?batch=a',data=>{data.lessons=data.lessons.filter(l=>l.id!=='one');});
-  expect(html).toContain('Class assignments &amp; activities');expect(html).toContain('Paper homework');expect(html).toContain('/student/assignments?assignment=homework');
+  expect(html).toContain('Assignments &amp; activities');expect(html).toContain('Paper homework');expect(html).toContain('/student/assignments?assignment=homework');
  });
 });

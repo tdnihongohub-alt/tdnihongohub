@@ -6,10 +6,10 @@ export const parseSriLanka=(value:string)=>value?Date.parse(`${value}:00+05:30`)
 export const assignmentDeadline=(a:Row)=>Number(a.deadlineAt)|| (a.dueDate?Date.parse(`${a.dueDate}T23:59:59+05:30`):0);
 export const assignmentReleased=(a:Row,now=Date.now())=>!!a.published&&Number(a.releaseAt||0)<=now;
 export const assignmentClosed=(a:Row,now=Date.now())=>!!assignmentDeadline(a)&&now>assignmentDeadline(a)&&a.allowLate===false;
-export const scheduleLabel=(ms:number)=>ms?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Colombo',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date(ms)):'No deadline';
+export const scheduleLabel=(ms:number)=>ms?new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Colombo',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date(ms)):'Available anytime';
 export function validateSchedule(a:Row){
- if(!Number.isFinite(a.releaseAt)||a.releaseAt<0||!Number.isFinite(a.deadlineAt)||a.deadlineAt<=0)throw Error('Choose a valid deadline and release time.');
- if(a.releaseAt&&a.deadlineAt<=a.releaseAt)throw Error('The deadline must be after the scheduled release.');
+ if(!Number.isFinite(a.releaseAt)||a.releaseAt<0||!Number.isFinite(a.deadlineAt)||a.deadlineAt<0)throw Error('Choose a valid deadline and release time.');
+ if(a.deadlineAt&&a.releaseAt&&a.deadlineAt<=a.releaseAt)throw Error('The deadline must be after the scheduled release.');
  if(a.timeLimitMinutes!==undefined&&(!Number.isInteger(a.timeLimitMinutes)||a.timeLimitMinutes<0||a.timeLimitMinutes>240))throw Error('Choose a whole-minute time limit from 0 to 240.');
  if(usesQuestionResponses(a)){
   const qs=a.formQuestions as FormQuestion[];

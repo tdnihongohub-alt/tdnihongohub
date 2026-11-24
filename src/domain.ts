@@ -3,7 +3,7 @@ import { validateSchedule } from './assignment-scheduling';
 import { z } from 'zod';
 
 export type Row = { id: string; [key: string]: any };
-export const tables = ['courses','batches','lessons','lessonNotes','sessions','practiceSeries','students','enrollments','accessRequests','assignments','questions','quizAttempts','levelAttempts','communityLinks','submissions','attendance','feeMonths','paymentClaims','payments','announcements','tasks','teacherNotes','studentLinks','courseAccess','progress','savedCourses','users','settings','audit','contentReads','studentAlerts'] as const;
+export const tables = ['courses','batches','lessons','lessonNotes','sessions','practiceSeries','students','enrollments','accessRequests','assignments','questions','quizAttempts','levelAttempts','communityLinks','submissions','attendance','feeMonths','paymentClaims','payments','announcements','tasks','teacherNotes','studentLinks','courseAccess','progress','taskProgress','submissionVersions','savedCourses','users','settings','audit','contentReads','studentAlerts'] as const;
 export type Table = typeof tables[number];
 export type Data = Record<Table, Row[]>;
 export const emptyData = (): Data => Object.fromEntries(tables.map(k=>[k,[]])) as unknown as Data;
@@ -33,7 +33,7 @@ const schemas:Partial<Record<Table,z.ZodTypeAny>>={
  students:z.object({fullName:text,phone:text,email:z.union([z.literal(''),z.string().email()]),registeredOn:date,active:z.boolean()}),
  payments:z.object({studentId:text,batchId:text,month:z.string().regex(/^\d{4}-\d{2}$/),amount:z.coerce.number().finite().positive(),paidOn:date,method:z.enum(['Cash','Bank Transfer','Other']),reference:z.string().default('')}),
  feeMonths:z.object({studentId:text,batchId:text,month:z.string().regex(/^\d{4}-\d{2}$/),amount:z.coerce.number().finite().min(0),dueDate:date}),
- assignments:z.object({title:text,courseId:text,lessonId:z.string(),instructions:text,dueDate:date,worksheetUrl:link,published:z.boolean(),maxMark:z.coerce.number().min(1)}),
+ assignments:z.object({title:text,courseId:text,lessonId:z.string(),instructions:text,dueDate:z.union([date,z.literal('')]),worksheetUrl:link,published:z.boolean(),maxMark:z.coerce.number().min(1)}),
  questions:z.object({courseId:text,topic:text,prompt:text,options:z.array(text).length(4),correct:z.coerce.number().int().min(0).max(3),explanation:z.string(),published:z.boolean()}),
  levelAttempts:z.object({uid:text,quizId:z.enum(['AL-B01','AL-I01','AL-H01','N5-B01','N5-I01','N5-H01','N4-B01','N4-I01','N4-H01']),edition:z.literal('2026-11'),score:z.number().int().min(0).max(3),total:z.literal(3),completedAt:z.string().datetime()}),
  quizAttempts:z.object({uid:text,courseId:text,topic:z.string().max(200),score:z.number().int().min(0),total:z.number().int().min(1).max(500),completedAt:z.string().datetime()}).refine(r=>r.score<=r.total,'Score cannot exceed total questions.'),

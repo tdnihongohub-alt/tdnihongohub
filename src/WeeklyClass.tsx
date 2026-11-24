@@ -1,68 +1,118 @@
-import { LessonNote } from './LessonNote';
-import { canOpenModule } from './course-enrollment';
-import { ModuleCards } from './TeachingModules';
-import { assignmentAppliesToBatch,assignmentBatchIds } from './assignment-audience';
 import { CopyQuizLink } from './CopyQuizLink';
-import { openFreeCourse } from './free-squads';
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Bell, BookOpen, CalendarDays, CheckCircle2, ClipboardCheck, FileText, FolderOpen, Play, Plus, Video } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { Link,useParams,useSearchParams } from 'react-router-dom';
+import { BookOpen,CalendarDays,ClipboardCheck,FileText,Play,Plus,Video } from 'lucide-react';
 import { useApp } from './store';
-import { Badge, Editor, Empty, Modal, OutLink } from './ui';
-import { batchName, key, readable, today, uid, percent, studentName } from './domain';
+import { Badge,Editor,Empty,Modal,OutLink } from './ui';
+import { key,percent,readable,studentName,today,uid } from './domain';
 import type { Row } from './domain';
-import { assignmentForStudent } from './assignment-audience';
-import { assignmentReleased, scheduleLabel, assignmentDeadline } from './assignment-scheduling';
-import { moduleLessons, nextWeekNumber,sectionLabel, noticeRead, noticeReceipt, weekGroups, weeklyWork } from './weekly-learning';
-import { ComingSoon, LessonMedia } from './LessonMedia';
-import { recordingThumbnail } from './lesson-content';
+import { canOpenModule } from './course-enrollment';
+import { openFreeCourse } from './free-squads';
+import { moduleLessons,nextWeekNumber,noticeRead,noticeReceipt,sectionLabel,weekGroups } from './weekly-learning';
+import { learningTasks,sortLearning,taskDone } from './learning-tasks';
+import type { LearningTask } from './learning-tasks';
+import { assignmentDeadline,scheduleLabel } from './assignment-scheduling';
+import { ModuleCards } from './TeachingModules';
+import { LessonNote } from './LessonNote';
+import { LessonMedia,ComingSoon } from './LessonMedia';
 import { LessonEditor } from './LessonEditor';
+import { AssignmentEditor } from './AssignmentEditor';
 import { DeleteLessonButton } from './DeleteLessonButton';
 import { RemoveRecordingButton } from './RemoveRecordingButton';
-import { isRecordingRemoved } from './recording-removal';
-import { AssignmentEditor } from './AssignmentEditor';
+import { recordingThumbnail } from './lesson-content';
+import { TransferActivity } from './TransferActivity';
+import CultureQuizLibrary from './CultureQuizLibrary';
 import './weekly-learning.css';
 
 export function WeeklyClass({teacher=false}:{teacher?:boolean}){
- const {id=''}=useParams();const navigate=useNavigate();const [params,setParams]=useSearchParams();const {data,identity,studentId,save,batch,notify,readUpdates}=useApp();const focusLesson=params.get('lesson')||'';const batchId=params.get('batch')||data.lessons.find(l=>l.id===focusLesson&&l.courseId===id)?.batchId||'';const requested=params.get('tab')||'weeks';const tab=['weeks','recordings','homework','quizzes','tutes','announcements','schedule','attendance'].includes(requested)?requested:'weeks';
- const [lessonEdit,setLessonEdit]=useState<Row|undefined|null>(null);const [workEdit,setWorkEdit]=useState<{row?:Row;lessonId:string;kind:string}|null>(null);const [announcementEdit,setAnnouncementEdit]=useState<Row|undefined|null>(null);const [watching,setWatching]=useState<Row|null>(null);const [showPast,setShowPast]=useState(false);const [busy,setBusy]=useState(false);const [expandAll,setExpandAll]=useState<boolean|null>(null);
- useEffect(()=>{if(focusLesson)setWatching({id:focusLesson});},[focusLesson,id]);
- const timetableUrl=(teacher?'/teacher/schedule':'/student/schedule')+'?course='+encodeURIComponent(id);
- const c=data.courses.find(c=>c.id===id),delivery=data.batches.find(b=>b.id===batchId&&b.courseId===id);
- const allowed=teacher||!!c&&(openFreeCourse(c)||data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===id&&a.active))&&(!batchId||!!delivery&&canOpenModule(data,studentId,delivery));
- const lessons=moduleLessons(data,id,batchId,studentId,teacher),weeks=weekGroups(lessons);const completed=(rows:Row[])=>rows.length>0&&rows.every(l=>data.progress.some(p=>p.uid===identity?.uid&&p.lessonId===l.id&&p.complete));const done=weeks.filter(w=>completed(w.lessons)).length;
- const weekly=weeks.every(w=>w.label==='Week');
- const sectionName=weekly?'week':'section';
- const announcements=data.announcements.filter(a=>batchId&&a.batchId===batchId).slice().reverse();const sessions=data.sessions.filter(s=>batchId&&s.batchId===batchId&&(showPast||s.date>=today())).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
- const unseenAnnouncements=announcements.filter(a=>!noticeRead(data,identity?.uid||'',a,'announcement'));const unseenSessions=data.sessions.filter(s=>batchId&&s.batchId===batchId&&s.date>=today()&&!noticeRead(data,identity?.uid||'',s,'session'));
- function markRead(kind:'announcement'|'session'){
-  const rows=kind==='announcement'?unseenAnnouncements:unseenSessions;
-  readUpdates(rows.map(row=>noticeReceipt(identity!.uid,kind,row,id)));
- }
+ const {id=''}=useParams(),[params,setParams]=useSearchParams();
+ const {data,identity,studentId,batch,notify,readUpdates}=useApp();
+ const batchId=params.get('batch')||data.lessons.find(l=>l.id===params.get('lesson')&&l.courseId===id)?.batchId||'';
+ const course=data.courses.find(c=>c.id===id),delivery=data.batches.find(b=>b.id===batchId&&b.courseId===id);
+ const allowed=teacher||!!course&&(openFreeCourse(course)||data.courseAccess.some(a=>a.studentId===studentId&&a.courseId===id&&a.active))&&(!batchId||!!delivery&&canOpenModule(data,studentId,delivery));
+ const [lessonEdit,setLessonEdit]=useState<Row|undefined|null>(null),[workEdit,setWorkEdit]=useState<Row|undefined|null>(null);
+ const [newLesson,setNewLesson]=useState(''),[newKind,setNewKind]=useState('assignment');
+ const [watching,setWatching]=useState<Row|null>(null),[announcementEdit,setAnnouncementEdit]=useState<Row|undefined|null>(null);
+ const [copy,setCopy]=useState<{row:Row;table:'lessons'|'assignments'}|null>(null);
+ const [sort,setSort]=useState('order'),[expand,setExpand]=useState(false),[busy,setBusy]=useState(false),[showPast,setShowPast]=useState(false);
+ const [now,setNow]=useState(Date.now());
+ useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[]);
+ const lessons=sortLearning(moduleLessons(data,id,batchId,studentId,teacher),sort),groups=weekGroups(lessons);
+ const tasks=learningTasks(data,id,batchId,studentId,teacher,now);
+ const flat=delivery?.learningLayout==='flat'||(delivery?.learningLayout!=='grouped'&&!tasks.some(t=>t.kind==='recording')&&tasks.some(t=>t.kind==='assignment'));
+ const weekly=!flat&&groups.length>0&&groups.every(g=>g.label==='Week');
+ const requested=params.get('tab')||'weeks',tab=requested==='homework'?'assignments':requested;
+ const shown=tasks.filter(task=>tab==='weeks'||tab==='recordings'&&task.kind==='recording'||tab==='assignments'&&task.kind==='assignment'&&task.row.kind!=='form'||tab==='quizzes'&&task.kind==='assignment'&&task.row.kind==='form'||tab==='tutes'&&['material','notes'].includes(task.kind));
+ const sorted=shown.slice().sort((a,b)=>sort==='title'?a.title.localeCompare(b.title,undefined,{numeric:true}):sort==='newest'?String(b.row.createdAt||b.id).localeCompare(String(a.row.createdAt||a.id)):sort==='deadline'?Number(a.row.deadlineAt||Infinity)-Number(b.row.deadlineAt||Infinity):0);
+ const done=tasks.filter(t=>taskDone(data,identity?.uid||'',studentId,t)).length;
+ const timetable=(teacher?'/teacher/schedule':'/student/schedule')+'?course='+encodeURIComponent(id);
+ const announcements=data.announcements.filter(a=>batchId&&a.batchId===batchId).slice().reverse();
+ const sessions=data.sessions.filter(s=>batchId&&s.batchId===batchId&&(showPast||s.date>=today())).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
  useEffect(()=>{
-  if(teacher||!allowed||!identity?.verified||!batchId)return;
-  if(tab==='announcements'&&unseenAnnouncements.length)markRead('announcement');
-  if(tab==='schedule'&&unseenSessions.length)markRead('session');
- },[teacher,allowed,identity?.uid,identity?.verified,batchId,tab,data.announcements,data.sessions,data.contentReads]);
- if(!c||!allowed||batchId&&!delivery)return <Empty title="This class needs teacher approval">Only your approved class modules and materials are available here.<br/><Link to={teacher?'/teacher/modules':'/student/classes'} className="text-link">Back to class folders →</Link></Empty>;
- if(!batchId&&!params.has('shared')&&data.batches.some(b=>b.courseId===id))return <><Link className="text-link" to={teacher?'/teacher/modules':'/student/classes'}>Back to courses</Link><header className="weekly-module-banner"><h1>{c.title}</h1><p>Choose a module to open its lessons and activities.</p><div className="actions"><Link className="button primary" to={timetableUrl}><CalendarDays size={16}/>Course timetable</Link><Link className="button" to="?shared=1">Shared course materials</Link></div></header><ModuleCards teacher={teacher} courseId={id}/></>;
- const title=delivery?.name||c.title;const attendance=data.attendance.filter(a=>(teacher||a.studentId===studentId)&&(batchId?a.batchId===batchId:data.batches.some(b=>b.id===a.batchId&&b.courseId===id)));const activeRecording=watching?lessons.find(l=>l.id===watching.id&&!isRecordingRemoved(l,batchId)):undefined;
- const setTab=(value:string)=>{const next=new URLSearchParams(params);next.set('tab',value);setParams(next);};
- async function markWeek(rows:Row[],complete:boolean){setBusy(true);try{const changes=rows.map(l=>({table:'progress' as const,row:{id:key(identity!.uid,l.id),uid:identity!.uid,lessonId:l.id,courseId:id,complete}}));for(let i=0;i<changes.length;i+=10)await batch(changes.slice(i,i+10));notify(complete?'Section marked complete. Keep going!':'Weekly progress updated.');}catch(e){notify((e as Error).message);}finally{setBusy(false);}}
- const workRows=(rows:Row[],kind:string)=>weeklyWork(data,rows,id,batchId,studentId,teacher).filter(a=>(kind==='quizzes')===(a.kind==='form'));
- function activityRows(rows:Row[],kind:string){const work=workRows(rows,kind);return <><div className="weekly-resource-heading"><strong>{kind==='quizzes'?'Quizzes':'Homework'}</strong>{teacher&&<button className="text-link" onClick={()=>setWorkEdit({lessonId:rows[0].id,kind:kind==='quizzes'?'form':'assignment'})}><Plus size={14}/>Create {kind==='quizzes'?'quiz':'assignment'}</button>}</div>{work.length?work.map(a=><div className="weekly-resource" key={a.id}><ClipboardCheck size={20}/><div><strong>{a.title}</strong><small>Deadline: {scheduleLabel(assignmentDeadline(a))}{teacher&&!a.published?' · Draft':''}</small></div>{teacher?<><button className="button small" onClick={()=>setWorkEdit({row:a,lessonId:a.lessonId,kind:a.kind})}>Edit</button><CopyQuizLink target={{kind:'assignment',id:a.id}} title={a.title} label={kind==='quizzes'?'Copy quiz link':'Copy assignment link'}/></>:<Link className="button small" to={`/student/assignments?assignment=${a.id}`}>Open</Link>}</div>):<div className="weekly-placeholder"><ComingSoon label={`${kind==='quizzes'?'Quiz':'Homework'} coming soon`}/></div>}</>;}
- function recordingRows(rows:Row[]){const visible=rows.filter(l=>!isRecordingRemoved(l,batchId));if(!visible.length)return tab==='recordings'?<p className="form-note">{teacher?'No recording in this section. Use Edit to add one.':'No recording available for this section.'}</p>:null;return <><div className="weekly-resource-heading"><strong>Lesson recordings</strong></div>{visible.map(l=><div className="weekly-resource" key={l.id}>{recordingThumbnail(l)?<img className="weekly-recording-thumb" src={recordingThumbnail(l)} alt=""/>:<Video size={22}/>}<div><strong>{l.recordingTitle||l.title}</strong>{l.recordingDescription&&<small>{l.recordingDescription}</small>}</div>{l.recordingUrl?<button className="button small" onClick={()=>setWatching(l)}><Play size={14}/>Watch</button>:<ComingSoon label="Recording coming soon"/>}{teacher&&<button className="text-link" onClick={()=>setLessonEdit({...l,weekNumber:l.weekNumber||weeks.find(w=>w.lessons.some(item=>item.id===l.id))?.number||1})}>Edit</button>}{teacher&&<RemoveRecordingButton lesson={l} batchId={batchId}/>}</div>)}</>;}
- function tuteRows(rows:Row[]){return <><div className="weekly-resource-heading"><strong>Tutes & lesson materials</strong></div>{rows.map(l=>{const resources=[...(l.resourceUrl?[{id:'main',title:'Worksheet / lesson tute',url:l.resourceUrl}]:[]),...(l.tutes||[])];return <div key={l.id}>{resources.map((r:any)=><div className="weekly-resource" key={r.id}><FileText size={20}/><div><strong>{r.title}</strong><small>{l.title}</small></div><OutLink url={r.url} className="button small">Open tute</OutLink></div>)}<LessonNote lesson={l}/>{teacher&&<button className="button small section-gap" onClick={()=>setLessonEdit(l)}>Write / edit notes</button>}{!resources.length&&!l.notes&&!l.hasManagedNotes&&<div className="weekly-placeholder"><ComingSoon label="Tutes coming soon"/></div>}</div>;})}</>;}
- const unlinked=data.assignments.filter(a=>a.courseId===id&&(!a.lessonId||!data.lessons.some(l=>l.id===a.lessonId))&&!lessons.some(l=>l.quizId===a.id)&&assignmentAppliesToBatch(a,batchId)&&(teacher||assignmentReleased(a)&&assignmentForStudent(a,data,studentId)));
- return <><Link className="text-link" to={(teacher?'/teacher/modules/':'/student/course/')+id}>Back to {c.title}</Link><header className="weekly-module-banner"><span>{c.category} · {c.title}</span><h1><FolderOpen size={28}/>{title}</h1><Link className="button" to={timetableUrl}><CalendarDays size={16}/>Course timetable</Link>{teacher&&<div className="actions"><button className="button" onClick={()=>setLessonEdit(undefined)}><Plus size={15}/>Add {sectionName}</button><button className="button primary" onClick={()=>setWorkEdit({lessonId:'',kind:'assignment'})}><Plus size={15}/>Create assignment</button>{batchId&&<Link className="button" to={`/teacher/classes?view=batches&edit=${batchId}`}>Edit class folder</Link>}<Link className="button" to={`/teacher/modules/${id}`}>Shared course materials</Link></div>}</header>
- {!teacher&&<div className="weekly-progress"><div><strong>Your {weekly?'weekly':'learning'} progress</strong><span>{done} of {weeks.length} {sectionName}s complete · {weeks.length?Math.round(done/weeks.length*100):0}%</span></div><progress value={done} max={weeks.length||1} aria-label={weekly?'Weekly learning progress':'Learning progress'}/><small>Tick a {sectionName} when you have finished your work. This is your own progress record.</small></div>}
- {!teacher&&(unseenAnnouncements.length+unseenSessions.length)>0&&<div className="module-update-alert" role="status"><Bell size={18}/><span>You have {unseenAnnouncements.length+unseenSessions.length} new class {unseenAnnouncements.length+unseenSessions.length===1?'update':'updates'}.</span><button className="text-link" onClick={()=>setTab(unseenAnnouncements.length?'announcements':'schedule')}>View updates →</button></div>}
- <nav className="weekly-tabs" aria-label="Class module sections">{[['weeks',weekly?'Weekly lessons':'Lessons & materials',BookOpen],['recordings','Lesson recordings',Video],['homework','Homework',ClipboardCheck],['quizzes','Quizzes',CheckCircle2],['tutes','Tutes',FileText],['announcements','Announcements',Bell],['schedule','Class schedule',CalendarDays],['attendance','Attendance',CheckCircle2]].map(([value,label,Icon]:any)=>{const count=!teacher?(value==='announcements'?unseenAnnouncements.length:value==='schedule'?unseenSessions.length:0):0;return <button key={value} className={tab===value?'active':''} aria-current={tab===value?'page':undefined} onClick={()=>setTab(value)}><Icon size={16}/>{label}{count>0&&<b className="module-count">{count}</b>}</button>;})}</nav>
- {tab==='attendance'?<section className="weekly-notice-panel"><h2>{teacher?'Class attendance':'My attendance'}</h2><p>{percent(attendance)}% attended. Present and Late count as attended.</p>{attendance.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=><div className="weekly-resource" key={a.id}><CalendarDays size={20}/><div><strong>{readable(a.date)}</strong><small>{teacher?studentName(data,a.studentId):batchName(data,a.batchId)}</small></div><Badge tone={a.status==='Absent'?'red':a.status==='Late'?'amber':'green'}>{a.status}</Badge></div>)}{!attendance.length&&<Empty title="No attendance records yet"/>}</section>:tab==='announcements'?<section className="weekly-notice-panel"><div className="weekly-section-heading"><h2>Announcements</h2>{teacher?batchId&&<button className="button primary" onClick={()=>setAnnouncementEdit(undefined)}>Add announcement</button>:unseenAnnouncements.length>0&&<button className="button small" disabled={busy} onClick={()=>void markRead('announcement')}>Mark all as read</button>}</div>{announcements.map(a=><article className="module-announcement" key={a.id}><h3>{a.title}{!teacher&&!noticeRead(data,identity!.uid,a,'announcement')&&<b className="module-count">New</b>}</h3><p className="preserve-lines">{a.body}</p>{teacher&&<button className="text-link" onClick={()=>setAnnouncementEdit(a)}>Edit announcement</button>}</article>)}{!announcements.length&&<Empty title="No announcements yet">{batchId?'Class notices will appear here.':'Announcements are posted inside each batch folder.'}</Empty>}</section>:tab==='schedule'?<section className="weekly-notice-panel"><div className="weekly-section-heading"><h2>Class schedule</h2>{teacher?batchId&&<Link className="button primary" to={`/teacher/schedule?new=1&batch=${batchId}`}>Schedule class</Link>:unseenSessions.length>0&&<button className="button small" disabled={busy} onClick={()=>void markRead('session')}>Mark updates as read</button>}</div><label className="check-line"><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/>Show past classes</label>{sessions.map(s=><div className="weekly-resource" key={s.id}><CalendarDays size={22}/><div><strong>{s.title||data.lessons.find(l=>l.id===s.lessonId)?.title||title}</strong><small>{readable(s.date)} · {s.time} · {s.duration} minutes · Sri Lanka time</small></div>{s.status==='cancelled'?<Badge tone="red">Cancelled</Badge>:<OutLink url={s.zoomUrl} className="button small">Join class</OutLink>}{!teacher&&!noticeRead(data,identity!.uid,s,'session')&&<b className="module-count">New</b>}{teacher&&<Link className="text-link" to={`/teacher/schedule?edit=${s.id}`}>Edit</Link>}</div>)}{!sessions.length&&<Empty title="No classes scheduled yet"/>}</section>:<><div className="weekly-section-heading"><h2>{tab==='weeks'?(weekly?'Weekly lessons':'Lessons & materials'):tab==='recordings'?'Lesson recordings':tab==='homework'?'Homework':tab==='quizzes'?'Quizzes':'Tutes'}</h2><div className="actions">{teacher&&['homework','quizzes'].includes(tab)&&<button className="button primary" onClick={()=>setWorkEdit({lessonId:'',kind:tab==='quizzes'?'form':'assignment'})}><Plus size={15}/>Create {tab==='quizzes'?'quiz':'assignment'}</button>}<button className="text-link" onClick={()=>setExpandAll(v=>!v)}>{expandAll?'Collapse all':'Expand all'}</button></div></div>{teacher&&['homework','quizzes'].includes(tab)&&<p className="form-note">Create {tab==='quizzes'?'quiz questions':'assignments and questions'} here. This class is selected automatically; choose a section, set the deadline, and publish when ready.</p>}{weeks.map((week,i)=><details className={`weekly-section week-tone-${(week.number-1)%6}`} key={`${week.key}-${expandAll}`} open={expandAll===null?i===0:expandAll}><summary><span>{week.label} {week.number}: {week.title}</span>{!teacher&&completed(week.lessons)&&<CheckCircle2 className="week-completed-icon" size={21}/>}</summary><div className="weekly-section-body">{teacher&&<div className="weekly-teacher-actions">{week.lessons.map(l=><div className="lesson-management-actions" key={l.id}><button className="text-link" onClick={()=>setLessonEdit({...l,weekNumber:l.weekNumber||weeks.find(w=>w.lessons.some(item=>item.id===l.id))?.number||1})}>Edit {sectionLabel(l).toLowerCase()} / {l.title}{!l.published?' · Draft':''}</button><DeleteLessonButton lesson={l}/></div>)}</div>}{(tab==='weeks'||tab==='recordings')&&recordingRows(week.lessons)}{(tab==='weeks'||tab==='homework')&&activityRows(week.lessons,'homework')}{(tab==='weeks'||tab==='quizzes')&&activityRows(week.lessons,'quizzes')}{(tab==='weeks'||tab==='tutes')&&tuteRows(week.lessons)}{!teacher&&<label className="week-completion-check"><input type="checkbox" checked={completed(week.lessons)} disabled={busy} onChange={e=>void markWeek(week.lessons,e.target.checked)}/>I have completed {week.label} {week.number}</label>}</div></details>)}{!weeks.length&&<Empty title="Lessons coming soon">{teacher?'Add your first section and attach its recordings, homework, quizzes and tutes.':'Your teacher will publish the lessons here.'}</Empty>}{unlinked.length>0&&['weeks','homework','quizzes'].includes(tab)&&<section className="weekly-notice-panel"><h2>Class assignments & activities</h2>{unlinked.filter(a=>tab==='weeks'||(tab==='quizzes')===(a.kind==='form')).map(a=><div className="weekly-resource" key={a.id}><ClipboardCheck size={20}/><div><strong>{a.title}</strong><small>{a.kind==='form'?'Quiz':'Homework'} · Class assignment (no linked lesson)</small></div>{teacher?<button className="button small" onClick={()=>setWorkEdit({row:a,lessonId:'',kind:a.kind})}>Assign to lesson / edit</button>:<Link className="button small" to={`/student/assignments?assignment=${a.id}`}>Open</Link>}</div>)}</section>}</>}
- {tab==='quizzes'&&!teacher&&data.questions.some(q=>q.courseId===id&&q.published)&&<p><Link className="button" to={'/student/quizzes/'+id}>Open topic practice quizzes →</Link></p>}
- {lessonEdit!==null&&<LessonEditor row={lessonEdit} initialCourseId={id} initialBatchId={batchId} initialWeekNumber={nextWeekNumber(data,id,batchId)} onClose={()=>setLessonEdit(null)}/>}
- {workEdit&&<AssignmentEditor row={workEdit.row} initialCourseId={id} initialBatchId={batchId} initialLessonId={workEdit.lessonId} initialKind={workEdit.kind} onSaved={row=>{const next=new URLSearchParams({tab:row.kind==='form'?'quizzes':'homework'});const target=assignmentBatchIds(row);if(target.length)next.set('batch',target.includes(batchId)?batchId:target[0]);navigate('/teacher/modules/'+row.courseId+'?'+next);setExpandAll(true);}} onClose={()=>setWorkEdit(null)}/>}
- {announcementEdit!==null&&<Editor table="announcements" row={announcementEdit||{id:uid('ANN-'),batchId,courseId:id,title:'',body:''}} isNew={!announcementEdit} onClose={()=>setAnnouncementEdit(null)}/>}
- {activeRecording&&<Modal title={activeRecording.recordingTitle||activeRecording.title} onClose={()=>setWatching(null)}><LessonMedia lesson={activeRecording} preview={teacher}/></Modal>}
+  if(teacher||!allowed||!identity?.verified)return;
+  const kind=tab==='announcements'?'announcement':tab==='schedule'?'session':null;
+  if(!kind)return;
+  const rows=kind==='announcement'?announcements:sessions;
+  const unread=rows.filter(row=>!noticeRead(data,identity.uid,row,kind));
+  if(unread.length)readUpdates(unread.map(row=>noticeReceipt(identity.uid,kind,row,id)));
+ },[teacher,allowed,identity?.uid,tab,data.contentReads,data.sessions,data.announcements]);
+ useEffect(()=>{const lesson=lessons.find(l=>l.id===params.get('lesson'));if(lesson?.recordingUrl)setWatching(lesson);},[params.get('lesson')]);
+ if(!course||!allowed||batchId&&!delivery)return <Empty title="This class needs teacher approval"><Link to={teacher?'/teacher/modules':'/student/classes'}>Back to courses</Link></Empty>;
+ if(!batchId&&!params.has('shared')&&data.batches.some(b=>b.courseId===id))return <><Link className="text-link" to={teacher?'/teacher/modules':'/student/classes'}>Back to courses</Link><header className="weekly-module-banner"><h1>{course.title}</h1><p>Choose a module to open its lessons and activities.</p><Link className="button primary" to={timetable}>Course timetable</Link><Link className="button" to="?shared=1">Shared course materials</Link></header><ModuleCards teacher={teacher} courseId={id}/></>;
+ function createWork(lessonId='',kind='assignment'){setNewLesson(lessonId);setNewKind(kind);setWorkEdit(undefined);}
+ async function mark(items:LearningTask[],complete:boolean){
+  setBusy(true);
+  try{
+   const changes=items.map(t=>({table:'taskProgress' as const,row:{id:key(identity!.uid,batchId,t.id),uid:identity!.uid,taskId:t.id,kind:t.kind,recordId:t.recordId,courseId:id,batchId,complete}}));
+   for(let i=0;i<changes.length;i+=4)await batch(changes.slice(i,i+4));
+  }catch(e){notify((e as Error).message);}finally{setBusy(false);}
+ }
+ function taskRow(t:LearningTask,index:number){
+  const checked=taskDone(data,identity?.uid||'',studentId,t);
+  return <div className={'weekly-resource activity-tone-'+index%6} key={t.id}>
+   {!teacher&&<input type="checkbox" aria-label={'Complete '+t.title} checked={checked} disabled={busy} onChange={e=>void mark([t],e.target.checked)}/>}
+   {t.kind==='recording'&&recordingThumbnail(t.row)?<img className="weekly-recording-thumb" src={recordingThumbnail(t.row)} alt=""/>:t.kind==='assignment'?<ClipboardCheck size={20}/>:t.kind==='recording'?<Video size={20}/>:<FileText size={20}/>}
+   <div><strong>{t.title}</strong><small>{t.kind==='assignment'?(t.row.kind==='form'?'Quiz':'Assignment / homework')+' · '+scheduleLabel(assignmentDeadline(t.row)):t.kind==='recording'?'Lesson recording':t.kind==='notes'?'Typed notes':'Lesson material'}{teacher&&!t.row.published?' · Draft':''}</small>{t.kind==='notes'&&<LessonNote lesson={t.row}/>}</div>
+   {t.kind==='assignment'?(teacher?<button className="button small" onClick={()=>setWorkEdit(t.row)}>Edit</button>:<Link className="button small" to={'/student/assignments?assignment='+encodeURIComponent(t.recordId)}>Open</Link>):t.kind==='recording'?<button className="button small" onClick={()=>setWatching(t.row)}><Play size={14}/>Watch</button>:t.url?<OutLink className="button small" url={t.url}>Open tute</OutLink>:null}
+   {teacher&&t.kind!=='assignment'&&<button className="text-link" onClick={()=>setLessonEdit(t.row)}>Edit</button>}
+   {teacher&&t.kind==='recording'&&<RemoveRecordingButton lesson={t.row} batchId={batchId}/>}
+   {teacher&&t.kind==='assignment'&&<CopyQuizLink target={{kind:'assignment',id:t.recordId}} title={t.title}/>} {teacher&&<button className="text-link" onClick={()=>setCopy({row:t.row,table:t.kind==='assignment'?'assignments':'lessons'})}>Transfer / copy</button>}
+  </div>;
+ }
+ const academic=['weeks','recordings','assignments','quizzes','tutes'].includes(tab);
+ return <>
+  <Link className="text-link" to={(teacher?'/teacher/modules/':'/student/course/')+id}>Back to {course.title}</Link>
+  <header className="weekly-module-banner"><span>{course.category} · {course.title}</span><h1>{delivery?.name||course.title}</h1>
+   <Link className="button" to={timetable}>Course timetable</Link>
+   {teacher&&<div className="actions"><button className="button" onClick={()=>setLessonEdit(undefined)}><Plus size={15}/>Add {weekly?'week':'lesson'}</button><button className="button primary" onClick={()=>createWork()}>Create assignment</button><button className="button" onClick={()=>createWork('','form')}>Create quiz</button>{delivery&&<Link className="button" to={'/teacher/classes?view=batches&edit='+batchId}>Module layout & colour</Link>}</div>}
+  </header>
+  {!teacher&&tasks.length>0&&<div className="weekly-progress"><div><strong>Your learning progress</strong><span>{done} of {tasks.length} tasks complete · {Math.round(done/tasks.length*100)}%</span></div><progress aria-label="Learning progress" value={done} max={tasks.length}/><small>Tick each recording, assignment, quiz or material as you complete it.</small></div>}
+  <nav className="weekly-tabs" aria-label="Class module sections">{[['weeks',flat?'Activities':weekly?'Weekly lessons':'Lessons & materials'],['recordings','Lesson recordings'],['assignments','Assignments & homework'],['quizzes','Quizzes'],['tutes','Tutes & notes'],['announcements','Announcements'],['schedule','Class schedule'],['attendance','Attendance'],...(teacher?[['culture','Culture library']]:[])].map(([value,label])=><button key={value} className={tab===value?'active':''} onClick={()=>{const next=new URLSearchParams(params);next.set('tab',value);setParams(next);}}>{label}{!teacher&&['announcements','schedule'].includes(value)&&(()=>{const kind=value==='announcements'?'announcement':'session';const rows=kind==='announcement'?announcements:sessions;const count=rows.filter(row=>!noticeRead(data,identity!.uid,row,kind)).length;return count?<b className="module-count">{count}</b>:null;})()}</button>)}</nav>
+  {academic&&<>
+   {teacher&&<p className="form-note">This class is selected automatically. Choose a lesson or publish an activity directly in this module.</p>}<div className="weekly-section-heading"><h2>{tab==='weeks'?(flat?'Activities':weekly?'Weekly lessons':'Lessons & materials'):tab==='assignments'?'Assignments & homework':tab==='recordings'?'Lesson recordings':tab==='quizzes'?'Quizzes':'Tutes & notes'}</h2><div className="actions"><label>Sort <select aria-label="Sort activities" value={sort} onChange={e=>setSort(e.target.value)}><option value="order">Lesson order</option><option value="title">Title A–Z</option><option value="newest">Newest first</option><option value="deadline">Deadline</option></select></label>{!flat&&<button className="text-link" onClick={()=>setExpand(!expand)}>{expand?'Collapse all':'Expand all'}</button>}</div></div>
+   {flat?<section className="weekly-notice-panel">{sorted.map(taskRow)}</section>:<>
+    {groups.map(group=>{
+     const groupTasks=sorted.filter(t=>group.lessons.some(l=>l.id===t.lessonId));
+     if(!teacher&&!groupTasks.length)return null;
+     return <details className={'weekly-section week-tone-'+(group.number-1)%6} key={group.key+expand} open={expand}><summary><span>{group.label} {group.number}: {group.title}</span></summary><div className="weekly-section-body">
+      {teacher&&<div className="weekly-teacher-actions">{group.lessons.map(l=><div className="lesson-management-actions" key={l.id}><button className="text-link" onClick={()=>setLessonEdit(l)}>Edit {sectionLabel(l).toLowerCase()} / {l.title}{!l.published?' · Draft':''}</button><DeleteLessonButton lesson={l}/><button className="text-link" onClick={()=>setCopy({row:l,table:'lessons'})}>Transfer / copy</button></div>)}</div>}
+      {groupTasks.map(taskRow)}
+      {teacher&&<div className="weekly-teacher-actions"><button className="button small" onClick={()=>createWork(group.lessons[0].id)}>Create assignment</button><button className="button small" onClick={()=>createWork(group.lessons[0].id,'form')}>Create quiz</button><button className="button small" onClick={()=>setLessonEdit(group.lessons[0])}>Write / edit notes</button>{!groupTasks.length&&<ComingSoon label="Add recordings, questions or materials"/>}</div>}
+      {!teacher&&groupTasks.length>0&&<label className="week-completion-check"><input type="checkbox" disabled={busy} checked={groupTasks.every(t=>taskDone(data,identity!.uid,studentId,t))} onChange={e=>void mark(groupTasks,e.target.checked)}/>Complete all tasks in {group.label} {group.number}</label>}
+     </div></details>;
+    })}
+    {sorted.some(t=>!lessons.some(l=>l.id===t.lessonId))&&<section className="weekly-notice-panel"><h2>Assignments & activities</h2>{sorted.filter(t=>!lessons.some(l=>l.id===t.lessonId)).map(taskRow)}</section>}
+   </>}
+   {!sorted.length&&!teacher&&<Empty title="No published activities yet"/>}
+  </>}
+  {tab==='culture'&&teacher&&<CultureQuizLibrary initialCourseId={id} initialBatchId={batchId}/>}
+  {tab==='announcements'&&<section className="weekly-notice-panel"><h2>Announcements</h2>{teacher&&batchId&&<button className="button" onClick={()=>setAnnouncementEdit(undefined)}>Add announcement</button>}{announcements.map(a=><article className="module-announcement" key={a.id}><h3>{a.title}</h3><p className="preserve-lines">{a.body}</p>{teacher&&<button className="text-link" onClick={()=>setAnnouncementEdit(a)}>Edit</button>}</article>)}</section>}
+  {tab==='schedule'&&<section className="weekly-notice-panel"><h2>Class schedule</h2>{teacher&&batchId&&<Link className="button" to={'/teacher/schedule?new=1&batch='+batchId}>Schedule class</Link>}<label className="check-line"><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/>Show past classes</label>{sessions.map(s=><div className="weekly-resource" key={s.id}><CalendarDays size={20}/><div><strong>{s.title||data.lessons.find(l=>l.id===s.lessonId)?.title||delivery?.name}</strong><small>{readable(s.date)} · {s.time} · {s.duration} minutes · Sri Lanka time</small></div>{s.status==='cancelled'?<Badge>Cancelled</Badge>:<OutLink className="button" url={s.zoomUrl}>Join class</OutLink>}{teacher&&<Link to={'/teacher/schedule?edit='+s.id}>Edit</Link>}</div>)}</section>}
+  {tab==='attendance'&&<section className="weekly-notice-panel"><h2>{teacher?'Class attendance':'My attendance'}</h2>{(()=>{const rows=data.attendance.filter(a=>(teacher||a.studentId===studentId)&&(batchId?a.batchId===batchId:data.batches.some(b=>b.id===a.batchId&&b.courseId===id)));return <><p>{percent(rows)}% attended. Present and Late count as attended.</p>{rows.map(a=><div className="weekly-resource" key={a.id}><strong>{readable(a.date)}</strong>{teacher&&<span>{studentName(data,a.studentId)}</span>}<Badge>{a.status}</Badge></div>)}</>;})()}</section>}
+  {lessonEdit!==null&&<LessonEditor row={lessonEdit} initialCourseId={id} initialBatchId={batchId} initialWeekNumber={nextWeekNumber(data,id,batchId)} onClose={()=>setLessonEdit(null)}/>}
+  {workEdit!==null&&<AssignmentEditor key={workEdit?.id||newLesson+newKind} row={workEdit} initialCourseId={id} initialBatchId={batchId} initialLessonId={newLesson} initialKind={newKind} onClose={()=>setWorkEdit(null)}/>}
+  {watching&&<Modal title={watching.title} onClose={()=>setWatching(null)}><LessonMedia lesson={watching} preview={teacher} batchId={batchId}/></Modal>}
+  {announcementEdit!==null&&<Editor table="announcements" row={announcementEdit||{id:uid('ANN-'),courseId:id,batchId,title:'',body:''}} isNew={!announcementEdit} onClose={()=>setAnnouncementEdit(null)}/>}
+  {copy&&<TransferActivity {...copy} onClose={()=>setCopy(null)}/>}
  </>;
 }

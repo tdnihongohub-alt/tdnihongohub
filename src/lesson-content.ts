@@ -12,7 +12,7 @@ export function lessonQuiz(data:Data,lesson:Row,studentId:string,now=Date.now())
  return data.assignments.find(a=>(lesson.quizId?a.id===lesson.quizId:a.lessonId===lesson.id)&&a.kind==='form'&&a.courseId===lesson.courseId&&a.formQuestions?.length>0&&assignmentReleased(a,now)&&assignmentForStudent(a,data,studentId));
 }
 export function lessonContentPlan(data:Data,lesson:Row,newQuiz?:Row,note?:Row):{table:Table;row:Row}[]{
- const row=validate('lessons',note?{...lesson,notes:'',hasManagedNotes:!!note.body.trim()}:lesson) as Row;validateAssignmentBatch(row,data);
+ const row=validate('lessons',note?{...lesson,notes:'',hasManagedNotes:!!note.body.trim(),notesPublished:note.published,notesReleaseAt:note.releaseAt}:lesson) as Row;validateAssignmentBatch(row,data);
  if(row.weekNumber!==undefined&&(!Number.isInteger(Number(row.weekNumber))||Number(row.weekNumber)<1||Number(row.weekNumber)>520))throw Error('Choose a section number from 1 to 520.');
  if(row.sectionType!==undefined&&!sectionTypes.includes(row.sectionType))throw Error('Choose a valid section type.');
  if(row.tutes&&(!Array.isArray(row.tutes)||row.tutes.length>20||row.tutes.some((t:any)=>!t.id||!String(t.title||'').trim()||!safeLink(t.url||''))))throw Error('Each tute needs a title and a valid worksheet link (up to 20 tutes).');
