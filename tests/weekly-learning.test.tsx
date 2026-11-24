@@ -28,6 +28,14 @@ describe('weekly class folders',()=>{
   expect(plan.some(c=>['enrollments','feeMonths','payments'].includes(c.table))).toBe(false);
  });
  it('keeps legacy lessons separate from explicitly numbered weeks without changing records',()=>{const lessons=[{id:'new',title:'Third',weekNumber:3},{id:'old-a',title:'First'},{id:'old-b',title:'Second'}];const before=structuredClone(lessons);const groups=weekGroups(lessons);expect(groups.map(g=>[g.number,g.lessons[0].id])).toEqual([[1,'old-a'],[2,'old-b'],[3,'new']]);expect(lessons).toEqual(before);});
+ it('shows topics and categories independently from weeks and keeps lesson progress',()=>{
+  const data=fixture();
+  const groups=weekGroups([{id:'week',title:'Weekly',weekNumber:1},{id:'topic',title:'Essay',weekNumber:1,sectionType:'topic'}]);
+  expect(groups).toHaveLength(2);expect(groups.map(g=>g.label)).toEqual(['Week','Topic']);
+  const html=render(<WeeklyClass/>,false,undefined,data=>{data.lessons[0].sectionType='topic';data.progress=[{id:'done',uid:'u',lessonId:data.lessons[0].id,complete:true}];});
+  expect(html).toContain('Topic 1: Particles');expect(html).toContain('I have completed Topic');
+  expect(html).toContain('Your learning progress');expect(html).not.toContain('Week 1: Particles');
+ });
  it('groups multiple recordings into a week and includes shared materials without another batch',()=>{const data=fixture();data.lessons.push({...data.lessons[0],id:'l2'},{id:'shared',courseId:'al',batchId:'',title:'Shared',published:true});const lessons=moduleLessons(data,'al','a','s');expect(lessons.map(l=>l.id)).not.toContain('hidden');expect(lessons.map(l=>l.id)).toContain('shared');expect(weekGroups(lessons)[0].lessons).toHaveLength(2);});
  it('renders weekly resources, notifications and a personal progress tick',()=>{const html=render(<WeeklyClass/>);for(const label of ['2027 A/L Theory','Weekly lessons','Homework','Quizzes','Tutes','Lesson recordings','Announcements','Class schedule','Grammar tute','I have completed Week'])expect(html).toContain(label);expect(html).toContain('aria-label="Weekly learning progress"');expect(html).not.toContain('Other batch secret');expect(html).not.toContain('One lesson at a time');});
  it('protects a guessed batch URL and preserves previously saved completion',()=>{expect(render(<WeeklyClass/>,false,'/student/course/al?batch=c')).toContain('This class needs teacher approval');const html=render(<WeeklyClass/>,false,undefined,data=>{data.progress=[{id:'u_l1',uid:'u',lessonId:'l1',courseId:'al',complete:true}];});expect(html).toContain('value="1" max="1"');expect(html).toContain('checked=""');});

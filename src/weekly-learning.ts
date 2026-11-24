@@ -14,9 +14,11 @@ export function teachingModules(data:Data,studentId:string,uid:string,teacher=fa
  modules.push(...courses.map(c=>({id:`course:${c.id}`,courseId:c.id,batchId:'',title:c.title,category:c.category,active:c.active!==false})));return modules.sort((a,b)=>a.title.localeCompare(b.title,undefined,{numeric:true}));
 }
 export function moduleLessons(data:Data,courseId:string,batchId:string,studentId:string,teacher=false){return data.lessons.filter(l=>l.courseId===courseId&&(!l.batchId||l.batchId===batchId)&&(teacher||l.published&&assignmentForStudent(l,data,studentId))).sort((a,b)=>(Number(a.weekNumber)||Infinity)-(Number(b.weekNumber)||Infinity)||`${a.module}|${a.title}`.localeCompare(`${b.module}|${b.title}`,undefined,{numeric:true}));}
+export const sectionTypes=['week','topic','category','lesson'] as const;
+export function sectionLabel(row:Row){const type=sectionTypes.includes(row.sectionType)?row.sectionType:'week';return type[0].toUpperCase()+type.slice(1);}
 export function weekGroups(lessons:Row[]){
- const groups=new Map<number,{number:number;title:string;lessons:Row[]}>();const reserved=new Set(lessons.map(l=>Number(l.weekNumber)).filter(n=>n>0));let next=1;
- lessons.forEach(lesson=>{while(reserved.has(next))next++;const number=Number(lesson.weekNumber)>0?Number(lesson.weekNumber):next++;const group=groups.get(number)||{number,title:lesson.weekTitle||lesson.title,lessons:[] as Row[]};group.lessons.push(lesson);groups.set(number,group);});
+ const groups=new Map<string,{key:string;label:string;number:number;title:string;lessons:Row[]}>();const reserved=new Set(lessons.map(l=>Number(l.weekNumber)).filter(n=>n>0));let next=1;
+ lessons.forEach(lesson=>{while(reserved.has(next))next++;const number=Number(lesson.weekNumber)>0?Number(lesson.weekNumber):next++;const label=sectionLabel(lesson),key=label+':'+number;const group=groups.get(key)||{key,label,number,title:lesson.weekTitle||lesson.title,lessons:[] as Row[]};group.lessons.push(lesson);groups.set(key,group);});
  return [...groups.values()].sort((a,b)=>a.number-b.number);
 }
 export function nextWeekNumber(data:Data,courseId:string,batchId:string){const groups=weekGroups(moduleLessons(data,courseId,batchId,'',true));return Math.max(0,...groups.map(w=>w.number))+1;}

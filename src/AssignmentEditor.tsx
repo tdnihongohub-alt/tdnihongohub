@@ -1,3 +1,4 @@
+import { sectionLabel } from './weekly-learning';
 import { PracticeQuestionImport } from './PracticeQuestionImport';
 import { AssignmentBatchPicker } from './AssignmentBatchPicker';
 import { assignmentBatchIds,assignmentBatchScoped,assignmentAudienceFields,assignmentBatchLabel } from './assignment-audience';
@@ -24,7 +25,7 @@ export function AssignmentEditor({row,onClose,onSaved,onReuse,initialCourseId=''
  <label className="form-field">Title *<input required value={v.title} onChange={e=>set('title',e.target.value)}/></label>
  <label className="form-field">Course *<select required disabled={!!v.practiceSeriesId} value={v.courseId} onChange={e=>{set('courseId',e.target.value);set('lessonId','');set('batchId','');set('batchIds',[]);set('audience','course');}}><option value="">Choose course</option>{data.courses.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
  {!v.practiceSeriesId&&<AssignmentBatchPicker row={v as Row} data={data} onChange={setV}/>}
- <label className="form-field">Week / linked lesson<select value={v.lessonId} onChange={e=>set('lessonId',e.target.value)}><option value="">Class assignment (no specific week)</option>{lessonChoices.map(l=><option key={l.id} value={l.id}>{l.weekNumber?`Week ${l.weekNumber} · `:''}{l.title}</option>)}</select><small>You can create an assignment before adding any weekly lessons.</small></label>
+ <label className="form-field">Section / linked lesson<select value={v.lessonId} onChange={e=>set('lessonId',e.target.value)}><option value="">Class assignment (no linked lesson)</option>{lessonChoices.map(l=><option key={l.id} value={l.id}>{l.weekNumber?`${sectionLabel(l)} ${l.weekNumber} · `:''}{l.title}</option>)}</select><small>You can create an assignment before adding any weekly lessons.</small></label>
  {v.kind!=='form'&&<label className="form-field">How students answer<select value={v.responseMode} onChange={e=>set('responseMode',e.target.value)}><option value="questions">Answer questions inside the website</option><option value="written">One written response / worksheet link</option></select></label>}
  <label className="form-field wide">Instructions *<textarea required rows={4} placeholder="Describe the task, what students should practise, and what they need to submit." value={v.instructions} onChange={e=>set('instructions',e.target.value)}/></label>
  <label className="form-field">Release at (Sri Lanka time)<input type="datetime-local" readOnly={!!v.practiceSeriesId} value={release} onChange={e=>setRelease(e.target.value)}/><small>{v.practiceSeriesId?'Set by the timetable slot.':'Leave empty to release immediately when published.'}</small></label>
