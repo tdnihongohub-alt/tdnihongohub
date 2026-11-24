@@ -1,3 +1,4 @@
+import { LearningRhythm } from './LearningRhythm';
 import { ExamCountdowns } from './ExamCountdown';
 import { TimetableHomeworkEditor } from './TimetableHomeworkEditor';
 import { moduleColour } from './module-colour';
@@ -77,6 +78,7 @@ function CourseTimetable({student,courseId}:{student:boolean;courseId:string}){
  return <>
   {course&&<Link className="text-link" to={(student?'/student/course/':'/teacher/modules/')+encodeURIComponent(course.id)}>Back to {course.title}</Link>}
   <PageHead eyebrow={student?'YOUR LEARNING SPACE':undefined} title={course?course.title+' timetable':'Your timetable.'} description="Plan your classes and keep every date clear. Classes and practice releases use Sri Lanka time.">{!student&&<><AddButton onClick={()=>create()}>Schedule class</AddButton><button className="button" onClick={()=>setHomework({})}>Schedule homework</button><button className="button" onClick={()=>setPracticeManager(true)}>Recurring homework & quizzes</button></>}</PageHead>
+  {(!course||/\b(?:a\/?l|advanced level)\b/i.test([course.category,course.title].join(' ')))&&<LearningRhythm date={date} onSelect={day=>{setDate(day);setView('day');setBatchFilter('');setSearch('');}}/>}
   <ExamCountdowns courses={course?[course]:courses}/>
   {course&&!student&&<Link className="button small section-gap" to={`/teacher/classes?edit=${encodeURIComponent(course.id)}`}>Set exam date & quote</Link>}
   <div className="toolbar spread">
